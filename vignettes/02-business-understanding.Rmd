@@ -311,6 +311,67 @@ head(RandomStartPoint)
 8. Based on each start point simulate a day of work.
 
 
+```{r example-simulate_trips, echo = FALSE}
+
+# Let's defining 3 zones
+valid_zones <- 1:3
+
+# Then define the closest zone to each zone
+closest_zones <- c(2L, 1L, 2L)
+names(closest_zones) <- valid_zones
+
+# All the zones are from the same borough
+borough_zones <- data.frame(
+  LocationID = valid_zones,
+  id_list = I(list(valid_zones, valid_zones, valid_zones))
+)
+
+start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
+start_zone <- 1L
+
+df <- data.frame(
+  PULocationID = c(
+    
+  # Let's simulate a trip in starting zone
+  1L,
+  
+  # Then we can start in the closest zone
+  2L,
+  
+  # Finally we can take a trip at borough level
+  3L
+  ),
+  
+  DOLocationID = c(3L, 1L, 1L),
+  
+  request_datetime = c(
+   start_datetime + lubridate::minutes(2L),
+   start_datetime + lubridate::minutes(20L + 7L),
+   start_datetime + lubridate::minutes(37L + 14L)
+  ),
+  dropoff_datetime = c(
+   start_datetime + lubridate::minutes(20L),
+   start_datetime + lubridate::minutes(37L),
+   lubridate::make_datetime(2023L, 5L, 18L, 9L, 1L)
+  ),
+  driver_pay = 10,
+  tips = 2 
+)
+
+df
+
+simulate_trips(df,
+               start_datetime = start_datetime,
+               start_zone = start_zone,
+               minutes_next_trip = 6L,
+               end_datetime = start_datetime + lubridate::hours(1L),
+               valid_end_zones = valid_zones,
+               closest_zone = closest_zones,
+               borough_zones = borough_zones)
+
+
+```
+
 ```{r parsermd-chunk-9}
 BaseLineSimulation <-
   RandomStartPoint[
@@ -319,7 +380,7 @@ BaseLineSimulation <-
                      start_zone = PULocationID,
                      minutes_next_trip = minutes(6L),
                      end_datetime = start_time + hours(hours_to_work),
-                     end_zones = ValidZoneCodes$LocationID,
+                     valid_end_zones = ValidZoneCodes$LocationID,
                      closest_zone = ClosestZone,
                      borough_zones = BoroughZones,
                      seed_num = seed_num),

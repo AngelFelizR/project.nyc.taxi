@@ -10,7 +10,7 @@ simulate_trips(
   start_zone,
   minutes_next_trip,
   end_datetime,
-  end_zones,
+  valid_end_zones,
   closest_zone,
   borough_zones,
   seed_num = 1234
@@ -27,7 +27,7 @@ simulate_trips(
 
 \item{end_datetime}{a date with an associated time when the taxi driver stop looking for new trips}
 
-\item{end_zones}{a vector of number defining all possible zones to drive}
+\item{valid_end_zones}{a vector of number defining all possible zones to drive}
 
 \item{closest_zone}{a named vector pointing the closest zone from the taxi driver is waiting for a need trip in order to start a trip}
 
@@ -41,4 +41,64 @@ A data.frame
 \description{
 This function sample from a data.frame or arrow connection all the trips needed
 to complete the a working day form taxi driver.
+}
+\examples{
+
+# Let's defining 3 zones
+valid_zones <- 1:3
+
+# Then define the closest zone to each zone
+closest_zones <- c(2L, 1L, 2L)
+names(closest_zones) <- valid_zones
+
+# All the zones are from the same borough
+borough_zones <- data.frame(
+  LocationID = valid_zones,
+  id_list = I(list(valid_zones, valid_zones, valid_zones))
+)
+
+start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
+start_zone <- 1L
+
+df <- data.frame(
+  PULocationID = c(
+    
+  # Let's simulate a trip in starting zone
+  1L,
+  
+  # Then we can start in the closest zone
+  2L,
+  
+  # Finally we can take a trip at borough level
+  3L
+  ),
+  
+  DOLocationID = c(3L, 1L, 1L),
+  
+  request_datetime = c(
+   start_datetime + lubridate::minutes(2L),
+   start_datetime + lubridate::minutes(20L + 7L),
+   start_datetime + lubridate::minutes(37L + 14L)
+  ),
+  dropoff_datetime = c(
+   start_datetime + lubridate::minutes(20L),
+   start_datetime + lubridate::minutes(37L),
+   lubridate::make_datetime(2023L, 5L, 18L, 9L, 1L)
+  ),
+  driver_pay = 10,
+  tips = 2 
+)
+
+df
+
+simulate_trips(df,
+               start_datetime = start_datetime,
+               start_zone = start_zone,
+               minutes_next_trip = 6L,
+               end_datetime = start_datetime + lubridate::hours(1L),
+               valid_end_zones = valid_zones,
+               closest_zone = closest_zones,
+               borough_zones = borough_zones)
+
+
 }
