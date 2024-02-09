@@ -49,7 +49,7 @@ TaxiZoneLink <-
   SourcePage |>
   rvest::html_elements(xpath = '//ul/li/a[text()="Taxi Zone Lookup Table"]')  |>
   rvest::html_attr("href") |>
-  trimws
+  trimws()
 
 TaxiZoneLink
 ```
@@ -62,9 +62,9 @@ To take advantage of the best capacities of `arrow` we need save a each parquet 
 
 
 ```{r parsermd-chunk-3}
-RawDataPath <- here::here("data-raw")
+RawDataPath <- here::here("raw-data")
 
-if(!"data-raw" %in% dir(here::here())) dir.create(RawDataPath)
+if(!"raw-data" %in% dir(here::here())) dir.create(RawDataPath)
 
 RawDataPath
 ```
@@ -120,11 +120,7 @@ MonthFoldersPath
 
 - Downloading each file on each folder.
 
-
-```{r parsermd-chunk-7}
-#| eval: false
-
-
+```{r eval=FALSE}
 # Parquet files might time a longer time to be downloaded
 options(timeout = 1800)
 
@@ -143,7 +139,6 @@ for(link_i in seq_along(TripLinks)){
 download.file(TaxiZoneLink,
               destfile = file.path(RawDataPath,"taxi_zone_lookup.csv"),
               mode = "wb")
-
 ```
 
 ## Final result

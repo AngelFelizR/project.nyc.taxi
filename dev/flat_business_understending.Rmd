@@ -615,5 +615,5 @@ A **Shiny app** which assists the drivers in focusing their attention on the bet
 fusen::inflate(flat_file = "dev/flat_business_understending.Rmd",
                vignette_name = "02 - Business Understanding",
                overwrite = "yes",
-               vignette = FALSE)
+               vignettes = FALSE)
 ```

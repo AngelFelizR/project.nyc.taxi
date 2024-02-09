@@ -48,7 +48,7 @@ This project will be limited to Juno, Uber, Via and Lyft taxi drivers who work i
 To define the elements of the process, we use a **SIPOC** diagram.
 
 
-```{r parsermd-chunk-1, eval = FALSE}
+```{r parsermd-chunk-1}
 
 DiagrammeR::grViz('
 digraph SIPOC {
