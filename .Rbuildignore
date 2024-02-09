@@ -1,0 +1,8 @@
+^dev$
+^LICENSE\.md$
+^README\.Rmd$
+^project\.nyc\.taxi\.Rproj$
+^\.Rproj\.user$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

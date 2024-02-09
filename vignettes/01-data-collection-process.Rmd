@@ -1,0 +1,157 @@
+---
+title: "Data Collection Process"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{01-data-collection-process}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+For most projects the data collection process can be done manually and later attache the file in a folder but that isn't a option when we are working with big data.
+
+To solve this problem, we have created the next script to automate the data collection process so the project could be reproduced easily just by running the code below.
+
+
+## Web Scraping
+
+To always have a updated list of 2022 and 2023 links of **High Volume For-Hire Vehicles** documents let's scrape the [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) by using the `rvest` library.
+
+
+```{r parsermd-chunk-1}
+SourcePage <-
+  rvest::read_html("https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page")
+
+TripLinks <-
+  SourcePage |>
+  rvest::html_elements(xpath = '//div[@class="faq-answers"]//li/a') |>
+  rvest::html_attr("href") |>
+  grep(pattern = "fhvhv_[a-z]+_202[23]-\\d{2}\\.parquet", value = TRUE) |>
+  trimws() |>
+  sort()
+
+FileNames <- basename(TripLinks)
+
+FileNames
+```
+
+From the same page we also can find the link to download the codes related to each Zone.
+
+
+```{r parsermd-chunk-2}
+TaxiZoneLink <-
+  SourcePage |>
+  rvest::html_elements(xpath = '//ul/li/a[text()="Taxi Zone Lookup Table"]')  |>
+  rvest::html_attr("href") |>
+  trimws
+
+TaxiZoneLink
+```
+
+## Saving files
+
+To take advantage of the best capacities of `arrow` we need save a each parquet file in folder with useful information to filter later, that why we will have one folder level related to years the next sub-folders related to a month with each parquet with the name `part-0.parquet` by following the next process:
+
+- Creating our main folder store the data.
+
+
+```{r parsermd-chunk-3}
+RawDataPath <- here::here("data-raw")
+
+if(!"data-raw" %in% dir(here::here())) dir.create(RawDataPath)
+
+RawDataPath
+```
+
+- Defining a new folder only to save the trip data in parquet files.
+
+
+```{r parsermd-chunk-4}
+ParquetFolderPath <- file.path(RawDataPath, "trip-data")
+
+if(!"trip-data" %in% dir(RawDataPath)) dir.create(ParquetFolderPath)
+
+ParquetFolderPath
+```
+
+- Defining the sub-folders to split the files based on year.
+
+
+```{r parsermd-chunk-5}
+YearFolders <- gsub(
+  x = FileNames,
+  pattern = "^fhvhv_tripdata_|-\\d{2}\\.parquet$",
+  replacement = ""
+) |>
+  paste0("year=", a = _)
+
+YearFoldersUnique <- unique(YearFolders)
+YearFoldersPath <- file.path(ParquetFolderPath, YearFoldersUnique)
+
+for(year_i in YearFoldersPath) dir.create(year_i)
+
+YearFoldersPath
+```
+
+- Creating a folder for each month.
+
+
+```{r parsermd-chunk-6}
+MonthFolders <- gsub(
+  x = FileNames,
+  pattern = "^fhvhv_tripdata_\\d{4}-|\\.parquet$",
+  replacement = ""
+) |>
+  paste0("month=", a = _)
+
+MonthFoldersPath <- file.path(ParquetFolderPath, YearFolders, MonthFolders)
+
+for(month_i in MonthFoldersPath) dir.create(month_i, showWarnings = FALSE)
+
+MonthFoldersPath
+
+```
+
+- Downloading each file on each folder.
+
+
+```{r parsermd-chunk-7}
+#| eval: false
+
+
+# Parquet files might time a longer time to be downloaded
+options(timeout = 1800)
+
+
+# Parquet trip data
+for(link_i in seq_along(TripLinks)){
+  
+  download.file(TripLinks[link_i],
+                destfile = file.path(MonthFoldersPath[link_i],"part-0.parquet"),
+                mode = "wb")
+  
+}
+
+
+# Taxi Zone CSV
+download.file(TaxiZoneLink,
+              destfile = file.path(RawDataPath,"taxi_zone_lookup.csv"),
+              mode = "wb")
+
+```
+
+## Final result
+
+After getting all the files you should end with the next structure for the `data` folder.
+
+
+```{r parsermd-chunk-8}
+fs::dir_tree(RawDataPath)
+```
+

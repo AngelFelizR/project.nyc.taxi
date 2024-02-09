@@ -1,0 +1,585 @@
+---
+title: "Business Understanding"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r development, include=FALSE}
+library(testthat)
+```
+
+
+```{r development-load}
+# Load already included functions if relevant
+pkgload::load_all(export_all = FALSE)
+```
+
+
+
+## Project Name
+
+**Taxi Drivers Net Earnings**.
+
+## Problem Statement
+
+The problem is that taxi drivers’ net earnings are not as high as they could be due to a lack of strategy for increasing tips.
+
+## Project Scope
+
+This project will be limited to Juno, Uber, Via and Lyft taxi drivers who work in New York City.
+
+## Stakeholders
+
+- Taxi drivers
+- Taxi companies
+- Customers
+- NYC Taxi and Limousine Commission
+
+## Top Process Definition
+
+To define the elements of the process, we use a **SIPOC** diagram.
+
+```{r}
+
+DiagrammeR::grViz('
+digraph SIPOC {
+    rankdir=LR;
+    node [shape=box];
+    subgraph cluster_S {
+        label="Suppliers";
+        S1 [label="Gas Station"];
+        S2 [label="Car Manufacturer"];
+        S3 [label="Taxi Application"];
+        S4 [label="Telecomuncation\nCompany"];
+        S5 [label="Smartphone Supplier"];
+        S6 [label="Maintenance\nService Providers"];
+    }
+    subgraph cluster_I {
+        label="Inputs";
+        I1 [label="Gas"];
+        I2 [label="Car"];
+        I3 [label="Start\nLocation"];
+        I4 [label="End\nLocation"];
+        I5 [label="Internet"];
+        I6 [label="Smartphone"];
+        I7 [label="Customer\nRequests"];
+    }
+    subgraph cluster_P {
+        label="Process";
+        P1 [label="The customer request a taxi"];
+        P2 [label="The driver arrived at\nthe pick-up location"];
+        P3 [label="Drivers pick the customer up"];
+        P4 [label="Drivers drive to destination"];
+        P5 [label="Drivers leave the customer\nat the end point"];
+    }
+    subgraph cluster_O {
+        label="Outputs";
+        O1 [label="The customer is picked up\n at start location"];
+        O2 [label="The customer recives a\ntravel experience"];
+        O3 [label="The Customer gets\nat end location"];
+        O4 [label="Payment Received"]
+    }
+    subgraph cluster_C {
+        label="Customers";
+        C1 [label="Taxi User"];
+    }
+    S1 -> I1 [style=invis];
+    I1 -> P1 [style=invis];
+    P1 -> O1 [style=invis];
+    O1 -> C1 [style=invis];
+    P1 -> P2 [constraint=false];
+    P2 -> P3 [constraint=false];
+    P3 -> P4 [constraint=false];
+    P4 -> P5 [constraint=false];
+}
+
+')
+```
+
+## Project Objective
+
+The objective of this project is to develop a strategy to select the best paid trips possible and to increase their tips and thereby their net earnings.
+
+## Defining Metric
+
+Based on the current information we can say that our objective is to increase the **hourly wage** received by each taxi driver defined by the following formula.
+
+$$
+\text{Hourly Wage} = \frac{\text{Total Driver Pay} + \text{Total Tips}}{\text{Total Hours Worked}}
+$$
+
+## Data to Use
+
+In this project, we will use a subset of the data available in the [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) from 2022 to 2023 for **High Volume For-Hire Vehicle** with the columns described in the README.md file located at the [data](https://github.com/AngelFelizR/nyc-taxi-project/tree/master/data) folder.
+
+Based on the variables available, we can divide them in to 2 categories:
+
+- **Available Before Arriving at the Pick-Up Location**: They will be used as the predictors to train the model.
+  - hvfhs_license_num
+  - dispatching_base_num
+  - originating_base_num
+  - request_datetime
+  - PULocationID
+  - DOLocationID
+  - trip_miles
+  - base_passenger_fare
+  - shared_request_flag
+  - access_a_ride_flag
+  - wav_request_flag
+  - wav_match_flag
+
+- **Available After Ending the Trip**: They will be used to create the outcome variable needs to be predicted by the model.
+  - on_scene_datetime
+  - pickup_datetime
+  - dropoff_datetime
+  - trip_time
+  - tolls
+  - bcf
+  - sales_tax
+  - congestion_surcharge
+  - airport_fee
+  - tips
+  - driver_pay
+  - shared_match_flag
+
+
+## Outcome to predict
+
+To select better trips a taxi driver needs to have a clear which are the best trips to take, I mean the ones the request less time to get more money.
+
+Based on the available data we can calculate the **profit_rate** in dollars by minute to  *minimize the time needed to make more money* and increasing in consequence the expected **hourly wage** in the long term.
+
+$$
+\text{profit rate} = \frac{\text{driver pay} + \text{tips}}{(\text{dropoff datetime}-\text{request datetime})/60}
+$$
+
+
+### Defining Metric's Base Line (Simulation)
+
+Defining the baseline based on this data is a challenge as the data doesn't have any unique id to make the estimation, but we can **run a simulation** to estimate its value with a confident interval.
+
+The simulation will be based on the following assumptions related to the taxi drivers:
+
+- They can start to work from any zone of Manhattan, Brooklyn or Queens (the more active ones).
+- They work from 8 to 12 hour every day.
+- They can start to work in any month, weekday or hour.
+- They just can take trips starting at the same zone they are after ending the their last trip
+- The maximum waiting time before receiving a new trip request is 6 minutes.
+- If a taxi driver cannot find a new trip in the first 6 minutes, he can to extend 6 minutes more and drive to the closest zone to find a new trip, but if that doesn't work in the next 6 minutes he can drive to any zone in the current Borough.
+
+To do it, we will apply the next steps:
+
+1. Load the environment to use.
+
+```{r, warning=FALSE, message=FALSE}
+library(project.nyc.taxi)
+library(here)
+library(scales)
+library(ggplot2)
+library(data.table)
+library(lubridate)
+library(dplyr)
+library(arrow)
+library(infer)
+```
+
+2. Create a connection with the parquet files without loading them into RAM.
+
+```{r}
+NycTrips <- open_dataset(here("data-raw/trip-data"))
+
+nrow(NycTrips) |> scales::comma() |> paste0(" rows")
+```
+
+3. Use the locations ids of all the trips we can estimate the mean distance between each pear of locations.
+
+```{r}
+LocationsMeanDistance <-
+  NycTrips |>
+  group_by(PULocationID, DOLocationID) |>
+  summarize(trip_miles_mean = mean(trip_miles)) |>
+  collect() |>
+  as.data.table()
+
+LocationsMeanDistance
+```
+
+4. Define a named vectors that can return the closest location id for all locations ids in the dataset. 
+
+```{r}
+ClosestZone <-
+  
+  # We are bind the same table after exchanging the id columns
+  # to make sure that all ids are present in both column for any
+  # pair of ids
+  rbind(LocationsMeanDistance,
+        LocationsMeanDistance[, .(PULocationID = DOLocationID,
+                                  DOLocationID = PULocationID,
+                                  trip_miles_mean)]
+  
+  # We need to make sure to place the lower distances at the top  
+  )[order(
+    # This expression help me to place distances between the same location
+    # at the bottom of the list with needing to open another []
+    (PULocationID == DOLocationID), 
+    # Then we just need to pass the distance column
+    trip_miles_mean
+    ), 
+    
+    # This expression will select the first row of the data.table
+    # for each PULocationID to avoid duplication
+    .SD[1L],
+    by = "PULocationID"
+    
+  # To end the process we just need to create named vector
+  # that we will use to return the closest location for any  id
+  ][, setattr(DOLocationID, "names", PULocationID)]
+
+
+head(ClosestZone)
+```
+
+5. Restrict the location ids to use to the ones related to those zones.
+
+```{r}
+ValidZoneCodes <- fread(
+  here("data-raw/taxi_zone_lookup.csv"),
+  colClasses = c("integer",
+                 "character",
+                 "character",
+                 "character")
+)[Borough %chin% c("Manhattan", "Brooklyn", "Queens")]
+```
+
+6. Link all possible zones for each location id based on each Borough.
+
+```{r}
+BoroughZones <-
+  ValidZoneCodes[, .(LocationID,
+                     id_list = list(LocationID)),
+                 by = "Borough"]
+
+head(BoroughZones)
+```
+
+
+7. Defining when and where each simulation will start.
+
+```{r}
+# Repeating the experiment to create confident intervals
+NumRepetitions <- 30L
+
+# Defining the seed
+set.seed(1558)
+
+# Defining the starting point of each repetition
+RandomStartPoint <- data.table(
+  simulation_day = 1:NumRepetitions,
+  seed_num = sample(1000:9000, NumRepetitions),
+  PULocationID = sample(ValidZoneCodes$LocationID, NumRepetitions, replace = TRUE),
+  hours_to_work = sample(8:12, NumRepetitions, replace = TRUE),
+  start_time = make_datetime(
+    year = sample(c(2022L, 2023L), NumRepetitions, replace = TRUE),
+    month = sample(1:12, NumRepetitions, replace = TRUE),
+    day = sample(1:31, NumRepetitions, replace = TRUE),
+    hour = sample(0:23, NumRepetitions, replace = TRUE)
+  )
+)
+
+head(RandomStartPoint)
+```
+
+
+8. Based on each start point simulate a day of work.
+
+```{r function-simulate_trips}
+
+#' Simulates a day of work
+#' 
+#' This function sample from a data.frame or arrow connection all the trips needed
+#' to complete the a working day form taxi driver.
+#'
+#' @param df a data.frame or arrow connection with trips to sample from
+#' @param start_datetime a date with an associated time when the taxi driver start to work
+#' @param start_zone a number to select to the starting zone
+#' @param minutes_next_trip an integer to define the limit time needed before extending the filters
+#' @param end_datetime a date with an associated time when the taxi driver stop looking for new trips
+#' @param end_zones a vector of number defining all possible zones to drive
+#' @param closest_zone a named vector pointing the closest zone from the taxi driver is waiting for a need trip in order to start a trip
+#' @param borough_zones a data.frame with the integer column LocationID with all possible zone ids and the list column id_list with contain all other zones ids related to the LocationID's borough
+#' @param seed_num a single value, interpreted as an integer to make possible to reproduce random events
+#'
+#' @importFrom lubridate minutes as_datetime
+#' @importFrom dplyr select filter collect sample_n bind_rows
+#'
+#' @return A data.frame
+#' @export
+#'
+simulate_trips <- function(df,
+                           start_datetime,
+                           start_zone,
+                           minutes_next_trip,
+                           end_datetime,
+                           end_zones,
+                           closest_zone,
+                           borough_zones,
+                           seed_num = 1234){
+  
+  # Confirm if will need to collect the results
+  need_to_collect <- inherits(df, "Dataset")
+  
+  # Transforming minutes to period class
+  minutes_next_trip <- lubridate::minutes(minutes_next_trip)
+  
+  # For the first trip
+  current_time <- start_time
+  current_zone <- start_zone
+
+  # An empty table to bind the results
+  done_trips <- data.frame(
+    s_PULocationID = vector("integer"),
+    s_DOLocationID = vector("integer"),
+    s_request_datetime = vector("double") |> lubridate::as_datetime(),
+    s_dropoff_datetime = vector("double") |> lubridate::as_datetime(),
+    s_trip_miles = vector("double"),
+    s_trip_time = vector("integer"),
+    s_driver_pay = vector("double"),
+    s_tips = vector("double")
+  )
+
+  # We need to keep adding trips until reaching the end_time 
+  while(current_time <= end_time){
+
+    # Filter all trips that meet the expected conditions
+    trip_alternatives <-
+     
+      # From data source 
+      df |>
+      
+      # Add the prefix s_ to each column
+      dplyr::select(s_PULocationID = PULocationID,
+                    s_DOLocationID = DOLocationID,
+                    s_request_datetime = request_datetime,
+                    s_dropoff_datetime = dropoff_datetime,
+                    s_trip_miles = trip_miles,
+                    s_trip_time = trip_time,
+                    s_driver_pay = driver_pay,
+                    s_tips = tips) |>
+      
+      # Remove any row that don't meet expectations
+      dplyr::filter(s_PULocationID %in% current_zone &
+                      s_DOLocationID %in% end_zones &
+                      s_request_datetime >= current_time &
+                      s_request_datetime <= (current_time + minutes_next_trip)) 
+    
+    
+    # Collect the results if needed
+    if(need_to_collect) {
+      trip_alternatives <- dplyr::collect(trip_alternatives)
+    }
+
+    # If we can not find any trip in the zone and time defined
+    # we can move update the current time try to find trip in the closest zone
+    if(length(current_zone) == 1L && nrow(trip_alternatives) == 0L){
+
+      current_time <- current_time + minutes_next_trip
+      current_zone <- c(current_zone, closest_zone[as.character(current_zone)])
+
+    # If we couldn't find any trip to the closest zone
+    # we can open the trip to any zone of the borough
+    # after updating the current_time
+    }else if(length(current_zone) > 1L && nrow(trip_alternatives) == 0L){
+
+      current_time <- current_time + minutes_next_trip
+      current_zone <- c(
+        current_zone,
+        borough_zones[borough_zones$LocationID == 12L, ][["id_list"]][[1L]]
+      )
+
+    }else{
+
+      # Once we have alternatives to select from can select one trip
+      set.seed(seed_num)
+      simulated_trip <- dplyr::sample_n(trip_alternatives, size = 1L)
+      set.seed(NULL)
+      
+      # Updating starting point for next trip
+      current_time <- simulated_trip$s_dropoff_datetime
+      current_zone <- simulated_trip$s_DOLocationID
+
+      # Adding the trip to final result
+      done_trips <- dplyr::bind_rows(done_trips, simulated_trip)
+
+    }
+
+  }
+
+  # Returning all trips
+  return(done_trips)
+
+}
+
+```
+
+
+```{r}
+BaseLineSimulation <-
+  RandomStartPoint[
+    , simulate_trips(NycTrips,
+                     start_datetime = start_time,
+                     start_zone = PULocationID,
+                     minutes_next_trip = minutes(6L),
+                     end_datetime = start_time + hours(hours_to_work),
+                     end_zones = ValidZoneCodes$LocationID,
+                     closest_zone = ClosestZone,
+                     borough_zones = BoroughZones,
+                     seed_num = seed_num),
+    by = "simulation_day"
+  ][RandomStartPoint, on = "simulation_day"]
+```
+
+```{r}
+#| echo: false
+#| eval: false
+
+# Now we can save the results to 
+# avoid running this long simulation twice
+
+usethis::use_data(
+  ClosestZone,
+  BoroughZones,
+  NumRepetitions,
+  MinutesToNextTrip,
+  RandomStartPoint,
+  BaseLineSimulation,
+  internal = TRUE, 
+  overwrite = TRUE
+)
+
+```
+
+After simulating 30 days, we can use **bootstrap** to infer the distribution of the mean **Hourly Wage** for any day in the year by following the next steps.
+
+1. Calculate the *Hourly Wage* for each simulated day.
+
+```{r}
+SimulationHourlyWage <-
+  BaseLineSimulation[, .(`Driver Pay` = sum(s_driver_pay),
+                         `Tips` = sum(s_tips),
+                         `Hours Worked` = 
+                           difftime(max(s_dropoff_datetime),
+                                    min(s_request_datetime),
+                                    units = "hours") |>
+                           as.double()),
+                     by = "simulation_day"]
+
+SimulationHourlyWage[, `Hourly Wage` := (`Driver Pay` + Tips) / `Hours Worked`]
+
+SimulationHourlyWage[order(-`Hourly Wage`)]
+```
+
+2. Then we need to resample with replacement a new 30 days hourly wage 3,000 times and calculate the mean of each resample.
+
+```{r}
+set.seed(1586)
+BootstrapHourlyWage <-
+  specify(SimulationHourlyWage,
+          `Hourly Wage` ~ NULL) |>
+  generate(reps = 3000, type = "bootstrap") |>
+  calculate(stat = "mean")
+
+BootstrapHourlyWage
+```
+
+3. Compute the 95% confident interval.
+
+```{r}
+BootstrapInterval <- 
+  get_ci(BootstrapHourlyWage, 
+         level = 0.95,
+         type = "percentile")
+
+BootstrapInterval
+```
+
+4. Visualize the estimated distribution.
+
+```{r}
+visualize(BootstrapHourlyWage)+
+  shade_ci(endpoints = BootstrapInterval,
+           color = "#2c77BF",
+           fill = "#2c77BF")+
+  annotate(geom = "text",
+           y = 400,
+           x = c(BootstrapInterval[1L][[1L]] - 0.4,
+                 BootstrapInterval[2L][[1L]] + 0.4),
+           label = unlist(BootstrapInterval) |> comma(accuracy = 0.01))+
+  labs(title = "Mean Hourly Wage Distribution",
+       subtitle = paste0("Mean: ", round(mean(SimulationHourlyWage$`Hourly Wage`), 2),
+                         ", Median: ", round(median(SimulationHourlyWage$`Hourly Wage`), 2)),
+       y = "Count")+
+  theme_light()+
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        plot.title = element_text(face = "bold"),
+        axis.title.x = element_blank())
+```
+
+## Business Case
+
+As the base driver's pay increases with costs like gas, time and car's maintenance the best way to increase total earning is by increasing the amount of **tips** that drivers receive from customers.
+
+Based on *212,416,083* trips recorded 2022, drivers received *$229,936,965* in tips which is only 5% of the total earnings for that year, for example if a driver improves his strategy to increase his tips to **20%** of his current earning he could be earning **`r dollar(41.69*8*5*4*0.2)` extra monthly** if he works 8 hours a day, 5 days each week and earns *$41.69* hourly.
+
+```{r}
+# 2022 Earning Summary
+NycTrips |>
+  filter(year == 2022) |>
+  summarize(number_of_trips = sum(driver_pay > -1e6),
+            trips_with_tips = sum(tips > 0, na.rm = TRUE),
+            driver_net_earning = sum(driver_pay + tips, na.rm = TRUE),
+            tips = sum(tips, na.rm = TRUE)) |>
+  collect() |>
+  as.data.table() |>
+  (\(dt)  dt[, .(number_of_trips = comma(number_of_trips),
+                 trips_with_tips = comma(trips_with_tips),
+                 trips_with_tips_pct = percent(trips_with_tips / number_of_trips),
+                 driver_net_earning = dollar(driver_net_earning),
+                 tips = dollar(tips),
+                 tips_pct = percent(tips/driver_net_earning))
+          ][, melt(.SD, 
+                   measure.vars = names(.SD),
+                   variable.name = "Summary Variable",
+                   value.name = "Total",
+                   variable.factor = FALSE)]
+   )()
+
+```
+
+## Project's side benefits
+
+It's also important to consider that Taxi companies and customers can both benefit from drivers earning more tips in several ways:
+
+1. **Taxi Companies**: 
+    - **Employee Satisfaction**: Higher tips can lead to increased job satisfaction among drivers, which can improve their performance and reduce turnover rates.
+    - **Company Reputation**: If drivers are earning more tips, it could indicate that they are providing excellent service, which can enhance the company's reputation.
+    - **Customer Retention**: Satisfied drivers are more likely to provide better customer service, which can lead to higher customer retention rates.
+
+2. **Customers**:
+    - **Better Service**: Drivers who earn more tips are often those who provide better service. This could mean cleaner vehicles, more courteous behavior, and a more enjoyable ride overall.
+    - **Driver Availability**: If the tip earnings are high, it could attract more drivers to work, potentially reducing wait times for customers.
+    - **Safety**: Drivers who are not worried about their earnings might be less likely to engage in risky behaviors (like speeding or working overly long shifts) to earn more.
+
+## Deliverables
+
+A **Shiny app** which assists the drivers in focusing their attention on the better trips.
+
+```{r development-inflate, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+fusen::inflate(flat_file = "dev/flat_business_understending.Rmd",
+               vignette_name = "02 - Business Understanding",
+               overwrite = "yes",
+               vignette = FALSE)
+```

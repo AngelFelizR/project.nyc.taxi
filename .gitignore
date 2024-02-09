@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+.DS_Store
+.httr-oauth
+data-raw/
+inst/doc

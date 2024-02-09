@@ -1,0 +1,8 @@
+pandoc: 2.17.1.1
+pkgdown: 2.0.7
+pkgdown_sha: ~
+articles:
+  01-data-collection-process: 01-data-collection-process.html
+  02-business-understanding: 02-business-understanding.html
+last_built: 2024-02-09T07:52Z
+

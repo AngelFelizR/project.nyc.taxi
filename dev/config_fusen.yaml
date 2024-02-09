@@ -1,0 +1,14 @@
+flat_business_understending.Rmd:
+  path: dev/flat_business_understending.Rmd
+  state: active
+  R: R/simulate_trips.R
+  tests: []
+  vignettes: vignettes/02-business-understanding.Rmd
+  inflate:
+    flat_file: dev/flat_business_understending.Rmd
+    vignette_name: 02 - Business Understanding
+    open_vignette: true
+    check: true
+    document: true
+    overwrite: 'yes'
+    vignette: false

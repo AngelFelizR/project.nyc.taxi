@@ -1,0 +1,24 @@
+Package: project.nyc.taxi
+Version: 0.0.99
+Title: A Data Analysis Project On NYC Taxi Drivers’ Earnings
+Description: In this package, you will find the tools needed to reproduce the analysis done in the project to help taxi drivers in NYC implement strategies that can help them increase their earnings.
+Authors@R: person(given = "Angel",
+       family = "Feliz",
+       role = c("aut", "cre"),
+       email = "angel.esteban.feliz@gmail.com")
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+LazyData: true
+Suggests: 
+    infer,
+    knitr
+VignetteBuilder: knitr
+Config/fusen/version: 0.5.2
+Depends: 
+    R (>= 4.1)
+Imports: 
+    arrow,
+    dplyr,
+    lubridate
