@@ -48,7 +48,7 @@ This project will be limited to Juno, Uber, Via and Lyft taxi drivers who work i
 To define the elements of the process, we use a **SIPOC** diagram.
 
 
-```{r parsermd-chunk-1}
+```{r parsermd-chunk-1, eval = FALSE}
 
 DiagrammeR::grViz('
 digraph SIPOC {
@@ -368,8 +368,6 @@ simulate_trips(df,
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
                borough_zones = borough_zones)
-
-
 ```
 
 ```{r parsermd-chunk-9}
@@ -378,7 +376,7 @@ BaseLineSimulation <-
     , simulate_trips(NycTrips,
                      start_datetime = start_time,
                      start_zone = PULocationID,
-                     minutes_next_trip = minutes(6L),
+                     minutes_next_trip = 6L,
                      end_datetime = start_time + hours(hours_to_work),
                      valid_end_zones = ValidZoneCodes$LocationID,
                      closest_zone = ClosestZone,
@@ -388,32 +386,12 @@ BaseLineSimulation <-
   ][RandomStartPoint, on = "simulation_day"]
 ```
 
-```{r parsermd-chunk-10}
-#| echo: false
-#| eval: false
-
-# Now we can save the results to 
-# avoid running this long simulation twice
-
-usethis::use_data(
-  ClosestZone,
-  BoroughZones,
-  NumRepetitions,
-  MinutesToNextTrip,
-  RandomStartPoint,
-  BaseLineSimulation,
-  internal = TRUE, 
-  overwrite = TRUE
-)
-
-```
-
 After simulating 30 days, we can use **bootstrap** to infer the distribution of the mean **Hourly Wage** for any day in the year by following the next steps.
 
 1. Calculate the *Hourly Wage* for each simulated day.
 
 
-```{r parsermd-chunk-11}
+```{r parsermd-chunk-10}
 SimulationHourlyWage <-
   BaseLineSimulation[, .(`Driver Pay` = sum(s_driver_pay),
                          `Tips` = sum(s_tips),
@@ -432,7 +410,7 @@ SimulationHourlyWage[order(-`Hourly Wage`)]
 2. Then we need to resample with replacement a new 30 days hourly wage 3,000 times and calculate the mean of each resample.
 
 
-```{r parsermd-chunk-12}
+```{r parsermd-chunk-11}
 set.seed(1586)
 BootstrapHourlyWage <-
   specify(SimulationHourlyWage,
@@ -446,7 +424,7 @@ BootstrapHourlyWage
 3. Compute the 95% confident interval.
 
 
-```{r parsermd-chunk-13}
+```{r parsermd-chunk-12}
 BootstrapInterval <- 
   get_ci(BootstrapHourlyWage, 
          level = 0.95,
@@ -458,7 +436,7 @@ BootstrapInterval
 4. Visualize the estimated distribution.
 
 
-```{r parsermd-chunk-14}
+```{r parsermd-chunk-13}
 visualize(BootstrapHourlyWage)+
   shade_ci(endpoints = BootstrapInterval,
            color = "#2c77BF",
@@ -483,14 +461,12 @@ visualize(BootstrapHourlyWage)+
 
 As the base driver's pay increases with costs like gas, time and car's maintenance the best way to increase total earning is by increasing the amount of **tips** that drivers receive from customers.
 
-Based on *212,416,083* trips recorded 2022, drivers received *$229,936,965* in tips which is only 5% of the total earnings for that year, for example if a driver improves his strategy to increase his tips to **20%** of his current earning he could be earning **`r dollar(41.69*8*5*4*0.2)` extra monthly** if he works 8 hours a day, 5 days each week and earns *$41.69* hourly.
+Based on *424,389,806* trips recorded between 2022 and 2023, drivers received *$469,726,156* in tips which is only 5% of the total earnings for that year, for example if a driver improves his strategy to increase his tips to **20%** of his current earning he could be earning **`r dollar(41.69*8*5*4*0.2)` extra monthly** if he works 8 hours a day, 5 days each week and earns *$41.69* hourly.
 
 
-```{r parsermd-chunk-15}
-# 2022 Earning Summary
+```{r parsermd-chunk-14}
 NycTrips |>
-  filter(year == 2022) |>
-  summarize(number_of_trips = sum(driver_pay > -1e6),
+  summarize(number_of_trips = sum(!is.na(PULocationID)),
             trips_with_tips = sum(tips > 0, na.rm = TRUE),
             driver_net_earning = sum(driver_pay + tips, na.rm = TRUE),
             tips = sum(tips, na.rm = TRUE)) |>

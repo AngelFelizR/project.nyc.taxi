@@ -99,6 +99,4 @@ simulate_trips(df,
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
                borough_zones = borough_zones)
-
-
 }

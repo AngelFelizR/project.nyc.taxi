@@ -312,6 +312,7 @@ head(RandomStartPoint)
 #'
 #' @importFrom lubridate minutes as_datetime make_datetime hours
 #' @importFrom dplyr select filter collect sample_n bind_rows
+#' @import arrow
 #'
 #' @return A data.frame
 #' @export
@@ -334,7 +335,7 @@ simulate_trips <- function(df,
   minutes_next_trip <- lubridate::minutes(minutes_next_trip)
   
   # For the first trip
-  current_time <- start_time
+  current_time <- start_datetime
   current_zone <- start_zone
 
   # An empty table to bind the results
@@ -348,7 +349,7 @@ simulate_trips <- function(df,
   )
 
   # We need to keep adding trips until reaching the end_time 
-  while(current_time <= end_time){
+  while(current_time <= end_datetime){
 
     # Filter all trips that meet the expected conditions
     trip_alternatives <-
@@ -391,7 +392,7 @@ simulate_trips <- function(df,
       current_time <- current_time + minutes_next_trip
       current_zone <- c(
         current_zone,
-        borough_zones[borough_zones$LocationID == 12L, ][["id_list"]][[1L]]
+        borough_zones[borough_zones$LocationID == current_zone[1L], ][["id_list"]][[1L]]
       )
 
     }else{
@@ -476,11 +477,7 @@ simulate_trips(df,
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
                borough_zones = borough_zones)
-
-
 ```
-
-
 
 ```{r}
 BaseLineSimulation <-
@@ -488,7 +485,7 @@ BaseLineSimulation <-
     , simulate_trips(NycTrips,
                      start_datetime = start_time,
                      start_zone = PULocationID,
-                     minutes_next_trip = minutes(6L),
+                     minutes_next_trip = 6L,
                      end_datetime = start_time + hours(hours_to_work),
                      valid_end_zones = ValidZoneCodes$LocationID,
                      closest_zone = ClosestZone,
@@ -496,26 +493,6 @@ BaseLineSimulation <-
                      seed_num = seed_num),
     by = "simulation_day"
   ][RandomStartPoint, on = "simulation_day"]
-```
-
-```{r}
-#| echo: false
-#| eval: false
-
-# Now we can save the results to 
-# avoid running this long simulation twice
-
-usethis::use_data(
-  ClosestZone,
-  BoroughZones,
-  NumRepetitions,
-  MinutesToNextTrip,
-  RandomStartPoint,
-  BaseLineSimulation,
-  internal = TRUE, 
-  overwrite = TRUE
-)
-
 ```
 
 After simulating 30 days, we can use **bootstrap** to infer the distribution of the mean **Hourly Wage** for any day in the year by following the next steps.
@@ -589,13 +566,11 @@ visualize(BootstrapHourlyWage)+
 
 As the base driver's pay increases with costs like gas, time and car's maintenance the best way to increase total earning is by increasing the amount of **tips** that drivers receive from customers.
 
-Based on *212,416,083* trips recorded 2022, drivers received *$229,936,965* in tips which is only 5% of the total earnings for that year, for example if a driver improves his strategy to increase his tips to **20%** of his current earning he could be earning **`r dollar(41.69*8*5*4*0.2)` extra monthly** if he works 8 hours a day, 5 days each week and earns *$41.69* hourly.
+Based on *424,389,806* trips recorded between 2022 and 2023, drivers received *$469,726,156* in tips which is only 5% of the total earnings for that year, for example if a driver improves his strategy to increase his tips to **20%** of his current earning he could be earning **`r dollar(41.69*8*5*4*0.2)` extra monthly** if he works 8 hours a day, 5 days each week and earns *$41.69* hourly.
 
 ```{r}
-# 2022 Earning Summary
 NycTrips |>
-  filter(year == 2022) |>
-  summarize(number_of_trips = sum(driver_pay > -1e6),
+  summarize(number_of_trips = sum(!is.na(PULocationID)),
             trips_with_tips = sum(tips > 0, na.rm = TRUE),
             driver_net_earning = sum(driver_pay + tips, na.rm = TRUE),
             tips = sum(tips, na.rm = TRUE)) |>

@@ -18,6 +18,7 @@
 #'
 #' @importFrom lubridate minutes as_datetime make_datetime hours
 #' @importFrom dplyr select filter collect sample_n bind_rows
+#' @import arrow
 #'
 #' @return A data.frame
 #' @export
@@ -79,8 +80,6 @@
 #'                valid_end_zones = valid_zones,
 #'                closest_zone = closest_zones,
 #'                borough_zones = borough_zones)
-#'
-#'
 simulate_trips <- function(df,
                            start_datetime,
                            start_zone,
@@ -98,7 +97,7 @@ simulate_trips <- function(df,
   minutes_next_trip <- lubridate::minutes(minutes_next_trip)
   
   # For the first trip
-  current_time <- start_time
+  current_time <- start_datetime
   current_zone <- start_zone
 
   # An empty table to bind the results
@@ -112,7 +111,7 @@ simulate_trips <- function(df,
   )
 
   # We need to keep adding trips until reaching the end_time 
-  while(current_time <= end_time){
+  while(current_time <= end_datetime){
 
     # Filter all trips that meet the expected conditions
     trip_alternatives <-
@@ -155,7 +154,7 @@ simulate_trips <- function(df,
       current_time <- current_time + minutes_next_trip
       current_zone <- c(
         current_zone,
-        borough_zones[borough_zones$LocationID == 12L, ][["id_list"]][[1L]]
+        borough_zones[borough_zones$LocationID == current_zone[1L], ][["id_list"]][[1L]]
       )
 
     }else{
