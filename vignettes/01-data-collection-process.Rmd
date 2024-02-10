@@ -1,5 +1,5 @@
 ---
-title: "Data Collection Process"
+title: "01 - Data Collection Process"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{01-data-collection-process}

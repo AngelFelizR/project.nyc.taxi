@@ -86,10 +86,20 @@ ArrowDf <- data.frame(
   ),
   driver_pay = 10,
   tips = 2 
-)
+) |>
+  arrow::arrow_table(schema = arrow::schema(
+    year = arrow::int32(),
+    month = arrow::int32(),
+    PULocationID = arrow::int64(),
+    DOLocationID = arrow::int64(),
+    request_datetime = arrow::timestamp(unit = "us"),
+    dropoff_datetime = arrow::timestamp(unit = "us"),
+    driver_pay = double(),
+    tips = double()
+  ))
 
 
-simulate_trips(arrow::arrow_table(ArrowDf),
+simulate_trips(ArrowDf,
                start_datetime = start_datetime,
                start_zone = start_zone,
                minutes_next_trip = 6L,
