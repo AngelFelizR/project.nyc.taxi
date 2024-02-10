@@ -12,17 +12,3 @@ flat_business_understending.Rmd:
     document: true
     overwrite: 'yes'
     vignettes: false
-test.Rmd:
-  path: dev/test.Rmd
-  state: active
-  R: R/simulate_trips.R
-  tests: []
-  vignettes: vignettes/02-business-understanding.Rmd
-  inflate:
-    flat_file: dev/test.Rmd
-    vignette_name: 02 - Business Understanding
-    open_vignette: true
-    check: true
-    document: true
-    overwrite: 'yes'
-    vignettes: false

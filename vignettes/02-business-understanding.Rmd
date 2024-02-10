@@ -328,7 +328,7 @@ borough_zones <- data.frame(
 start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
 start_zone <- 1L
 
-df <- data.frame(
+ArrowDf <- data.frame(
   year = 2023L,
   month = 5L,
   PULocationID = c(
@@ -357,17 +357,19 @@ df <- data.frame(
   ),
   driver_pay = 10,
   tips = 2 
-)
+) |>
+  arrow::arrow_table()
 
-with(new.env(parent = globalenv()),
-     simulate_trips(arrow::arrow_table(df),
+
+simulate_trips(ArrowDf,
                start_datetime = start_datetime,
                start_zone = start_zone,
                minutes_next_trip = 6L,
                end_datetime = start_datetime + lubridate::hours(1L),
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
-               borough_zones = borough_zones))
+               borough_zones = borough_zones) |>
+  dplyr::collect()
 
 ```
 

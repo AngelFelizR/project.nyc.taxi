@@ -308,10 +308,12 @@ head(RandomStartPoint)
 #' @param closest_zone a named vector pointing the closest zone from the taxi driver is waiting for a need trip in order to start a trip
 #' @param borough_zones a data.frame with the integer column LocationID with all possible zone ids and the list column id_list with contain all other zones ids related to the LocationID's borough
 #' @param seed_num a single value, interpreted as an integer to make possible to reproduce random events
+#' @param envir the environment in which expr is to be evaluated
 #'
 #' @importFrom lubridate minutes as_datetime make_datetime hours year month
-#' @importFrom dplyr select filter compute collect slice_sample bind_rows
-#'
+#' @importFrom dplyr select filter compute collect slice_sample
+#' @importFrom arrow concat_tables
+#' 
 #' @return A data.frame
 #' @export
 #'
@@ -324,7 +326,8 @@ simulate_trips <- function(arrow_con,
                            valid_end_zones,
                            closest_zone,
                            borough_zones,
-                           seed_num = 1234){
+                           seed_num = 1234,
+                           envir = parent.frame()){
   
   # Confirm if will need to compute the results
   stopifnot("arrow_con is not an arrow connection" = inherits(arrow_con, "ArrowObject"))
@@ -344,22 +347,26 @@ simulate_trips <- function(arrow_con,
     s_dropoff_datetime = vector("double") |> lubridate::as_datetime(),
     s_driver_pay = vector("double"),
     s_tips = vector("double")
-  )
+  ) |>
+    arrow::arrow_table()
 
   # We need to keep adding trips until reaching the end_time 
   while(current_time <= end_datetime){
+  
+  # Defining time needed to wait
+  wait_limit_datetime <- current_time + minutes_next_trip
 
    # Filter all trips that meet the expected conditions
     # Remove any row that don't meet expectations
     trip_alternatives <-
       arrow_con |>
-        dplyr::filter(year == lubridate::year(current_time),
-                      month == lubridate::month(current_time),
-                      PULocationID %in% current_zone,
-                      DOLocationID %in% valid_end_zones,
-                      request_datetime >= current_time,
-                      request_datetime <= (current_time + minutes_next_trip)) |>
-        dplyr::compute()
+      dplyr::filter(year == lubridate::year(current_time),
+                    month == lubridate::month(current_time),
+                    PULocationID %in% current_zone,
+                    DOLocationID %in% valid_end_zones,
+                    request_datetime >= current_time,
+                    request_datetime <= wait_limit_datetime) |>
+      dplyr::compute()
 
     # If we can not find any trip in the zone and time defined
     # we can move update the current time try to find trip in the closest zone
@@ -395,16 +402,17 @@ simulate_trips <- function(arrow_con,
                       s_driver_pay = driver_pay,
                       s_tips = tips) |>
         
-        dplyr::collect()
+        # taking all data to R
+        dplyr::compute()
       
       set.seed(NULL)
       
       # Updating starting point for next trip
-      current_time <- simulated_trip$s_dropoff_datetime
-      current_zone <- simulated_trip$s_DOLocationID
+      current_time <- as.vector(simulated_trip$s_dropoff_datetime)
+      current_zone <- as.vector(simulated_trip$s_DOLocationID)
 
       # Adding the trip to final result
-      done_trips <- dplyr::bind_rows(done_trips, simulated_trip)
+      done_trips <- arrow::concat_tables(done_trips, simulated_trip)
       
     }
 
@@ -435,7 +443,7 @@ borough_zones <- data.frame(
 start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
 start_zone <- 1L
 
-df <- data.frame(
+ArrowDf <- data.frame(
   year = 2023L,
   month = 5L,
   PULocationID = c(
@@ -464,17 +472,19 @@ df <- data.frame(
   ),
   driver_pay = 10,
   tips = 2 
-)
+) |>
+  arrow::arrow_table()
 
-with(new.env(parent = globalenv()),
-     simulate_trips(arrow::arrow_table(df),
+
+simulate_trips(ArrowDf,
                start_datetime = start_datetime,
                start_zone = start_zone,
                minutes_next_trip = 6L,
                end_datetime = start_datetime + lubridate::hours(1L),
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
-               borough_zones = borough_zones))
+               borough_zones = borough_zones) |>
+  dplyr::collect()
 
 ```
 

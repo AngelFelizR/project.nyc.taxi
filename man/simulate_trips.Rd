@@ -13,7 +13,8 @@ simulate_trips(
   valid_end_zones,
   closest_zone,
   borough_zones,
-  seed_num = 1234
+  seed_num = 1234,
+  envir = parent.frame()
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ simulate_trips(
 \item{borough_zones}{a data.frame with the integer column LocationID with all possible zone ids and the list column id_list with contain all other zones ids related to the LocationID's borough}
 
 \item{seed_num}{a single value, interpreted as an integer to make possible to reproduce random events}
+
+\item{envir}{the environment in which expr is to be evaluated}
 }
 \value{
 A data.frame
@@ -60,7 +63,7 @@ borough_zones <- data.frame(
 start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
 start_zone <- 1L
 
-df <- data.frame(
+ArrowDf <- data.frame(
   year = 2023L,
   month = 5L,
   PULocationID = c(
@@ -89,16 +92,18 @@ df <- data.frame(
   ),
   driver_pay = 10,
   tips = 2 
-)
+) |>
+  arrow::arrow_table()
 
-with(new.env(parent = globalenv()),
-     simulate_trips(arrow::arrow_table(df),
+
+simulate_trips(ArrowDf,
                start_datetime = start_datetime,
                start_zone = start_zone,
                minutes_next_trip = 6L,
                end_datetime = start_datetime + lubridate::hours(1L),
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
-               borough_zones = borough_zones))
+               borough_zones = borough_zones) |>
+  dplyr::collect()
 
 }
