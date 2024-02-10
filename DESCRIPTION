@@ -10,10 +10,10 @@ License: GPL (>= 3)
 Depends: 
     R (>= 4.1.0)
 Imports: 
-    arrow,
     dplyr,
     lubridate
 Suggests: 
+    arrow,
     data.table,
     DiagrammeR,
     fs,
@@ -28,5 +28,6 @@ VignetteBuilder:
     knitr
 Config/fusen/version: 0.5.2
 Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1

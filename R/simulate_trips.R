@@ -16,8 +16,7 @@
 #' @param borough_zones a data.frame with the integer column LocationID with all possible zone ids and the list column id_list with contain all other zones ids related to the LocationID's borough
 #'
 #' @importFrom lubridate minutes as_datetime make_datetime hours year month
-#' @importFrom dplyr select filter compute collect slice_sample
-#' @importFrom arrow concat_tables schema int64 timestamp
+#' @importFrom dplyr select filter collect slice_sample bind_rows
 #' 
 #' @return A data.frame
 #' @export
@@ -69,28 +68,17 @@
 #'   ),
 #'   driver_pay = 10,
 #'   tips = 2 
-#' ) |>
-#'   arrow::arrow_table(schema = arrow::schema(
-#'     year = arrow::int32(),
-#'     month = arrow::int32(),
-#'     PULocationID = arrow::int64(),
-#'     DOLocationID = arrow::int64(),
-#'     request_datetime = arrow::timestamp(unit = "us"),
-#'     dropoff_datetime = arrow::timestamp(unit = "us"),
-#'     driver_pay = double(),
-#'     tips = double()
-#'   ))
+#' )
 #'
 #'
-#' simulate_trips(ArrowDf,
+#' simulate_trips(arrow::arrow_table(ArrowDf),
 #'                start_datetime = start_datetime,
 #'                start_zone = start_zone,
 #'                minutes_next_trip = 6L,
 #'                end_datetime = start_datetime + lubridate::hours(1L),
 #'                valid_end_zones = valid_zones,
 #'                closest_zone = closest_zones,
-#'                borough_zones = borough_zones) |>
-#'   dplyr::collect()
+#'                borough_zones = borough_zones)
 #'
 simulate_trips <- function(arrow_con,
                            start_datetime,
@@ -119,16 +107,8 @@ simulate_trips <- function(arrow_con,
     s_dropoff_datetime = vector("double") |> lubridate::as_datetime(),
     s_driver_pay = vector("double"),
     s_tips = vector("double")
-  ) |>
-    arrow::arrow_table(schema = arrow::schema(
-      s_PULocationID = arrow::int64(),
-      s_DOLocationID = arrow::int64(),
-      s_request_datetime = arrow::timestamp(unit = "us"),
-      s_dropoff_datetime = arrow::timestamp(unit = "us"),
-      s_driver_pay = double(),
-      s_tips = double()
-    ))
-
+  )
+  
   # We need to keep adding trips until reaching the end_time 
   while(current_time <= end_datetime){
   
@@ -137,27 +117,27 @@ simulate_trips <- function(arrow_con,
 
    # Filter all trips that meet the expected conditions
     # Remove any row that don't meet expectations
-    simulated_trip <-
-      arrow_con |>
-      dplyr::filter(year == lubridate::year(current_time),
-                    month == lubridate::month(current_time),
-                    PULocationID %in% current_zone,
-                    DOLocationID %in% valid_end_zones,
-                    request_datetime >= current_time,
-                    request_datetime <= wait_limit_datetime) |>
-      
-        # Once we have alternatives to select from can select one trip
-        dplyr::slice_sample(n = 1L) |>
-        
-        # Add the prefix s_ to each column
-        dplyr::select(s_PULocationID = PULocationID,
-                      s_DOLocationID = DOLocationID,
-                      s_request_datetime = request_datetime,
-                      s_dropoff_datetime = dropoff_datetime,
-                      s_driver_pay = driver_pay,
-                      s_tips = tips) |>
-      
-      dplyr::compute()
+  simulated_trip <-
+    arrow_con |>
+    dplyr::filter(year == lubridate::year(current_time)) |>
+    dplyr::filter(month == lubridate::month(current_time)) |>
+    dplyr::filter(PULocationID %in% current_zone) |>
+    dplyr::filter(DOLocationID %in% valid_end_zones) |>
+    dplyr::filter(request_datetime >= current_time) |>
+    dplyr::filter(request_datetime <= wait_limit_datetime) |>
+    
+    # Once we have alternatives to select from can select one trip
+    dplyr::slice_sample(n = 1L) |>
+    
+    # Add the prefix s_ to each column
+    dplyr::select(s_PULocationID = PULocationID,
+                  s_DOLocationID = DOLocationID,
+                  s_request_datetime = request_datetime,
+                  s_dropoff_datetime = dropoff_datetime,
+                  s_driver_pay = driver_pay,
+                  s_tips = tips) |>
+    
+    dplyr::collect()
 
     # If we can not find any trip in the zone and time defined
     # we can move update the current time try to find trip in the closest zone
@@ -180,11 +160,11 @@ simulate_trips <- function(arrow_con,
     }else{
       
       # Updating starting point for next trip
-      current_time <- as.vector(simulated_trip$s_dropoff_datetime)
-      current_zone <- as.vector(simulated_trip$s_DOLocationID)
+      current_time <- simulated_trip$s_dropoff_datetime
+      current_zone <- simulated_trip$s_DOLocationID
 
       # Adding the trip to final result
-      done_trips <- arrow::concat_tables(done_trips, simulated_trip)
+      done_trips <- dplyr::bind_rows(done_trips, simulated_trip)
       
     }
 

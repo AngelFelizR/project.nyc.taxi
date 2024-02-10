@@ -1,7 +1,9 @@
 flat_business_understending.Rmd:
   path: dev/flat_business_understending.Rmd
   state: active
-  R: R/simulate_trips.R
+  R:
+  - R/simulate_trips.R
+  - R/outcome-to-predict.R
   tests: []
   vignettes: vignettes/02-business-understanding.Rmd
   inflate:
