@@ -186,7 +186,6 @@ To do it, we will apply the next steps:
 
 
 ```{r parsermd-chunk-2, warning = FALSE, message = FALSE}
-library(project.nyc.taxi)
 library(here)
 library(scales)
 library(ggplot2)
@@ -201,7 +200,7 @@ library(infer)
 
 
 ```{r parsermd-chunk-3}
-NycTrips <- open_dataset(here("data-raw/trip-data"))
+NycTrips <- open_dataset(here("raw-data/trip-data"))
 
 nrow(NycTrips) |> scales::comma() |> paste0(" rows")
 ```
@@ -261,7 +260,7 @@ head(ClosestZone)
 
 ```{r parsermd-chunk-6}
 ValidZoneCodes <- fread(
-  here("data-raw/taxi_zone_lookup.csv"),
+  here("raw-data/taxi_zone_lookup.csv"),
   colClasses = c("integer",
                  "character",
                  "character",
@@ -330,6 +329,8 @@ start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
 start_zone <- 1L
 
 df <- data.frame(
+  year = 2023L,
+  month = 5L,
   PULocationID = c(
     
   # Let's simulate a trip in starting zone
@@ -358,16 +359,16 @@ df <- data.frame(
   tips = 2 
 )
 
-df
-
-simulate_trips(df,
+with(new.env(parent = globalenv()),
+     simulate_trips(arrow::arrow_table(df),
                start_datetime = start_datetime,
                start_zone = start_zone,
                minutes_next_trip = 6L,
                end_datetime = start_datetime + lubridate::hours(1L),
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
-               borough_zones = borough_zones)
+               borough_zones = borough_zones))
+
 ```
 
 ```{r parsermd-chunk-9}

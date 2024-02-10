@@ -5,7 +5,7 @@
 \title{Simulates a day of work}
 \usage{
 simulate_trips(
-  df,
+  arrow_con,
   start_datetime,
   start_zone,
   minutes_next_trip,
@@ -17,7 +17,7 @@ simulate_trips(
 )
 }
 \arguments{
-\item{df}{a data.frame or arrow connection with trips to sample from}
+\item{arrow_con}{an arrow connection with trips to sample from}
 
 \item{start_datetime}{a date with an associated time when the taxi driver start to work}
 
@@ -61,6 +61,8 @@ start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
 start_zone <- 1L
 
 df <- data.frame(
+  year = 2023L,
+  month = 5L,
   PULocationID = c(
     
   # Let's simulate a trip in starting zone
@@ -89,14 +91,14 @@ df <- data.frame(
   tips = 2 
 )
 
-df
-
-simulate_trips(df,
+with(new.env(parent = globalenv()),
+     simulate_trips(arrow::arrow_table(df),
                start_datetime = start_datetime,
                start_zone = start_zone,
                minutes_next_trip = 6L,
                end_datetime = start_datetime + lubridate::hours(1L),
                valid_end_zones = valid_zones,
                closest_zone = closest_zones,
-               borough_zones = borough_zones)
+               borough_zones = borough_zones))
+
 }

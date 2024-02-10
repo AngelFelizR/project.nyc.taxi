@@ -10,10 +10,10 @@ License: GPL (>= 3)
 Depends: 
     R (>= 4.1.0)
 Imports: 
-    arrow,
     dplyr,
     lubridate
 Suggests: 
+    arrow,
     data.table,
     DiagrammeR,
     fs,

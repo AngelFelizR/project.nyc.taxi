@@ -6,7 +6,7 @@
 #' This function sample from a data.frame or arrow connection all the trips needed
 #' to complete the a working day form taxi driver.
 #'
-#' @param df a data.frame or arrow connection with trips to sample from
+#' @param arrow_con an arrow connection with trips to sample from
 #' @param start_datetime a date with an associated time when the taxi driver start to work
 #' @param start_zone a number to select to the starting zone
 #' @param minutes_next_trip an integer to define the limit time needed before extending the filters
@@ -16,9 +16,8 @@
 #' @param borough_zones a data.frame with the integer column LocationID with all possible zone ids and the list column id_list with contain all other zones ids related to the LocationID's borough
 #' @param seed_num a single value, interpreted as an integer to make possible to reproduce random events
 #'
-#' @importFrom lubridate minutes as_datetime make_datetime hours
-#' @importFrom dplyr select filter collect sample_n bind_rows
-#' @import arrow
+#' @importFrom lubridate minutes as_datetime make_datetime hours year month
+#' @importFrom dplyr select filter compute collect slice_sample bind_rows
 #'
 #' @return A data.frame
 #' @export
@@ -42,6 +41,8 @@
 #' start_zone <- 1L
 #'
 #' df <- data.frame(
+#'   year = 2023L,
+#'   month = 5L,
 #'   PULocationID = c(
 #'     
 #'   # Let's simulate a trip in starting zone
@@ -70,17 +71,17 @@
 #'   tips = 2 
 #' )
 #'
-#' df
-#'
-#' simulate_trips(df,
+#' with(new.env(parent = globalenv()),
+#'      simulate_trips(arrow::arrow_table(df),
 #'                start_datetime = start_datetime,
 #'                start_zone = start_zone,
 #'                minutes_next_trip = 6L,
 #'                end_datetime = start_datetime + lubridate::hours(1L),
 #'                valid_end_zones = valid_zones,
 #'                closest_zone = closest_zones,
-#'                borough_zones = borough_zones)
-simulate_trips <- function(df,
+#'                borough_zones = borough_zones))
+#'
+simulate_trips <- function(arrow_con,
                            start_datetime,
                            start_zone,
                            minutes_next_trip,
@@ -90,8 +91,8 @@ simulate_trips <- function(df,
                            borough_zones,
                            seed_num = 1234){
   
-  # Confirm if will need to collect the results
-  need_to_collect <- inherits(df, "Dataset")
+  # Confirm if will need to compute the results
+  stopifnot("arrow_con is not an arrow connection" = inherits(arrow_con, "ArrowObject"))
   
   # Transforming minutes to period class
   minutes_next_trip <- lubridate::minutes(minutes_next_trip)
@@ -113,31 +114,17 @@ simulate_trips <- function(df,
   # We need to keep adding trips until reaching the end_time 
   while(current_time <= end_datetime){
 
-    # Filter all trips that meet the expected conditions
+   # Filter all trips that meet the expected conditions
+    # Remove any row that don't meet expectations
     trip_alternatives <-
-     
-      # From data source 
-      df |>
-      
-      # Add the prefix s_ to each column
-      dplyr::select(s_PULocationID = PULocationID,
-                    s_DOLocationID = DOLocationID,
-                    s_request_datetime = request_datetime,
-                    s_dropoff_datetime = dropoff_datetime,
-                    s_driver_pay = driver_pay,
-                    s_tips = tips) |>
-      
-      # Remove any row that don't meet expectations
-      dplyr::filter(s_PULocationID %in% current_zone &
-                      s_DOLocationID %in% valid_end_zones &
-                      s_request_datetime >= current_time &
-                      s_request_datetime <= (current_time + minutes_next_trip)) 
-    
-    
-    # Collect the results if needed
-    if(need_to_collect) {
-      trip_alternatives <- dplyr::collect(trip_alternatives)
-    }
+      arrow_con |>
+        dplyr::filter(year == lubridate::year(current_time),
+                      month == lubridate::month(current_time),
+                      PULocationID %in% current_zone,
+                      DOLocationID %in% valid_end_zones,
+                      request_datetime >= current_time,
+                      request_datetime <= (current_time + minutes_next_trip)) |>
+        dplyr::compute()
 
     # If we can not find any trip in the zone and time defined
     # we can move update the current time try to find trip in the closest zone
@@ -158,10 +145,23 @@ simulate_trips <- function(df,
       )
 
     }else{
-
-      # Once we have alternatives to select from can select one trip
+      
       set.seed(seed_num)
-      simulated_trip <- dplyr::sample_n(trip_alternatives, size = 1L)
+      
+      simulated_trip <- 
+        # Once we have alternatives to select from can select one trip
+        dplyr::slice_sample(trip_alternatives, n = 1L) |>
+        
+        # Add the prefix s_ to each column
+        dplyr::select(s_PULocationID = PULocationID,
+                      s_DOLocationID = DOLocationID,
+                      s_request_datetime = request_datetime,
+                      s_dropoff_datetime = dropoff_datetime,
+                      s_driver_pay = driver_pay,
+                      s_tips = tips) |>
+        
+        dplyr::collect()
+      
       set.seed(NULL)
       
       # Updating starting point for next trip
@@ -170,7 +170,7 @@ simulate_trips <- function(df,
 
       # Adding the trip to final result
       done_trips <- dplyr::bind_rows(done_trips, simulated_trip)
-
+      
     }
 
   }
