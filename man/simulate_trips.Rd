@@ -12,9 +12,7 @@ simulate_trips(
   end_datetime,
   valid_end_zones,
   closest_zone,
-  borough_zones,
-  seed_num = 1234,
-  envir = parent.frame()
+  borough_zones
 )
 }
 \arguments{
@@ -33,10 +31,6 @@ simulate_trips(
 \item{closest_zone}{a named vector pointing the closest zone from the taxi driver is waiting for a need trip in order to start a trip}
 
 \item{borough_zones}{a data.frame with the integer column LocationID with all possible zone ids and the list column id_list with contain all other zones ids related to the LocationID's borough}
-
-\item{seed_num}{a single value, interpreted as an integer to make possible to reproduce random events}
-
-\item{envir}{the environment in which expr is to be evaluated}
 }
 \value{
 A data.frame
@@ -93,7 +87,16 @@ ArrowDf <- data.frame(
   driver_pay = 10,
   tips = 2 
 ) |>
-  arrow::arrow_table()
+  arrow::arrow_table(schema = arrow::schema(
+    year = arrow::int32(),
+    month = arrow::int32(),
+    PULocationID = arrow::int64(),
+    DOLocationID = arrow::int64(),
+    request_datetime = arrow::timestamp(unit = "us"),
+    dropoff_datetime = arrow::timestamp(unit = "us"),
+    driver_pay = double(),
+    tips = double()
+  ))
 
 
 simulate_trips(ArrowDf,

@@ -293,7 +293,6 @@ set.seed(1558)
 # Defining the starting point of each repetition
 RandomStartPoint <- data.table(
   simulation_day = 1:NumRepetitions,
-  seed_num = sample(1000:9000, NumRepetitions),
   PULocationID = sample(ValidZoneCodes$LocationID, NumRepetitions, replace = TRUE),
   hours_to_work = sample(8:12, NumRepetitions, replace = TRUE),
   start_time = make_datetime(
@@ -310,7 +309,7 @@ head(RandomStartPoint)
 8. Based on each start point simulate a day of work.
 
 
-```{r example-simulate_trips, echo = FALSE}
+```{r example-simulate_trips, echo = FALSE, eval = FALSE}
 
 # Let's defining 3 zones
 valid_zones <- 1:3
@@ -358,7 +357,16 @@ ArrowDf <- data.frame(
   driver_pay = 10,
   tips = 2 
 ) |>
-  arrow::arrow_table()
+  arrow::arrow_table(schema = arrow::schema(
+    year = arrow::int32(),
+    month = arrow::int32(),
+    PULocationID = arrow::int64(),
+    DOLocationID = arrow::int64(),
+    request_datetime = arrow::timestamp(unit = "us"),
+    dropoff_datetime = arrow::timestamp(unit = "us"),
+    driver_pay = double(),
+    tips = double()
+  ))
 
 
 simulate_trips(ArrowDf,
@@ -383,8 +391,8 @@ BaseLineSimulation <-
                      end_datetime = start_time + hours(hours_to_work),
                      valid_end_zones = ValidZoneCodes$LocationID,
                      closest_zone = ClosestZone,
-                     borough_zones = BoroughZones,
-                     seed_num = seed_num),
+                     borough_zones = BoroughZones) |>
+      collect(),
     by = "simulation_day"
   ][RandomStartPoint, on = "simulation_day"]
 ```

@@ -2,6 +2,9 @@
 
 export(simulate_trips)
 importFrom(arrow,concat_tables)
+importFrom(arrow,int64)
+importFrom(arrow,schema)
+importFrom(arrow,timestamp)
 importFrom(dplyr,collect)
 importFrom(dplyr,compute)
 importFrom(dplyr,filter)
