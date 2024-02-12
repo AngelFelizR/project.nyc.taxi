@@ -61,29 +61,25 @@ To take advantage of the best capacities of `arrow` we need save a each parquet 
 - Creating our main folder store the data.
 
 
-```{r parsermd-chunk-3}
+```{r parsermd-chunk-3, eval=FALSE}
 RawDataPath <- here::here("raw-data")
 
 if(!"raw-data" %in% dir(here::here())) dir.create(RawDataPath)
-
-RawDataPath
 ```
 
 - Defining a new folder only to save the trip data in parquet files.
 
 
-```{r parsermd-chunk-4}
+```{r parsermd-chunk-4, eval=FALSE}
 ParquetFolderPath <- file.path(RawDataPath, "trip-data")
 
 if(!"trip-data" %in% dir(RawDataPath)) dir.create(ParquetFolderPath)
-
-ParquetFolderPath
 ```
 
 - Defining the sub-folders to split the files based on year.
 
 
-```{r parsermd-chunk-5}
+```{r parsermd-chunk-5, eval=FALSE}
 YearFolders <- gsub(
   x = FileNames,
   pattern = "^fhvhv_tripdata_|-\\d{2}\\.parquet$",
@@ -95,14 +91,12 @@ YearFoldersUnique <- unique(YearFolders)
 YearFoldersPath <- file.path(ParquetFolderPath, YearFoldersUnique)
 
 for(year_i in YearFoldersPath) dir.create(year_i, showWarnings = FALSE)
-
-YearFoldersPath
 ```
 
 - Creating a folder for each month.
 
 
-```{r parsermd-chunk-6}
+```{r parsermd-chunk-6, eval=FALSE}
 MonthFolders <- gsub(
   x = FileNames,
   pattern = "^fhvhv_tripdata_\\d{4}-|\\.parquet$",
@@ -113,9 +107,6 @@ MonthFolders <- gsub(
 MonthFoldersPath <- file.path(ParquetFolderPath, YearFolders, MonthFolders)
 
 for(month_i in MonthFoldersPath) dir.create(month_i, showWarnings = FALSE)
-
-MonthFoldersPath
-
 ```
 
 - Downloading each file on each folder.
@@ -144,6 +135,10 @@ download.file(TaxiZoneLink,
 ## Final result
 
 After getting all the files you should end with the next structure for the `data` folder.
+
+```{r, echo=FALSE}
+RawDataPath <- here::here("raw-data")
+```
 
 
 ```{r parsermd-chunk-8}
