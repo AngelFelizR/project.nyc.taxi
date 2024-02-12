@@ -54,7 +54,14 @@
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="search.json" id="search-input" placeholder="Search for" autocomplete="off">
 </form>
 
-      <ul class="navbar-nav"></ul>
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/AngelFelizR/project.nyc.taxi/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 
     
@@ -62,7 +69,7 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="projectnyctaxi">project.nyc.taxi<a class="anchor" aria-label="anchor" href="#projectnyctaxi"></a>
+<div class="page-header"><h1 id="increasing-nyc-taxi-drivers-earnings">Increasing NYC Taxi Drivers Earnings<a class="anchor" aria-label="anchor" href="#increasing-nyc-taxi-drivers-earnings"></a>
 </h1></div>
 <!-- badges: start -->
 <!-- badges: end -->
@@ -72,126 +79,18 @@
 </h2>
 <p>You can install the development version of project.nyc.taxi like so:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="data-used">Data used<a class="anchor" aria-label="anchor" href="#data-used"></a>
-</h2>
-<p>In this project will use a subset of the data available in the <a href="https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page" class="external-link">TLC Trip Record Data</a>.</p>
-<p>I will focus our attention to the 2022 and 2023 data available on the <strong>High Volume For-Hire Vehicle</strong> as you can see below.</p>
-<p><img src="reference/figures/01-source-page.png"></p>
-<p>Where each <strong>row represents a single trip</strong> in an FHV dispatched by one of NYC’s licensed High Volume FHV bases and each column has next meaning based on <a href="https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_hvfhs.pdf" class="external-link">data dictionary</a> avaible on the web page.</p>
-<table class="table">
-<colgroup>
-<col width="11%">
-<col width="88%">
-</colgroup>
-<thead><tr class="header">
-<th align="left"><strong>Field Name</strong></th>
-<th align="left"><strong>Description</strong></th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left"><strong>hvfhs_license_num</strong></td>
-<td align="left">The TLC license number of the HVFHS base or business. As of September 2019, the HVFHS licensees are the following: <br> - HV0002: Juno <br> - HV0003: Uber <br> - HV0004: Via <br> - HV0005: Lyft</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>dispatching_base_num</strong></td>
-<td align="left">The TLC Base License Number of the base that dispatched the trip</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>originating_base_num</strong></td>
-<td align="left">Base number of the base that received the original trip request</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>request_datetime</strong></td>
-<td align="left">Date/time when passenger requested to be picked up</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>on_scene_datetime</strong></td>
-<td align="left">Date/time when driver arrived at the pick-up location (Accessible Vehicles-only)</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>pickup_datetime</strong></td>
-<td align="left">The date and time of the trip pick-up</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>dropoff_datetime</strong></td>
-<td align="left">The date and time of the trip drop-off</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>PULocationID</strong></td>
-<td align="left">TLC Taxi Zone in which the trip began</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>DOLocationID</strong></td>
-<td align="left">TLC Taxi Zone in which the trip ended</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>trip_miles</strong></td>
-<td align="left">Total miles for passenger trip</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>trip_time</strong></td>
-<td align="left">Total time in seconds for passenger trip</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>base_passenger_fare</strong></td>
-<td align="left">Base passenger fare before tolls, tips, taxes, and fees</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>tolls</strong></td>
-<td align="left">Total amount of all tolls paid in trip</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>bcf</strong></td>
-<td align="left">Total amount collected in trip for Black Car Fund</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>sales_tax</strong></td>
-<td align="left">Total amount collected in trip for NYS sales tax</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>congestion_surcharge</strong></td>
-<td align="left">Total amount collected in trip for NYS congestion surcharge</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>airport_fee</strong></td>
-<td align="left">$2.50 for both drop off and pick up at LaGuardia, Newark, and John F. Kennedy airports</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>tips</strong></td>
-<td align="left">Total amount of tips received from passenger</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>driver_pay</strong></td>
-<td align="left">Total driver pay (not including tolls or tips and net of commission, surcharges, or taxes)</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>shared_request_flag</strong></td>
-<td align="left">Did the passenger agree to a shared/pooled ride, regardless of whether they were matched? (Y/N)</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>shared_match_flag</strong></td>
-<td align="left">Did the passenger share the vehicle with another passenger who booked separately at any point during the trip? (Y/N)</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>access_a_ride_flag</strong></td>
-<td align="left">Was the trip administered on behalf of the Metropolitan Transportation Authority (MTA)? (Y/N)</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>wav_request_flag</strong></td>
-<td align="left">Did the passenger request a wheelchair-accessible vehicle (WAV)? (Y/N)</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>wav_match_flag</strong></td>
-<td align="left">Did the trip occur in a wheelchair-accessible vehicle (WAV)? (Y/N)</td>
-</tr>
-</tbody>
-</table>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu">pak</span><span class="op">(</span><span class="st">"AngelFelizR/project.nyc.taxi"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/AngelFelizR/project.nyc.taxi/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/AngelFelizR/project.nyc.taxi/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="LICENSE.html">Full license</a></li>
@@ -211,6 +110,7 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Angel Feliz <br><small class="roles"> Author, maintainer </small>  </li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 

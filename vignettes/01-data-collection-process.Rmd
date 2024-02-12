@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-For most projects the data collection process can be done manually and later attache the file in a folder but that isn't a option when we are working with big data.
+For most projects the data collection process can be done manually and later attache the file in a folder but that isn't a option when we are working with **big data**.
 
 To solve this problem, we have created the next script to automate the data collection process so the project could be reproduced easily just by running the code below.
 

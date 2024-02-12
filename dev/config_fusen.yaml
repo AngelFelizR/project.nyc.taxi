@@ -3,7 +3,7 @@ flat_business_understending.Rmd:
   state: active
   R:
   - R/simulate_trips.R
-  - R/outcome-to-predict.R
+  - R/defining-metric-s-base-line.R
   tests: tests/testthat/test-simulate_trips.R
   vignettes: vignettes/02-business-understanding.Rmd
   inflate:

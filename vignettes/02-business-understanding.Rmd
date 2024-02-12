@@ -22,7 +22,7 @@ library(project.nyc.taxi)
 
 ## Project Name
 
-**Taxi Drivers Net Earnings**.
+**Increasing NYC Taxi Drivers Earnings**.
 
 
 ## Problem Statement
@@ -48,8 +48,7 @@ This project will be limited to Juno, Uber, Via and Lyft taxi drivers who work i
 To define the elements of the process, we use a **SIPOC** diagram.
 
 
-```{r parsermd-chunk-1}
-
+```{r parsermd-chunk-1, echo = FALSE}
 DiagrammeR::grViz('
 digraph SIPOC {
     rankdir=LR;
@@ -105,61 +104,99 @@ digraph SIPOC {
 ')
 ```
 
-## Project Objective
-
-The objective of this project is to develop a strategy to select the best paid trips possible and to increase their tips and thereby their net earnings.
-
-
-## Defining Metric
-
-Based on the current information we can say that our objective is to increase the **hourly wage** received by each taxi driver defined by the following formula.
-
-$$
-\text{Hourly Wage} = \frac{\text{Total Driver Pay} + \text{Total Tips}}{\text{Total Hours Worked}}
-$$
-
-
 ## Data to Use
 
-In this project, we will use a subset of the data available in the [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) from 2022 to 2023 for **High Volume For-Hire Vehicle** with the columns described in the README.md file located at the [data](https://github.com/AngelFelizR/nyc-taxi-project/tree/master/data) folder.
+In this project, we will use a subset of the data available in the [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) from 2022 to 2023 for **High Volume For-Hire Vehicle** with the columns described below as describes the [source data dictonary](https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_hvfhs.pdf).
 
-Based on the variables available, we can divide them in to 2 categories:
+|**Field Name**|**Description**|
+|:-------------|:--------------|
+|**hvfhs_license_num**|The TLC license number of the HVFHS base or business. As of September 2019, the HVFHS licensees are the following: <br> - HV0002: Juno <br> - HV0003: Uber <br> - HV0004: Via <br> - HV0005: Lyft|
+|**dispatching_base_num**|The TLC Base License Number of the base that dispatched the trip|
+|**originating_base_num**|Base number of the base that received the original trip request|
+|**request_datetime**|Date/time when passenger requested to be picked up|
+|**on_scene_datetime**|Date/time when driver arrived at the pick-up location (Accessible Vehicles-only)|
+|**pickup_datetime**|The date and time of the trip pick-up|
+|**dropoff_datetime**|The date and time of the trip drop-off|
+|**PULocationID**|TLC Taxi Zone in which the trip began|
+|**DOLocationID**|TLC Taxi Zone in which the trip ended|
+|**trip_miles**|Total miles for passenger trip|
+|**trip_time**|Total time in seconds for passenger trip|
+|**base_passenger_fare**|Base passenger fare before tolls, tips, taxes, and fees|
+|**tolls**|Total amount of all tolls paid in trip|
+|**bcf**|Total amount collected in trip for Black Car Fund|
+|**sales_tax**|Total amount collected in trip for NYS sales tax|
+|**congestion_surcharge**|Total amount collected in trip for NYS congestion surcharge|
+|**airport_fee**|$2.50 for both drop off and pick up at LaGuardia, Newark, and John F. Kennedy airports|
+|**tips**|Total amount of tips received from passenger|
+|**driver_pay**|Total driver pay (not including tolls or tips and net of commission, surcharges, or taxes)|
+|**shared_request_flag**|Did the passenger agree to a shared/pooled ride, regardless of whether they were matched? (Y/N)|
+|**shared_match_flag**|Did the passenger share the vehicle with another passenger who booked separately at any point during the trip? (Y/N)|
+|**access_a_ride_flag**|Was the trip administered on behalf of the Metropolitan Transportation Authority (MTA)? (Y/N)|
+|**wav_request_flag**|Did the passenger request a wheelchair-accessible vehicle (WAV)? (Y/N)|
+|**wav_match_flag**|Did the trip occur in a wheelchair-accessible vehicle (WAV)? (Y/N)|
 
-- **Available Before Arriving at the Pick-Up Location**: They will be used as the predictors to train the model.
-  - hvfhs_license_num
-  - dispatching_base_num
-  - originating_base_num
-  - request_datetime
-  - PULocationID
-  - DOLocationID
-  - trip_miles
-  - base_passenger_fare
-  - shared_request_flag
-  - access_a_ride_flag
-  - wav_request_flag
-  - wav_match_flag
-
-- **Available After Ending the Trip**: They will be used to create the outcome variable needs to be predicted by the model.
-  - on_scene_datetime
-  - pickup_datetime
-  - dropoff_datetime
-  - trip_time
-  - tolls
-  - bcf
-  - sales_tax
-  - congestion_surcharge
-  - airport_fee
-  - tips
-  - driver_pay
-  - shared_match_flag
-
+Based on the variables available, we can divide them in to 2 categories.
 
 
-## Outcome to predict
+### Available Before Arriving at the Pick-Up Location
 
-To select better trips a taxi driver needs to have a clear which are the best trips to take, I mean the ones the request less time to get more money.
+They will be used as the predictors to train the model.
 
-Based on the available data we can calculate the **profit_rate** in dollars by minute to  *minimize the time needed to make more money* and increasing in consequence the expected **hourly wage** in the long term.
+- ***request_datetime***
+- ***PULocationID***
+- ***DOLocationID***
+- *hvfhs_license_num*
+- *dispatching_base_num*
+- *originating_base_num*
+- *trip_miles*
+- *base_passenger_fare*
+- *shared_request_flag*
+- *access_a_ride_flag*
+- *wav_request_flag*
+- *wav_match_flag*
+
+
+
+### Available After Ending the Trip
+
+They will be used to create the outcome variable needs to be predicted by the model.
+
+- ***dropoff_datetime***
+- ***driver_pay***
+- ***tips***
+- *on_scene_datetime*
+- *pickup_datetime*
+- *trip_time*
+- *tolls*
+- *bcf*
+- *sales_tax*
+- *congestion_surcharge*
+- *airport_fee*
+- *shared_match_flag*
+
+
+
+## Project Objective
+
+The objective of this project is to develop a strategy to select the best paid trips possible to get an consistent increase in NYC taxi drivers' income. 
+
+
+## Defining Business Metric
+
+Based on the current information, we can say that our objective is to increase the **Daily Hourly Wage** received by each taxi driver defined by the following formula:
+
+$$
+\text{Daily Hourly Wage} = \frac{\text{Total Earnings}}{\text{Total Hours Worked}}
+$$
+
+
+
+
+## Defining Outcome to Predict
+
+Once we have a clear business problem to solve, it's important to also make the translation into a *data science* problem that we can solve using the available data.
+
+As we want to increase earning and reduce time, we can use calculate and predict the `profit_rate` of each trip, to understand **what is behind the best pay trips**.
 
 $$
 \text{profit rate} = \frac{\text{driver pay} + \text{tips}}{(\text{dropoff datetime}-\text{request datetime})/60}
@@ -167,9 +204,9 @@ $$
 
 
 
-### Defining Metric's Base Line (Simulation)
+## Defining Metric's Base Line 
 
-Defining the baseline based on this data is a challenge as the data doesn't have any unique id to make the estimation, but we can **run a simulation** to estimate its value with a confident interval.
+Defining the baseline based on this data is a challenge as the data doesn't have any *unique id* to make the estimation, but we can **run a simulation** to estimate its value with a confident interval.
 
 The simulation will be based on the following assumptions related to the taxi drivers:
 
@@ -180,7 +217,9 @@ The simulation will be based on the following assumptions related to the taxi dr
 - The maximum waiting time before receiving a new trip request is 6 minutes.
 - If a taxi driver cannot find a new trip in the first 6 minutes, he can to extend 6 minutes more and drive to the closest zone to find a new trip, but if that doesn't work in the next 6 minutes he can drive to any zone in the current Borough.
 
-To do it, we will apply the next steps:
+
+
+### Runing trips simulation
 
 1. Load the environment to use.
 
@@ -375,9 +414,11 @@ BaseLineSimulation <-
   ][RandomStartPoint, on = "simulation_day"]
 ```
 
-After simulating 30 days, we can use **bootstrap** to infer the distribution of the mean **Hourly Wage** for any day in the year by following the next steps.
+### Infering Daily Hourly Wage
 
-1. Calculate the *Hourly Wage* for each simulated day.
+After simulating 30 days, we can use **bootstrap** to infer the distribution of the mean **Daily Hourly Wage** for any day in the year by following the next steps.
+
+1. Calculate the *Daily Hourly Wage* for each simulated day.
 
 
 ```{r parsermd-chunk-10}
@@ -391,9 +432,9 @@ SimulationHourlyWage <-
                            as.double()),
                      by = "simulation_day"]
 
-SimulationHourlyWage[, `Hourly Wage` := (`Driver Pay` + Tips) / `Hours Worked`]
+SimulationHourlyWage[, `Daily Hourly Wage` := (`Driver Pay` + Tips) / `Hours Worked`]
 
-SimulationHourlyWage[order(-`Hourly Wage`)]
+SimulationHourlyWage[order(-`Daily Hourly Wage`)]
 ```
 
 2. Then we need to resample with replacement a new 30 days hourly wage 3,000 times and calculate the mean of each resample.
@@ -403,7 +444,7 @@ SimulationHourlyWage[order(-`Hourly Wage`)]
 set.seed(1586)
 BootstrapHourlyWage <-
   specify(SimulationHourlyWage,
-          `Hourly Wage` ~ NULL) |>
+          `Daily Hourly Wage` ~ NULL) |>
   generate(reps = 3000, type = "bootstrap") |>
   calculate(stat = "mean")
 
@@ -436,8 +477,8 @@ visualize(BootstrapHourlyWage)+
                  BootstrapInterval[2L][[1L]] + 0.4),
            label = unlist(BootstrapInterval) |> comma(accuracy = 0.01))+
   labs(title = "Mean Hourly Wage Distribution",
-       subtitle = paste0("Mean: ", round(mean(SimulationHourlyWage$`Hourly Wage`), 2),
-                         ", Median: ", round(median(SimulationHourlyWage$`Hourly Wage`), 2)),
+       subtitle = paste0("Mean: ", round(mean(SimulationHourlyWage$`Daily Hourly Wage`), 2),
+                         ", Median: ", round(median(SimulationHourlyWage$`Daily Hourly Wage`), 2)),
        y = "Count")+
   theme_light()+
   theme(panel.grid.minor.y = element_blank(),

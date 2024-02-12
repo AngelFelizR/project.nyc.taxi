@@ -2,11 +2,15 @@ Package: project.nyc.taxi
 Title: A Data Analysis Project On NYC Taxi Drivers’ Earnings
 Version: 0.0.99
 Authors@R: 
-    person("Angel", "Feliz", , "angel.esteban.feliz@gmail.com", role = c("aut", "cre"))
+    person("Angel", "Feliz", , "angel.esteban.feliz@gmail.com", role = c("aut", "cre"),
+           comment = "Personal Web, <https://angelfeliz.com/>")
 Description: In this package, you will find the tools needed to reproduce
     the analysis done in the project to help taxi drivers in NYC implement
     strategies that can help them increase their earnings.
 License: GPL (>= 3)
+URL: https://angelfelizr.github.io/project.nyc.taxi/,
+    https://github.com/AngelFelizR/project.nyc.taxi
+BugReports: https://github.com/AngelFelizR/project.nyc.taxi/issues
 Depends: 
     R (>= 4.1.0)
 Imports: 

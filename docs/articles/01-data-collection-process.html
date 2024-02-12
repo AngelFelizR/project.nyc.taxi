@@ -50,7 +50,14 @@
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off">
 </form>
 
-      <ul class="navbar-nav"></ul>
+      <ul class="navbar-nav">
+<li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/AngelFelizR/project.nyc.taxi/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
 </div>
 
     
@@ -65,7 +72,7 @@
       <img src="" class="logo" alt=""><h1>01 - Data Collection Process</h1>
             
       
-      
+      <small class="dont-index">Source: <a href="https://github.com/AngelFelizR/project.nyc.taxi/blob/HEAD/vignettes/01-data-collection-process.Rmd" class="external-link"><code>vignettes/01-data-collection-process.Rmd</code></a></small>
       <div class="d-none name"><code>01-data-collection-process.Rmd</code></div>
     </div>
 
@@ -73,7 +80,7 @@
     
 <p>For most projects the data collection process can be done manually
 and later attache the file in a folder but that isn’t a option when we
-are working with big data.</p>
+are working with <strong>big data</strong>.</p>
 <p>To solve this problem, we have created the next script to automate
 the data collection process so the project could be reproduced easily
 just by running the code below.</p>
@@ -165,11 +172,7 @@ files.</li>
 <span><span class="va">YearFoldersUnique</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">YearFolders</span><span class="op">)</span></span>
 <span><span class="va">YearFoldersPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ParquetFolderPath</span>, <span class="va">YearFoldersUnique</span><span class="op">)</span></span>
 <span></span>
-<span><span class="kw">for</span><span class="op">(</span><span class="va">year_i</span> <span class="kw">in</span> <span class="va">YearFoldersPath</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">year_i</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in dir.create(year_i): 'C:\Users\anfeliz\Particular</span></span>
-<span><span class="co">#&gt; Projects\project.nyc.taxi\raw-data\trip-data\year=2022' already exists</span></span>
-<span><span class="co">#&gt; Warning in dir.create(year_i): 'C:\Users\anfeliz\Particular</span></span>
-<span><span class="co">#&gt; Projects\project.nyc.taxi\raw-data\trip-data\year=2023' already exists</span></span>
+<span><span class="kw">for</span><span class="op">(</span><span class="va">year_i</span> <span class="kw">in</span> <span class="va">YearFoldersPath</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">year_i</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">YearFoldersPath</span></span>
 <span><span class="co">#&gt; [1] "C:/Users/anfeliz/Particular Projects/project.nyc.taxi/raw-data/trip-data/year=2022"</span></span>

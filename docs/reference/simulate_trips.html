@@ -33,7 +33,13 @@ to complete the a working day form taxi driver."><!-- mathjax --><script src="ht
       </ul><form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="../search.json" id="search-input" placeholder="Search for" autocomplete="off"></form>
 
-      <ul class="navbar-nav"></ul></div>
+      <ul class="navbar-nav"><li class="nav-item">
+  <a class="external-link nav-link" href="https://github.com/AngelFelizR/project.nyc.taxi/" aria-label="github">
+    <span class="fab fa fab fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul></div>
 
     
   </div>
@@ -41,7 +47,7 @@ to complete the a working day form taxi driver."><!-- mathjax --><script src="ht
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Simulates a day of work</h1>
-      
+      <small class="dont-index">Source: <a href="https://github.com/AngelFelizR/project.nyc.taxi/blob/HEAD/R/simulate_trips.R" class="external-link"><code>R/simulate_trips.R</code></a></small>
       <div class="d-none name"><code>simulate_trips.Rd</code></div>
     </div>
 
@@ -67,7 +73,7 @@ to complete the a working day form taxi driver.</p>
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>arrow_con</dt>
-<dd><p>an arrow connection with trips to sample from</p></dd>
+<dd><p>a data.frame or arrow connection with trips to sample from, with the columns described below.</p></dd>
 
 
 <dt>start_datetime</dt>
@@ -104,43 +110,35 @@ to complete the a working day form taxi driver.</p>
 
 <p>A data.frame</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p><code>arrow_con</code> must has the following columns</p><table class="table table"><tr><td>"Column Name"</td><td>"class"</td></tr><tr><td>year</td><td>integer</td></tr><tr><td>month</td><td>integer</td></tr><tr><td>PULocationID</td><td>integer</td></tr><tr><td>DOLocationID</td><td>integer</td></tr><tr><td>request_datetime</td><td>POSIXct POSIXt</td></tr><tr><td>dropoff_datetime</td><td>POSIXct POSIXt</td></tr><tr><td>driver_pay</td><td>numeric</td></tr><tr><td>tips</td><td>numeric</td></tr></table></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Let's defining 3 zones</span></span></span>
+<span class="r-in"><span><span class="co"># Defining some zone context</span></span></span>
 <span class="r-in"><span><span class="va">valid_zones</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Then define the closest zone to each zone</span></span></span>
 <span class="r-in"><span><span class="va">closest_zones</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">closest_zones</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">valid_zones</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># All the zones are from the same borough</span></span></span>
 <span class="r-in"><span><span class="va">borough_zones</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  LocationID <span class="op">=</span> <span class="va">valid_zones</span>,</span></span>
 <span class="r-in"><span>  id_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/AsIs.html" class="external-link">I</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">valid_zones</span>, <span class="va">valid_zones</span>, <span class="va">valid_zones</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Defining start point</span></span></span>
 <span class="r-in"><span><span class="va">start_datetime</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/make_datetime.html" class="external-link">make_datetime</a></span><span class="op">(</span><span class="fl">2023L</span>, <span class="fl">5L</span>, <span class="fl">18L</span>, <span class="fl">8L</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">start_zone</span> <span class="op">&lt;-</span> <span class="fl">1L</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">ArrowDf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="co"># Let's check trips from at 3 levels</span></span></span>
+<span class="r-in"><span><span class="co"># 1. Starting in the same zone</span></span></span>
+<span class="r-in"><span><span class="co"># 2. Starting in the closest zone</span></span></span>
+<span class="r-in"><span><span class="co"># 3. Starting in the farthest zone</span></span></span>
+<span class="r-in"><span><span class="va">valid_trips</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  year <span class="op">=</span> <span class="fl">2023L</span>,</span></span>
 <span class="r-in"><span>  month <span class="op">=</span> <span class="fl">5L</span>,</span></span>
-<span class="r-in"><span>  PULocationID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    </span></span>
-<span class="r-in"><span>  <span class="co"># Let's simulate a trip in starting zone</span></span></span>
-<span class="r-in"><span>  <span class="fl">1L</span>,</span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  <span class="co"># Then we can start in the closest zone</span></span></span>
-<span class="r-in"><span>  <span class="fl">2L</span>,</span></span>
-<span class="r-in"><span>  </span></span>
-<span class="r-in"><span>  <span class="co"># Finally we can take a trip at borough level</span></span></span>
-<span class="r-in"><span>  <span class="fl">3L</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span>,</span></span>
-<span class="r-in"><span>  </span></span>
+<span class="r-in"><span>  PULocationID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">2L</span>, <span class="fl">3L</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  DOLocationID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">1L</span>, <span class="fl">1L</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  </span></span>
 <span class="r-in"><span>  request_datetime <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>   <span class="va">start_datetime</span> <span class="op">+</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/period.html" class="external-link">minutes</a></span><span class="op">(</span><span class="fl">2L</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>   <span class="va">start_datetime</span> <span class="op">+</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="https://lubridate.tidyverse.org/reference/period.html" class="external-link">minutes</a></span><span class="op">(</span><span class="fl">20L</span> <span class="op">+</span> <span class="fl">7L</span><span class="op">)</span>,</span></span>
@@ -153,20 +151,9 @@ to complete the a working day form taxi driver.</p>
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  driver_pay <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  tips <span class="op">=</span> <span class="fl">2</span> </span></span>
-<span class="r-in"><span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
-<span class="r-in"><span>  <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/table.html" class="external-link">arrow_table</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/schema.html" class="external-link">schema</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    year <span class="op">=</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">int32</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    month <span class="op">=</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">int32</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    PULocationID <span class="op">=</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">int64</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    DOLocationID <span class="op">=</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">int64</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    request_datetime <span class="op">=</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">timestamp</a></span><span class="op">(</span>unit <span class="op">=</span> <span class="st">"us"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    dropoff_datetime <span class="op">=</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/data-type.html" class="external-link">timestamp</a></span><span class="op">(</span>unit <span class="op">=</span> <span class="st">"us"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    driver_pay <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">double</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    tips <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">double</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">simulate_trips</span><span class="op">(</span><span class="va">ArrowDf</span>,</span></span>
+<span class="r-in"><span><span class="fu">simulate_trips</span><span class="op">(</span><span class="va">valid_trips</span>,</span></span>
 <span class="r-in"><span>               start_datetime <span class="op">=</span> <span class="va">start_datetime</span>,</span></span>
 <span class="r-in"><span>               start_zone <span class="op">=</span> <span class="va">start_zone</span>,</span></span>
 <span class="r-in"><span>               minutes_next_trip <span class="op">=</span> <span class="fl">6L</span>,</span></span>
