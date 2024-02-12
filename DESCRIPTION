@@ -23,7 +23,8 @@ Suggests:
     knitr,
     rmarkdown,
     rvest,
-    scales
+    scales,
+    testthat
 VignetteBuilder: 
     knitr
 Config/fusen/version: 0.5.2

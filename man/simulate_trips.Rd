@@ -16,7 +16,7 @@ simulate_trips(
 )
 }
 \arguments{
-\item{arrow_con}{an arrow connection with trips to sample from}
+\item{arrow_con}{a data.frame or arrow connection with trips to sample from, with the columns described below.}
 
 \item{start_datetime}{a date with an associated time when the taxi driver start to work}
 
@@ -39,41 +39,43 @@ A data.frame
 This function sample from a data.frame or arrow connection all the trips needed
 to complete the a working day form taxi driver.
 }
+\details{
+\code{arrow_con} must has the following columns\tabular{ll}{
+   "Column Name" \tab "class" \cr
+   year \tab integer \cr
+   month \tab integer \cr
+   PULocationID \tab integer \cr
+   DOLocationID \tab integer \cr
+   request_datetime \tab POSIXct POSIXt \cr
+   dropoff_datetime \tab POSIXct POSIXt \cr
+   driver_pay \tab numeric \cr
+   tips \tab numeric \cr
+}
+}
 \examples{
 
-# Let's defining 3 zones
+# Defining some zone context
 valid_zones <- 1:3
-
-# Then define the closest zone to each zone
 closest_zones <- c(2L, 1L, 2L)
 names(closest_zones) <- valid_zones
-
-# All the zones are from the same borough
 borough_zones <- data.frame(
   LocationID = valid_zones,
   id_list = I(list(valid_zones, valid_zones, valid_zones))
 )
 
+# Defining start point
 start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
 start_zone <- 1L
 
-ArrowDf <- data.frame(
+# Let's check trips from at 3 levels
+# 1. Starting in the same zone
+# 2. Starting in the closest zone
+# 3. Starting in the farthest zone
+valid_trips <- data.frame(
   year = 2023L,
   month = 5L,
-  PULocationID = c(
-    
-  # Let's simulate a trip in starting zone
-  1L,
-  
-  # Then we can start in the closest zone
-  2L,
-  
-  # Finally we can take a trip at borough level
-  3L
-  ),
-  
+  PULocationID = c(1L, 2L, 3L),
   DOLocationID = c(3L, 1L, 1L),
-  
   request_datetime = c(
    start_datetime + lubridate::minutes(2L),
    start_datetime + lubridate::minutes(20L + 7L),
@@ -86,20 +88,9 @@ ArrowDf <- data.frame(
   ),
   driver_pay = 10,
   tips = 2 
-) |>
-  arrow::arrow_table(schema = arrow::schema(
-    year = arrow::int32(),
-    month = arrow::int32(),
-    PULocationID = arrow::int64(),
-    DOLocationID = arrow::int64(),
-    request_datetime = arrow::timestamp(unit = "us"),
-    dropoff_datetime = arrow::timestamp(unit = "us"),
-    driver_pay = double(),
-    tips = double()
-  ))
+)
 
-
-simulate_trips(ArrowDf,
+simulate_trips(valid_trips,
                start_datetime = start_datetime,
                start_zone = start_zone,
                minutes_next_trip = 6L,
