@@ -14,3 +14,19 @@ flat_business_understending.Rmd:
     document: true
     overwrite: 'yes'
     vignettes: false
+flat_eda_functions.Rmd:
+  path: dev/flat_eda_functions.Rmd
+  state: active
+  R:
+  - R/count_pct.R
+  - R/fast_glimpse.R
+  tests: tests/testthat/test-fast_glimpse.R
+  vignettes: []
+  inflate:
+    flat_file: dev/flat_eda_functions.Rmd
+    vignette_name: .na
+    open_vignette: true
+    check: true
+    document: true
+    overwrite: ask
+    vignettes: false

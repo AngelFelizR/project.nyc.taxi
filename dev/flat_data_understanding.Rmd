@@ -1,0 +1,678 @@
+---
+title: "Data Understanding"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r development, include=FALSE}
+library(testthat)
+```
+
+<!--
+ You need to run the 'description' chunk in the '0-dev_history.Rmd' file before continuing your code there.
+-->
+
+```{r development-load}
+# Load already included functions if relevant
+pkgload::load_all(export_all = FALSE)
+```
+
+
+After completing the [business understanding](https://github.com/AngelFelizR/nyc-taxi-project/tree/master/notebooks/02-business-understanding) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
+
+1. Examining the distribution of variables available before arriving at the pick-up location.
+2. Examining the distribution of the target variable.
+3. Taking a subset of the data to fit in RAM.
+4. Exploring correlations between predictors and target variable.
+5. Exploring correlations between predictors.
+
+
+In order to:
+
+- Ensure data quality
+- Identify key predictors
+- Inform model choice
+- Detect multicollinearity
+- Guide feature engineering
+- Inform data collection strategy
+
+
+## Setting the environment up
+
+To setting the `R` environment up we just need to apply the following 4 steps:
+
+1. Loading the packages to use.
+
+```{r}
+library(here)
+library(data.table)
+library(ggplot2)
+library(scales)
+library(forcats)
+library(lubridate)
+library(dplyr)
+library(arrow)
+```
+
+2. Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
+
+```{r}
+NycTrips2022 <- 
+  here("data/trip-data/year=2022") |>
+  open_dataset() |>
+  mutate(company = case_when(
+    hvfhs_license_num == "HV0002" ~ "Juno",
+    hvfhs_license_num == "HV0003" ~ "Uber",
+    hvfhs_license_num == "HV0004" ~ "Via",
+    hvfhs_license_num == "HV0005" ~ "Lyft"
+  )) |>
+  select(-hvfhs_license_num)
+
+
+fast_glimpse(NycTrips2022)
+```
+
+4. Importing the zone code description.
+
+```{r}
+ZoneCodes <- fread(
+  here("data/taxi_zone_lookup.csv"),
+  colClasses = c("integer",
+                 "character",
+                 "character",
+                 "character")
+)
+
+fast_glimpse(ZoneCodes)
+```
+
+5. Counting the number of trips for each code, collecting and translating the zone codes.
+
+```{r}
+TripsZoneDistribution <-
+  NycTrips2022 |>
+  count(PULocationID, DOLocationID) |>
+  collect() |>
+  join_zones(zone_tb = ZoneCodes)
+
+fast_glimpse(TripsZoneDistribution)
+```
+
+
+## Distribution of variables available before arriving at the pick-up location
+
+### Categorical variables
+
+- `company`: The majority number of trips are done by *Uber* (HV003) and the rest for *Lyft*.
+
+```{r}
+NycTrips2022 |> count_pct(company)
+```
+
+- `dispatching_base_num`: For most of the trips the dispatching number is **B03404** for Uber and **B03406** related for Lyft. Uber also has other 27 dispatching number, but they are really weird to see.
+
+```{r}
+NycTrips2022 |>
+  count_pct(company, dispatching_base_num) |>
+  as.data.table() |>
+  (\(dt) dt[, .(n_unique_code = n_distinct(dispatching_base_num),
+                n_missing = sum(is.na(dispatching_base_num)),
+                n = sum(n),
+                pct = sum(pct) |> round(4L)),
+            by = .(company,
+                   common = pct > 0.01)
+          ][order(-n)] )()
+```
+
+- `originating_base_num`: This column has the same information as `dispatching_base_num` or has missing values, so we don't need to use it.
+
+```{r}
+NycTrips2022 |>
+  count_pct(company,
+            same_id = originating_base_num == dispatching_base_num)
+```
+
+- `shared_request_flag`: Most of passengers don't agree to a shared/pooled ride.
+
+```{r}
+NycTrips2022 |> count_pct(shared_request_flag)
+```
+
+- `shared_match_flag`: From the subset of trips that agreed to share the ride only 24% achieved the match, we even can see some weird cases when the passenger did not initially agree to a shared/pooled ride (shared_request_flag = N), but ended up sharing the vehicle with another passenger who booked separately at some point during the trip (shared_match_flag = Y).
+
+```{r}
+NycTrips2022 |> 
+  count(shared_request_flag, shared_match_flag) |>
+  collect() |>
+  group_by(shared_request_flag) |>
+  mutate(pct = n / sum(n)) |>
+  arrange(desc(shared_request_flag), desc(shared_match_flag))
+```
+
+- `access_a_ride_flag`: *Uber* isn't reporting whether their trips were administered on behalf of the Metropolitan Transportation Authority and for *Lyft* the answer is always "N", so we will **erase** this column as it doesn't show any useful information.
+
+```{r}
+NycTrips2022 |> count_pct(company, access_a_ride_flag)
+```
+
+- `wav_request_flag`: It's really unusual for a passenger to request a wheelchair-accessible vehicle.
+
+```{r}
+NycTrips2022 |> count_pct(wav_request_flag)
+```
+
+- `wav_match_flag`: If someone ask for a wheelchair-accessible vehicle it's really often that passenger get that type of vehicle.
+
+```{r}
+NycTrips2022 |> 
+  count(wav_request_flag, wav_match_flag) |>
+  collect() |>
+  group_by(wav_request_flag) |>
+  mutate(pct = n / sum(n)) |>
+  arrange(desc(wav_request_flag), desc(wav_match_flag))
+```
+
+- `start_borough` and `end_borough`: After exploring the next distribution of trips we can highlight that:
+
+  - 94% of the trips take place in *Manhattan*, *Brooklyn*, *Queens* and *Bronx*. As consequence, there is no reason to keep exploring trips related to *Staten Island*, *EWR* or *Unknown* as they are the minority.
+  - 70% the trips take place without going to outside the start borough.
+
+```{r}
+TripsZoneDistribution[, .(n = sum(n)),
+                      by = c("start_borough", "end_borough")
+][order(n)
+][, c("start_borough", "end_borough") := 
+    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
+  .SDcols = c("start_borough", "end_borough")
+][, end_borough := fct_rev(end_borough)] |>
+  ggplot(aes(end_borough, start_borough))+
+  geom_tile(aes(fill = n)) +
+  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
+  scale_fill_gradient(low = "white", 
+                      high = "red",
+                      labels= comma_format())+
+  scale_x_discrete(position = "top") +
+  labs(title = "Distribution of Trips by Borough in NYC 2022",
+       x = "Trip End", 
+       y = "Trip Start", 
+       fill = "Number of Trips") +
+  theme_classic() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_text(color = "black"),
+        axis.title = element_text(face = "italic"))
+```
+
+- `start_service_zone` and `end_service_zone`: 52% of the trips take place at the *Boro Zone*, 26% of trips take place at the *Yellow Zone* and only small fraction goes to the *Airports*.
+
+```{r}
+TripsZoneDistribution[  
+  !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+    !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
+  .(n = sum(n)),
+  by = c("start_service_zone",
+         "end_service_zone")
+][order(n)
+][, c("start_service_zone", "end_service_zone") := 
+    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
+  .SDcols = c("start_service_zone", "end_service_zone")
+][, end_service_zone := fct_rev(end_service_zone)] |>
+  ggplot(aes(end_service_zone, start_service_zone))+
+  geom_tile(aes(fill = n)) +
+  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
+  scale_fill_gradient(low = "white", 
+                      high = "red",
+                      labels= comma_format())+
+  scale_x_discrete(position = "top") +
+  labs(title = "Distribution of Trips by Service Zone in NYC 2022",
+       x = "Trip End", 
+       y = "Trip Start", 
+       fill = "Number of Trips") +
+  theme_classic() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_text(color = "black"),
+        axis.title = element_text(face = "italic"))
+```
+
+
+```{r}
+#| echo: false
+#| include: false
+
+ZoneUniqueComb <-
+  TripsZoneDistribution[ 
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    unique(.SD),
+    .SDcols = c("start_zone", "end_zone")
+  ][, .N] |>
+  comma()
+
+EndingUniqueZones <-
+  TripsZoneDistribution[ 
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    uniqueN(end_zone),] |>
+  comma()
+```
+
+
+- `start_zone` and `end_zone`: As our data has `r ZoneUniqueComb` rows of relations between both columns, we opted to transform data in a way what each unique zone represent a row reducing the points to be plotted to only `r EndingUniqueZones` by following the next steps: 
+
+  1. Summarizing the total number of trips for each **starting point** independently to its destination 
+  2. Summarizing the total number of trips for each **ending point** independently to its origin.
+  3. Joining both tables into one.
+
+```{r}
+# 1. Summarizing Staring Zones
+StartingZonesCount <-
+  TripsZoneDistribution[
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    .(start_trips = sum(n)),
+    by =  .(borough = start_borough, 
+            zone = start_zone)
+  ]
+
+# 2. Summarizing Ending Zones
+EndingZonesCount <-
+  TripsZoneDistribution[
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
+    .(end_trips = sum(n)),
+    by =  .(borough = end_borough, 
+            zone = end_zone)
+  ]
+
+# 3. Inner Joining Starting and Ending Zones Counts
+JoinedZonesCount <-
+  StartingZonesCount[
+    EndingZonesCount,
+    on = c("borough", "zone"),
+    nomatch = 0
+  ]
+```
+
+Once we have a much simpler data to work with, we is easy to confirm with the next linear regression that `start_trips` and `end_trips` has almost the same values the model has an slope of one. That means that in must of cases **if someone takes a taxi to go to any place it's really likely to take another taxi back**.
+
+```{r}
+lm(end_trips ~ start_trips, 
+   data = JoinedZonesCount) |>
+  summary()
+```
+
+Let's now explore the zones where there is **no balance** between the `start_trips` and the `end_trips` in the most visited zoned of each Borough. To do so, we defined the rate `end_trips`/`start_trips` and highlight zones with lower rate than the 15% percentile or higher rate than 85% percentile.
+
+```{r}
+# Creating dataset to plot
+ZonesCountToPlot <-
+  copy(JoinedZonesCount)[
+    j = `:=`(ending_starting_rate = end_trips/start_trips,
+             borough = fct_reorder(borough, -end_trips, .fun = sum, na.rm = TRUE),
+             end_m_trips = end_trips / 1e6L,
+             start_m_trips = start_trips / 1e6L)
+  ][, unbalance_situation := fcase(
+    ending_starting_rate < quantile(ending_starting_rate, 0.15),
+    "More starts than ends",
+    ending_starting_rate > quantile(ending_starting_rate, 0.85),
+    "More ends than starts",
+    default = "Balanced"
+  )
+  ][order(-(start_trips + end_trips)), 
+    .SD[1:6],
+    by = "borough"] 
+
+# Creating the scatted plot
+ggplot(ZonesCountToPlot,
+       aes(start_m_trips, end_m_trips))+
+  geom_blank(aes(pmax(start_m_trips, end_m_trips),
+                 pmax(start_m_trips, end_m_trips)))+
+  geom_abline(linewidth = 0.8,
+              alpha = 0.5)+
+  geom_point(aes(color = borough),
+             size = 3.5,
+             alpha = 0.75)+
+  geom_text(data = ZonesCountToPlot[unbalance_situation ==
+                                      "More starts than ends"],
+            aes(label = zone),
+            size = 3.5,
+            hjust = -0.12,
+            check_overlap = TRUE)+
+  geom_text(data = ZonesCountToPlot[unbalance_situation ==
+                                      "More ends than starts"],
+            aes(label = zone),
+            size = 3.5,
+            hjust = 1.12,
+            check_overlap = TRUE)+
+  scale_x_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
+  scale_y_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
+  coord_equal() +
+  labs(title = "Top 6 Most Important Zones by Borough",
+       color = "Borough",
+       x = "Number of Trips Starting",
+       y = "Number of Trips Ending")+
+  theme_light()+
+  theme(legend.position = "top",
+        text = element_text(color = "black"),
+        plot.title = element_text(face = "bold"))
+```
+
+Based on the results, we can highlight the next points:
+
+1. The airports present in Queens, *LaGuardia Airport* and *JFK Airport*, have many more trips going to the airport than going out of airport. This might happen due that there are more transportation options like other taxis, shuttles, and public transportation.
+
+2. The remaining zones, *Jackson Heights*, *East Village* and *TriBeCa/Civic Center*, are residential zones with a variety of public transportation options.
+
+
+### Time variables
+
+Let's start confirming if `request_datetime` has any missing value.
+
+```{r}
+NycTrips2022 |>
+  count(request_datetime_missing = is.na(request_datetime)) |>
+  collect()
+```
+
+To describe this variable, we decomposed it in different parts and count the number trips by each element and store the summary as a `data.table` to explore each part using visualizations.
+
+```{r}
+RequestTimeSummary <-
+  NycTrips2022 |>
+  transmute(parquet_month = make_date(2022L, month),
+            request_datetime,
+            request_date = as_date(request_datetime)) |>
+  count(parquet_month,
+        request_month = floor_date(request_date, unit = "month"),
+        request_week = floor_date(request_date, unit = "week"),
+        request_day = day(request_date),
+        request_hour = hour(request_datetime),
+        request_weekday = wday(request_date, week_start = 1)) |>
+  collect() |>
+  as.data.table()
+```
+
+- `month`: As we can see below most the months related to parquet files match with the request, as consequence there is no reason to keep that variable.
+
+```{r}
+RequestTimeSummary[, .(n = sum(n)),
+                   by = c("parquet_month", "request_month")] |>
+  ggplot(aes(request_month, parquet_month))+
+  geom_abline(color = "grey60",
+              linewidth = 1.1)+
+  geom_point(aes(size = n),
+             color = "dodgerblue4")+
+  scale_x_date(date_labels = "%y-%m",
+               date_breaks = "2 months")+
+  scale_y_date(date_labels = "%y-%m",
+               date_breaks = "months")+
+  scale_size_continuous(labels = comma_format(),
+                        breaks = c(5e3, 1.5e7))+
+  labs(title = "Comparting Request and Parquet File Months",
+       x = "Trips Request Month",
+       y = "Trips per Parquet File",
+       size = "Number of Trips")+
+  coord_equal()+
+  theme_light()+
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.grid.minor = element_blank(),
+        legend.position = "top")
+```
+
+In the next chart, we can see that the number trips keeps almost constant must of the year, but we have some fewer trips during the first 2 months and some extra trips in October and December.
+
+```{r}
+RequestTimeSummary[year(request_month) == 2022, 
+                   .(n = sum(n)),
+                   by = "request_month"] |>
+  ggplot(aes(request_month, n))+
+  geom_line(color = "grey60",
+            linewidth = 0.9)+
+  geom_point(color = "dodgerblue4",
+             size = 3)+
+  scale_x_date(date_labels = "%y-%m",
+               date_breaks = "2 months")+
+  scale_y_continuous(labels = comma_format(),
+                     breaks = breaks_width(2e6))+
+  labs(title = "Distribution of Trips by Month",
+       x = "Trips Request Month",
+       y = "Number of Trips")+
+  expand_limits(y = 0)+
+  theme_light()+
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.grid.minor = element_blank(),
+        legend.position = "top")
+```
+
+By breaking the months into weeks we can confirm we have fewer trips in the first 2 months, in relation to October we don't see a big change in he number of trips we see is that it has more weeks than November, but December keeps having more trips than normal in the first 2 weeks.
+
+```{r}
+RequestTimeSummary[year(request_month) == 2022, 
+                   .(n = sum(n)),
+                   by = "request_week"] |>
+  ggplot(aes(request_week, n))+
+  geom_line(color = "grey60",
+            linewidth = 0.9)+
+  geom_point(color = "dodgerblue4",
+             size = 3)+
+  scale_x_date(date_labels = "%y-%m",
+               date_breaks = "month")+
+  scale_y_continuous(labels = comma_format(),
+                     breaks = breaks_width(5e5))+
+  labs(title = "Distribution of Trips by Week",
+       x = "Trips Request Week",
+       y = "Number of Trips")+
+  expand_limits(y = 0)+
+  theme_light()+
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),
+        panel.grid.minor = element_blank(),
+        legend.position = "top")
+```
+
+If we explore the number of trips by month day we can not see any consistent pattern after plotting a line with total of trips for each month.
+
+```{r}
+RequestTimeSummary[year(request_month) == 2022, 
+                   .(n = sum(n)),
+                   by = .(request_month = format(request_month, "%B"),
+                          request_day)] |>
+  ggplot(aes(request_day, n))+
+  geom_line(aes(group = request_month),
+            color = "gray60",
+            linewidth = 0.1)+
+  geom_smooth(method = 'loess',
+              formula = 'y ~ x',
+              se = FALSE,
+              linewidth = 1.2)+
+  scale_x_continuous(breaks = breaks_width(5))+
+  scale_y_continuous(labels = comma_format())+
+  expand_limits(y = 0)+
+  labs(title = "Number of Trips by Month Day",
+       y = "Number of Trips",
+       x = "Day of Month")+
+  theme_light()+
+  theme(panel.grid = element_blank(),
+        plot.title = element_text(face = "bold"))
+```
+
+By if we change the month day in the prior chart with week day we can find that the number of trips trends to be higher Fridays and Saturdays.
+
+```{r}
+RequestTimeSummary[year(request_month) == 2022, 
+                   .(n = sum(n)),
+                   by = .(request_month = format(request_month, "%B"),
+                          request_weekday)] |>
+  ggplot(aes(request_weekday, n))+
+  geom_line(aes(group = request_month),
+            color = "gray60")+
+  geom_smooth(method = 'loess',
+              formula = 'y ~ x',
+              se = FALSE,
+              linewidth = 1.2)+
+  scale_x_continuous(breaks = breaks_width(1),
+                     labels = factor_weekday)+
+  scale_y_continuous(labels = comma_format())+
+  expand_limits(y = 0)+
+  labs(title = "Number of Trips by Week Day",
+       y = "Number of Trips",
+       x = "Day of Week")+
+  theme_light()+
+  theme(panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold"))
+```
+
+
+To understand better what is happening Fridays and Saturdays let's break each week day by hour. In the next chart, we can see how the higher number of trips start at  17:00 and end at 1:00 of next day for Fridays and Saturdays.
+
+```{r}
+RequestTimeSummary[year(request_month) == 2022, 
+                   .(n = sum(n)),
+                   by = .(request_hour = 
+                            factor(request_hour) |> fct_rev(), 
+                          request_weekday = factor_weekday(request_weekday))
+  ][, n_million := n/1e6 ] |>
+  ggplot(aes(request_weekday, request_hour))+
+  geom_tile(aes(fill = n),
+            color = "black",
+            linewidth = 0.005)+
+  geom_text(aes(label = comma(n_million, accuracy = 0.1, suffix = " M")))+
+  scale_fill_gradient(low = "white", 
+                      high = "dodgerblue4",
+                      labels= comma_format())+
+  scale_x_discrete(position = "top") +
+  labs(title = "Number of Trips by Hour and Week Day",
+       fill = "Number of Trips",
+       x = "Request Week Day",
+       y = "Request Hour") +
+  theme_classic() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_text(color = "black"))
+```
+
+
+### Numeric variables
+
+- `trip_miles`:
+
+```{r}
+TripMilesSummary <-
+  NycTrips2022 |>
+  compute_boxplot(trip_miles) |>
+  collect()
+
+TripMilesSummary
+```
+
+```{r}
+ggplot(TripMilesSummary)+
+  geom_boxplot(
+    aes(x = "", y = q2,
+        ymin = pmax(min_value, lower_whisker), 
+        lower = q1, 
+        middle = q2, 
+        upper = q3, 
+        ymax = pmin(max_value, higher_whisker)),
+    stat = "identity",
+    width = 0.3
+  )+
+  scale_y_continuous(breaks = breaks_width(2))+
+  labs(y = "trip_miles",
+       x = "") +
+  theme_light()
+```
+
+
+```{r}
+NycTrips2022 |>
+  filter(trip_miles > 15) |>
+  nrow() |>
+  comma()
+```
+
+
+
+- `base_passenger_fare`:
+
+```{r}
+BaseFareSummary <-
+  NycTrips2022 |>
+  compute_boxplot(base_passenger_fare) |>
+  collect()
+
+BaseFareSummary
+```
+
+
+```{r}
+ggplot(BaseFareSummary)+
+  geom_boxplot(
+    aes(x = "", y = q2,
+        ymin = pmax(min_value, lower_whisker), 
+        lower = q1, 
+        middle = q2, 
+        upper = q3, 
+        ymax = pmin(max_value, higher_whisker)),
+    stat = "identity",
+    width = 0.3
+  )+
+  scale_y_continuous(breaks = breaks_width(10))+
+  labs(y = "base_passenger_fare",
+       x = "") +
+  theme_light()
+```
+
+```{r}
+NycTrips2022 |>
+  filter(base_passenger_fare > 500) |>
+  nrow() |>
+  comma()
+
+
+NycTrips2022 |>
+  filter(base_passenger_fare < 0) |>
+  nrow() |>
+  comma()
+```
+
+
+
+
+# my_fun
+
+```{r function-my_fun}
+#' my_fun Title
+#'
+#' @return 1
+#' @export
+#'
+#' @examples
+my_fun <- function() {
+  1
+}
+```
+
+```{r examples-my_fun}
+my_fun()
+```
+
+```{r tests-my_fun}
+test_that("my_fun works", {
+
+})
+```
+
+
+```{r development-inflate, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+fusen::inflate(flat_file = "dev/flat_data_understanding.Rmd",
+               vignette_name = "03 - Data Understanding",
+               overwrite = "yes",
+               vignettes = FALSE)
+```

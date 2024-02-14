@@ -15,7 +15,8 @@ Depends:
     R (>= 4.1.0)
 Imports: 
     dplyr,
-    lubridate
+    lubridate,
+    scales
 Suggests: 
     arrow,
     data.table,
@@ -27,7 +28,6 @@ Suggests:
     knitr,
     rmarkdown,
     rvest,
-    scales,
     testthat
 VignetteBuilder: 
     knitr
