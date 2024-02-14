@@ -14,10 +14,10 @@ BugReports: https://github.com/AngelFelizR/project.nyc.taxi/issues
 Depends: 
     R (>= 4.1.0)
 Imports: 
-    arrow,
     dplyr,
     lubridate
 Suggests: 
+    arrow,
     data.table,
     DiagrammeR,
     fs,

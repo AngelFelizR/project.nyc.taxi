@@ -4,7 +4,7 @@
 #'
 #' Trips returned after runing the simulation.
 #'
-#' @format A data frame 6 variables:
+#' @format A data frame of 10 variables:
 #' \describe{
 #'   \item{ simulation_day }{ Sample date }
 #'   \item{ s_PULocationID }{ TLC Taxi Zone in which the trip began }

@@ -517,7 +517,7 @@ NycTrips |>
 
 ```
 
-## Project's side benefits
+## Project's Side Benefits
 
 It's also important to consider that Taxi companies and customers can both benefit from drivers earning more tips in several ways:
 

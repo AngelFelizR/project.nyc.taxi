@@ -30,8 +30,7 @@
 #' | tips | numeric|
 #'
 #' @importFrom lubridate minutes as_datetime make_datetime hours year month
-#' @importFrom dplyr select filter compute collect slice_sample
-#' @importFrom arrow arrow_table concat_tables schema int32 int64 timestamp
+#' @importFrom dplyr select filter compute collect slice_sample bind_rows
 #' 
 #' @return A data.frame
 #' @export
@@ -106,25 +105,6 @@ simulate_trips <- function(arrow_con,
   stopifnot("You are missing one or more expected column in the arrow_con" = 
               all(expected_columns %in% names(arrow_con)))
   
-  # Confirm if will need to compute the results
-  if(!inherits(arrow_con, "ArrowObject")){
-    
-    arrow_con <-
-      arrow::arrow_table(arrow_con,
-                         schema = arrow::schema(
-                           year = arrow::int32(),
-                           month = arrow::int32(),
-                           PULocationID = arrow::int64(),
-                           DOLocationID = arrow::int64(),
-                           request_datetime = arrow::timestamp(unit = "us"),
-                           dropoff_datetime = arrow::timestamp(unit = "us"),
-                           driver_pay = double(),
-                           tips = double()
-                         ))
-    
-  }
-  
-  
   
   # Transforming minutes to period class
   minutes_next_trip <- lubridate::minutes(minutes_next_trip)
@@ -141,15 +121,7 @@ simulate_trips <- function(arrow_con,
     s_dropoff_datetime = vector("double") |> lubridate::as_datetime(),
     s_driver_pay = vector("double"),
     s_tips = vector("double")
-  ) |>
-    arrow::arrow_table(schema = arrow::schema(
-      s_PULocationID = arrow::int64(),
-      s_DOLocationID = arrow::int64(),
-      s_request_datetime = arrow::timestamp(unit = "us"),
-      s_dropoff_datetime = arrow::timestamp(unit = "us"),
-      s_driver_pay = double(),
-      s_tips = double()
-    ))
+  )
 
   # We need to keep adding trips until reaching the end_time 
   while(current_time <= end_datetime){
@@ -167,9 +139,6 @@ simulate_trips <- function(arrow_con,
                     DOLocationID %in% valid_end_zones,
                     request_datetime >= current_time,
                     request_datetime <= wait_limit_datetime) |>
-      
-        # Once we have alternatives to select from can select one trip
-        dplyr::slice_sample(n = 1L) |>
         
         # Add the prefix s_ to each column
         dplyr::select(s_PULocationID = PULocationID,
@@ -177,9 +146,17 @@ simulate_trips <- function(arrow_con,
                       s_request_datetime = request_datetime,
                       s_dropoff_datetime = dropoff_datetime,
                       s_driver_pay = driver_pay,
-                      s_tips = tips) |>
+                      s_tips = tips)
+    
+    # If arrow we need to collect
+    if(inherits(arrow_con, "ArrowObject")){
       
-      dplyr::compute()
+      simulated_trip <- dplyr::collect(simulated_trip)
+    
+    }
+    
+    # Once we have alternatives to select from can select one trip
+    simulated_trip <- dplyr::slice_sample(simulated_trip, n = 1L) 
 
     # If we can not find any trip in the zone and time defined
     # we can move update the current time try to find trip in the closest zone
@@ -202,21 +179,19 @@ simulate_trips <- function(arrow_con,
     }else{
       
       # Updating starting point for next trip
-      current_time <- as.vector(simulated_trip$s_dropoff_datetime)
-      current_zone <- as.vector(simulated_trip$s_DOLocationID)
+      current_time <- simulated_trip$s_dropoff_datetime
+      current_zone <- simulated_trip$s_DOLocationID
 
       # Adding the trip to final result
       done_trips <- 
-        arrow::concat_tables(done_trips, simulated_trip)
+        dplyr::bind_rows(done_trips, simulated_trip)
       
     }
 
   }
-  
-  collected_trips <- dplyr::collect(done_trips)
 
   # Returning all trips
-  return(collected_trips)
+  return(done_trips)
 
 }
 
