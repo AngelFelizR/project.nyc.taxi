@@ -14,15 +14,17 @@ BugReports: https://github.com/AngelFelizR/project.nyc.taxi/issues
 Depends: 
     R (>= 4.1.0)
 Imports: 
+    data.table,
     dplyr,
+    ggplot2,
     lubridate,
+    rlang,
     scales
 Suggests: 
     arrow,
-    data.table,
     DiagrammeR,
+    forcats,
     fs,
-    ggplot2,
     here,
     infer,
     knitr,

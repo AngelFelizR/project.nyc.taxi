@@ -11,6 +11,7 @@
 #' @param sort If TRUE, will show the largest groups at the top.
 #' 
 #' @importFrom dplyr count collect mutate
+#' @importFrom rlang quos
 #'
 #' @return A data.frame
 #' @export
@@ -27,8 +28,10 @@
 #' count_pct(arrow_con, char2)
 #' count_pct(arrow_con, char1, char2)
 count_pct <- function(x, ..., sort = TRUE){
+  
+  grouping_vars_expr <- rlang::quos(...)
 
-  dplyr::count(x, ..., sort = sort) |>
+  dplyr::count(x, !!! grouping_vars_expr, sort = sort) |>
     dplyr::collect() |>
     dplyr::mutate(pct = n / sum(n))
 

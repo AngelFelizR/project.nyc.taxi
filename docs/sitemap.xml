@@ -10,6 +10,9 @@
     <loc>/articles/02-business-understanding.html</loc>
   </url>
   <url>
+    <loc>/articles/03-data-understanding.html</loc>
+  </url>
+  <url>
     <loc>/articles/index.html</loc>
   </url>
   <url>
@@ -25,7 +28,25 @@
     <loc>/reference/BaseLineSimulation.html</loc>
   </url>
   <url>
+    <loc>/reference/compute_boxplot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/count_pct.html</loc>
+  </url>
+  <url>
+    <loc>/reference/factor_weekday.html</loc>
+  </url>
+  <url>
+    <loc>/reference/fast_glimpse.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/join_zones.html</loc>
+  </url>
+  <url>
+    <loc>/reference/show_boxplot.html</loc>
   </url>
   <url>
     <loc>/reference/simulate_trips.html</loc>

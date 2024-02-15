@@ -4,5 +4,6 @@ pkgdown_sha: ~
 articles:
   01-data-collection-process: 01-data-collection-process.html
   02-business-understanding: 02-business-understanding.html
-last_built: 2024-02-12T04:56Z
+  03-data-understanding: 03-data-understanding.html
+last_built: 2024-02-15T08:05Z
 

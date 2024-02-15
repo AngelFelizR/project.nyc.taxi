@@ -28,6 +28,7 @@ to complete the a working day form taxi driver."><!-- mathjax --><script src="ht
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/01-data-collection-process.html">01 - Data Collection Process</a>
     <a class="dropdown-item" href="../articles/02-business-understanding.html">02 - Business Understanding</a>
+    <a class="dropdown-item" href="../articles/03-data-understanding.html">03 - Data Understanding</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -161,13 +162,14 @@ to complete the a working day form taxi driver.</p>
 <span class="r-in"><span>               valid_end_zones <span class="op">=</span> <span class="va">valid_zones</span>,</span></span>
 <span class="r-in"><span>               closest_zone <span class="op">=</span> <span class="va">closest_zones</span>,</span></span>
 <span class="r-in"><span>               borough_zones <span class="op">=</span> <span class="va">borough_zones</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 6</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   s_PULocationID s_DOLocationID s_request_datetime  s_dropoff_datetime </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>              1              3 2023-05-18 <span style="color: #949494;">04:02:00</span> 2023-05-18 <span style="color: #949494;">04:20:00</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>              2              1 2023-05-18 <span style="color: #949494;">04:27:00</span> 2023-05-18 <span style="color: #949494;">04:37:00</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>              3              1 2023-05-18 <span style="color: #949494;">04:51:00</span> 2023-05-18 <span style="color: #949494;">05:01:00</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 2 more variables: s_driver_pay &lt;dbl&gt;, s_tips &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   s_PULocationID s_DOLocationID  s_request_datetime  s_dropoff_datetime</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1              1              3 2023-05-18 08:02:00 2023-05-18 08:20:00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2              2              1 2023-05-18 08:27:00 2023-05-18 08:37:00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3              3              1 2023-05-18 08:51:00 2023-05-18 09:01:00</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   s_driver_pay s_tips</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1           10      2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           10      2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3           10      2</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

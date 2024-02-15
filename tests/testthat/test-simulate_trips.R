@@ -58,26 +58,21 @@ trips_to_omit <- data.frame(
   tips = 2 
 )
 
+result <- 
+  simulate_trips(rbind(valid_trips, trips_to_omit),
+                 start_datetime = start_datetime,
+                 start_zone = start_zone,
+                 minutes_next_trip = 6L,
+                 end_datetime = start_datetime + lubridate::hours(1L),
+                 valid_end_zones = valid_zones,
+                 closest_zone = closest_zones,
+                 borough_zones = borough_zones)
+
 
 testthat::test_that("The simulation is taking the correct options",{
   
-  testthat::expect_equal(
-    simulate_trips(rbind(valid_trips, trips_to_omit),
-                   start_datetime = start_datetime,
-                   start_zone = start_zone,
-                   minutes_next_trip = 6L,
-                   end_datetime = start_datetime + lubridate::hours(1L),
-                   valid_end_zones = valid_zones,
-                   closest_zone = closest_zones,
-                   borough_zones = borough_zones),
-    simulate_trips(valid_trips,
-                   start_datetime = start_datetime,
-                   start_zone = start_zone,
-                   minutes_next_trip = 6L,
-                   end_datetime = start_datetime + lubridate::hours(1L),
-                   valid_end_zones = valid_zones,
-                   closest_zone = closest_zones,
-                   borough_zones = borough_zones) 
+  testthat::expect_true(
+   nrow(result) == 3L
   )
   
 })

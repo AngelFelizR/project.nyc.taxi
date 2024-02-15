@@ -23,7 +23,8 @@
 #' arrow::arrow_table(df) |> fast_glimpse()
 fast_glimpse <- function(x){
   
-  stopifnot("x is not an arrow connection" = inherits(x, "ArrowObject"))
+  stopifnot("x is not an arrow connection" = 
+              inherits(x, "ArrowObject") | inherits(x, "arrow_dplyr_query"))
 
   schm <- x$.data$schema
 

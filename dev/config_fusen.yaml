@@ -18,9 +18,15 @@ flat_eda_functions.Rmd:
   path: dev/flat_eda_functions.Rmd
   state: active
   R:
+  - R/compute_boxplot.R
   - R/count_pct.R
+  - R/factor_weekday.R
   - R/fast_glimpse.R
-  tests: tests/testthat/test-fast_glimpse.R
+  - R/join_zones.R
+  - R/show_boxplot.R
+  tests:
+  - tests/testthat/test-fast_glimpse.R
+  - tests/testthat/test-factor_weekday.R
   vignettes: []
   inflate:
     flat_file: dev/flat_eda_functions.Rmd
