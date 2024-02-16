@@ -1,0 +1,706 @@
+---
+title: "flat_minimal_package.Rmd empty"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r development, include=FALSE}
+library(testthat)
+```
+
+<!--
+ You need to run the 'description' chunk in the '0-dev_history.Rmd' file before continuing your code there.
+-->
+
+```{r development-load}
+# Load already included functions if relevant
+pkgload::load_all(export_all = FALSE)
+```
+
+# Bussiness Understanding
+
+## simulate_trips
+
+```{r function-simulate_trips}
+
+#' Simulates a day of work
+#' 
+#' This function sample from a data.frame or arrow connection all the trips needed
+#' to complete the a working day form taxi driver.
+#'
+#' @param arrow_con a data.frame or arrow connection with trips to sample from, with the columns described below.
+#' @param start_datetime a date with an associated time when the taxi driver start to work
+#' @param start_zone a number to select to the starting zone
+#' @param minutes_next_trip an integer to define the limit time needed before extending the filters
+#' @param end_datetime a date with an associated time when the taxi driver stop looking for new trips
+#' @param valid_end_zones a vector of number defining all possible zones to drive
+#' @param closest_zone a named vector pointing the closest zone from the taxi driver is waiting for a need trip in order to start a trip
+#' @param borough_zones a data.frame with the integer column LocationID with all possible zone ids and the list column id_list with contain all other zones ids related to the LocationID's borough
+#' 
+#' @details
+#' `arrow_con` must has the following columns
+#' 
+#' | "Column Name"| "class" |
+#' |--------------|---------|
+#' | year | integer |
+#' | month| integer |
+#' | PULocationID | integer|
+#' | DOLocationID | integer|
+#' | request_datetime | POSIXct POSIXt|
+#' | dropoff_datetime | POSIXct POSIXt|
+#' | driver_pay | numeric|
+#' | tips | numeric|
+#'
+#' @importFrom lubridate minutes as_datetime make_datetime hours year month
+#' @importFrom dplyr select filter compute collect slice_sample bind_rows
+#' 
+#' @return A data.frame
+#' @export
+#'
+#' @examples
+simulate_trips <- function(arrow_con,
+                           start_datetime,
+                           start_zone,
+                           minutes_next_trip,
+                           end_datetime,
+                           valid_end_zones,
+                           closest_zone,
+                           borough_zones){
+  
+  expected_columns <- c(
+    # Parquet document
+    "year", "month",
+    # Start and ending zones
+    "PULocationID", "DOLocationID",
+    # Start and ending date times
+    "request_datetime", "dropoff_datetime",
+    # Money related in the trip
+    "driver_pay", "tips"
+  )
+  
+  stopifnot("You are missing one or more expected column in the arrow_con" = 
+              all(expected_columns %in% names(arrow_con)))
+  
+  
+  # Transforming minutes to period class
+  minutes_next_trip <- lubridate::minutes(minutes_next_trip)
+  
+  # For the first trip
+  current_time <- start_datetime
+  current_zone <- start_zone
+
+  # An empty table to bind the results
+  done_trips <- data.frame(
+    s_PULocationID = vector("integer"),
+    s_DOLocationID = vector("integer"),
+    s_request_datetime = vector("double") |> lubridate::as_datetime(),
+    s_dropoff_datetime = vector("double") |> lubridate::as_datetime(),
+    s_driver_pay = vector("double"),
+    s_tips = vector("double")
+  )
+
+  # We need to keep adding trips until reaching the end_time 
+  while(current_time <= end_datetime){
+  
+  # Defining time needed to wait
+  wait_limit_datetime <- current_time + minutes_next_trip
+
+   # Filter all trips that meet the expected conditions
+    # Remove any row that don't meet expectations
+    simulated_trip <-
+      arrow_con |>
+      dplyr::filter(year == lubridate::year(current_time),
+                    month == lubridate::month(current_time),
+                    PULocationID %in% current_zone,
+                    DOLocationID %in% valid_end_zones,
+                    request_datetime >= current_time,
+                    request_datetime <= wait_limit_datetime) |>
+        
+        # Add the prefix s_ to each column
+        dplyr::select(s_PULocationID = PULocationID,
+                      s_DOLocationID = DOLocationID,
+                      s_request_datetime = request_datetime,
+                      s_dropoff_datetime = dropoff_datetime,
+                      s_driver_pay = driver_pay,
+                      s_tips = tips)
+    
+    # If arrow we need to collect
+    if(inherits(arrow_con, "ArrowObject")){
+      
+      simulated_trip <- dplyr::collect(simulated_trip)
+    
+    }
+    
+    # Once we have alternatives to select from can select one trip
+    simulated_trip <- dplyr::slice_sample(simulated_trip, n = 1L) 
+
+    # If we can not find any trip in the zone and time defined
+    # we can move update the current time try to find trip in the closest zone
+    if(length(current_zone) == 1L && nrow(simulated_trip) == 0L){
+
+      current_time <- current_time + minutes_next_trip
+      current_zone <- c(current_zone, closest_zone[as.character(current_zone)])
+
+    # If we couldn't find any trip to the closest zone
+    # we can open the trip to any zone of the borough
+    # after updating the current_time
+    }else if(length(current_zone) > 1L && nrow(simulated_trip) == 0L){
+
+      current_time <- current_time + minutes_next_trip
+      current_zone <- c(
+        current_zone,
+        borough_zones[borough_zones$LocationID == current_zone[1L], ][["id_list"]][[1L]]
+      )
+
+    }else{
+      
+      # Updating starting point for next trip
+      current_time <- simulated_trip$s_dropoff_datetime
+      current_zone <- simulated_trip$s_DOLocationID
+
+      # Adding the trip to final result
+      done_trips <- 
+        dplyr::bind_rows(done_trips, simulated_trip)
+      
+    }
+
+  }
+
+  # Returning all trips
+  return(done_trips)
+
+}
+
+```
+
+```{r example-simulate_trips, echo=FALSE, eval=FALSE}
+
+# Defining some zone context
+valid_zones <- 1:3
+closest_zones <- c(2L, 1L, 2L)
+names(closest_zones) <- valid_zones
+borough_zones <- data.frame(
+  LocationID = valid_zones,
+  id_list = I(list(valid_zones, valid_zones, valid_zones))
+)
+
+# Defining start point
+start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
+start_zone <- 1L
+
+# Let's check trips from at 3 levels
+# 1. Starting in the same zone
+# 2. Starting in the closest zone
+# 3. Starting in the farthest zone
+valid_trips <- data.frame(
+  year = 2023L,
+  month = 5L,
+  PULocationID = c(1L, 2L, 3L),
+  DOLocationID = c(3L, 1L, 1L),
+  request_datetime = c(
+   start_datetime + lubridate::minutes(2L),
+   start_datetime + lubridate::minutes(20L + 7L),
+   start_datetime + lubridate::minutes(37L + 14L)
+  ),
+  dropoff_datetime = c(
+   start_datetime + lubridate::minutes(20L),
+   start_datetime + lubridate::minutes(37L),
+   lubridate::make_datetime(2023L, 5L, 18L, 9L, 1L)
+  ),
+  driver_pay = 10,
+  tips = 2 
+)
+
+simulate_trips(valid_trips,
+               start_datetime = start_datetime,
+               start_zone = start_zone,
+               minutes_next_trip = 6L,
+               end_datetime = start_datetime + lubridate::hours(1L),
+               valid_end_zones = valid_zones,
+               closest_zone = closest_zones,
+               borough_zones = borough_zones)
+
+```
+
+```{r tests-simulate_trips}
+
+# Defining some zone context
+valid_zones <- 1:3
+closest_zones <- c(2L, 1L, 2L)
+names(closest_zones) <- valid_zones
+borough_zones <- data.frame(
+  LocationID = valid_zones,
+  id_list = I(list(valid_zones, valid_zones, valid_zones))
+)
+
+# Defining start point
+start_datetime <- lubridate::make_datetime(2023L, 5L, 18L, 8L)
+start_zone <- 1L
+
+# Let's check trips from at 3 levels
+# 1. Starting in the same zone
+# 2. Starting in the closest zone
+# 3. Starting in the farthest zone
+valid_trips <- data.frame(
+  year = 2023L,
+  month = 5L,
+  PULocationID = c(1L, 2L, 3L),
+  DOLocationID = c(3L, 1L, 1L),
+  request_datetime = c(
+   start_datetime + lubridate::minutes(2L),
+   start_datetime + lubridate::minutes(20L + 7L),
+   start_datetime + lubridate::minutes(37L + 14L)
+  ),
+  dropoff_datetime = c(
+   start_datetime + lubridate::minutes(20L),
+   start_datetime + lubridate::minutes(37L),
+   lubridate::make_datetime(2023L, 5L, 18L, 9L, 1L)
+  ),
+  driver_pay = 10,
+  tips = 2 
+)
+
+# Defining 2 invalid trips
+# 1. The trip goes after the 6 min in same zone
+# 2. The trip is too far from second iteration
+trips_to_omit <- data.frame(
+  year = 2023L,
+  month = 5L,
+  PULocationID = c(1L, 3L),
+  DOLocationID = c(3L, 1L),
+  
+  request_datetime = c(
+   start_datetime + lubridate::minutes(2L + 6L),
+   start_datetime + lubridate::minutes(20L + 7L)
+  ),
+  dropoff_datetime = c(
+   start_datetime + lubridate::minutes(26L),
+   start_datetime + lubridate::minutes(37L)
+  ),
+  driver_pay = 10,
+  tips = 2 
+)
+
+result <- 
+  simulate_trips(rbind(valid_trips, trips_to_omit),
+                 start_datetime = start_datetime,
+                 start_zone = start_zone,
+                 minutes_next_trip = 6L,
+                 end_datetime = start_datetime + lubridate::hours(1L),
+                 valid_end_zones = valid_zones,
+                 closest_zone = closest_zones,
+                 borough_zones = borough_zones)
+
+
+testthat::test_that("The simulation is taking the correct options",{
+  
+  testthat::expect_true(
+   nrow(result) == 3L
+  )
+  
+})
+
+
+testthat::test_that("Missing column stop is working",{
+  
+  testthat::expect_error({
+    simulate_trips(valid_trips[!names(valid_trips) %in% c("driver_pay", "tips")],
+                   start_datetime = start_datetime,
+                   start_zone = start_zone,
+                   minutes_next_trip = 6L,
+                   end_datetime = start_datetime + lubridate::hours(1L),
+                   valid_end_zones = valid_zones,
+                   closest_zone = closest_zones,
+                   borough_zones = borough_zones) 
+  })
+  
+})
+
+```
+
+
+## BaseLineSimulation
+
+```{r function-BaseLineSimulation, eval=FALSE, echo=FALSE}
+#' BaseLineSimulation
+#'
+#' Trips returned after runing the simulation.
+#'
+#' @format A data frame of 10 variables:
+#' \describe{
+#'   \item{ simulation_day }{ Sample date }
+#'   \item{ s_PULocationID }{ TLC Taxi Zone in which the trip began }
+#'   \item{ s_DOLocationID }{ TLC Taxi Zone in which the trip ended }
+#'   \item{ s_request_datetime }{ Date and time when passenger requested to be picked up }
+#'   \item{ s_dropoff_datetime }{ The date and time of the trip drop-off }
+#'   \item{ s_driver_pay }{ Total driver pay (not including tolls or tips and net of commission, surcharges, or taxes) }
+#'   \item{ s_tips }{ Total amount of tips received from passenger }
+#'   \item{ PULocationID }{ Start zone of the simulation day }
+#'   \item{ hours_to_work }{ The number of hour to work in the simulation day }
+#'   \item{ start_time }{ Start date and time for the simulation day }
+#' }
+#' @source TLC Trip Record Data
+"BaseLineSimulation"
+```
+
+
+# EDA functions
+
+## fast_glimpse
+
+```{r function-fast_glimpse}
+
+#' Glimpse for arrow connections
+#' 
+#' Shows the class related to each column without loading the data into memory. 
+#'
+#' @param x An arrow connection
+#' 
+#' @importFrom scales comma
+#'
+#' @return The schema related to the connection
+#' @export
+#'
+#' @examples
+fast_glimpse <- function(x){
+  
+  stopifnot("x is not an arrow connection" = 
+              inherits(x, "ArrowObject") | inherits(x, "arrow_dplyr_query"))
+  
+  if(inherits(x, "arrow_dplyr_query")){
+    print(x)
+    invisible(x)
+  }
+
+  schm <- x$.data$schema
+
+  col_types <- sapply(
+
+    x$selected_columns,
+
+    FUN = function(expr) {
+      name <- expr$field_name
+      if (nzchar(name)) {
+        schm$GetFieldByName(name)$type$ToString()
+      }
+      else {
+        expr$type(schm)$ToString()
+      }
+
+    })
+
+
+  fields <- paste(
+    names(col_types),
+    col_types,
+    sep = ": ",
+    collapse = "\n"
+  )
+
+  cat(
+    paste0("FileSystemDataset (query)\n",
+           scales::comma(nrow(x)), " rows x ",
+           scales::comma(ncol(x)), " columns\n\n",
+           fields)
+  )
+  
+  invisible(x)
+}
+
+```
+
+
+```{r example-fast_glimpse}
+
+df <- data.frame(num = runif(10),
+                 char = LETTERS[1:10],
+                 factor = factor(LETTERS[1:10], levels = LETTERS[1:10]),
+                 dates = seq(from = as.Date("2024-01-01"), 
+                             by = "month", length.out = 10))
+
+arrow::arrow_table(df) |> fast_glimpse()
+```
+
+
+```{r tests-fast_glimpse}
+
+df <- data.frame(num = runif(10),
+                 char = LETTERS[1:10],
+                 factor = factor(LETTERS[1:10], levels = LETTERS[1:10]),
+                 dates = seq(from = as.Date("2024-01-01"), 
+                             by = "month", length.out = 10)) 
+
+testthat::test_that("We don't method for data.frame",{
+  testthat::expect_error(
+    fast_glimpse(df)
+  )
+})
+
+```
+
+
+## count_pct
+
+```{r function-count_pct}
+#' Counts rows based con columns provided
+#' 
+#' It counts the number rows where each unique value repeated in the columns 
+#' selected arranging there results in descent order and adds a percentage 
+#' column after collecting the results from `arrow`.
+#'
+#' @param x A lazy data frame arrow connection.
+#' @param ... Variables to group by
+#' @param sort If TRUE, will show the largest groups at the top.
+#' 
+#' @importFrom dplyr count collect mutate
+#' @importFrom rlang quos
+#'
+#' @return A data.frame
+#' @export
+#'
+#' @examples
+count_pct <- function(x, ..., sort = TRUE){
+  
+  grouping_vars_expr <- rlang::quos(...)
+
+  dplyr::count(x, !!! grouping_vars_expr, sort = sort) |>
+    dplyr::collect() |>
+    dplyr::mutate(pct = n / sum(n))
+
+}
+```
+
+```{r example-count_pct}
+set.seed(1234)
+
+arrow_con <- 
+  data.frame(char1 = sample(LETTERS[1:3], 100, replace = TRUE),
+             char2 = sample(LETTERS[4:6], 100, replace = TRUE)) |>
+  arrow::arrow_table()
+
+count_pct(arrow_con, char1)
+count_pct(arrow_con, char2)
+count_pct(arrow_con, char1, char2)
+```
+
+
+## join_zones
+
+```{r function-join_zones}
+#' Create a data.frame to show the zones
+#' 
+#' It creates the `start_borough`, `start_zone` and `start_service_zone` 
+#' columns based on the `PULocationID` column and the `end_borough`, `end_zone` 
+#' and `end_service_zone` columns based on the `DOLocationID` column.
+#'
+#' @param df A data.frame with all the code zones from main data.
+#' @param zone_tb A data.frame with zones from data dictionary.
+#' 
+#' @importFrom data.table is.data.table `%chin%` uniqueN as.data.table
+#'
+#' @return A data.table
+#' @export
+join_zones <- function(df, zone_tb){
+  
+  # Validating that the tables has the columns needed
+  stopifnot("df must have DOLocationID and PULocationID zone ids" = 
+              all(c("DOLocationID", "PULocationID") %chin% names(df)))
+  
+  stopifnot("zone_tb must have LocationID, Borough, Zone and service_zone" = 
+              all(c("LocationID", "Borough", "Zone", "service_zone") %chin% names(zone_tb)))
+  
+  # zone_tb can no have duplicated zones
+  stopifnot("All zone_tb rows must be unique" = uniqueN(zone_tb$LocationID) == nrow(zone_tb))
+  
+  
+  if(!data.table::is.data.table(df)){
+    df <- data.table::as.data.table(df)
+  }
+  
+  if(!data.table::is.data.table(zone_tb)){
+    zone_tb <- data.table::as.data.table(zone_tb)
+  }
+  
+  zone_tb[, .(end_id = LocationID,
+              end_borough = Borough,
+              end_zone = Zone,
+              end_service_zone = service_zone)
+  ][df, on = c("end_id" = "DOLocationID")
+  ][, zone_tb[, .(start_id = LocationID,
+                  start_borough = Borough,
+                  start_zone = Zone,
+                  start_service_zone = service_zone)
+      ][.SD, on = c("start_id" = "PULocationID")
+  ][, !c("start_id", "end_id")]]
+
+}
+```
+
+## factor_weekday
+
+```{r function-factor_weekday}
+#' Transform number into factors
+#'
+#' Transform a numeric vector in factor with a level for each day of a week.
+#'
+#' @param x A numeric vector with values from 1 to 7
+#'
+#' @return A factor vector
+#' @export
+#'
+#' @examples
+factor_weekday <- function(x){
+  
+  stopifnot("The vector must be numeric" = is.numeric(x))
+  
+  if(!all(x %in% 1:7)){
+    warning("One of the number is not from 1 to 7")
+  }
+
+  weekdays_name <- c("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su")
+
+  factor(weekdays_name[x], levels = weekdays_name)
+
+}
+```
+
+```{r example-factor_weekday}
+
+factor_weekday(c(1,7,5))
+
+```
+
+
+```{r test-factor_weekday}
+
+test_that("x must be numeric",{
+  testthat::expect_error(factor_weekday(c("Mon", 5)))
+})
+
+test_that("x must have values from 1 to 7",{
+  testthat::expect_warning(factor_weekday(c(10, 5)))
+})
+
+```
+
+## compute_num_summary
+
+```{r function-compute_num_summary}
+#' Calculates all values need to describe
+#' 
+#' Calculates of values needed to create a boxplot.
+#'
+#' @param x A data.frame or an arrow connection
+#' @param value A column vector to summarize
+#' 
+#' @importFrom dplyr filter summarize mutate select collect
+#'
+#' @return A data.frame with summary values
+#' @export
+#'
+#' @examples
+compute_num_summary <- function(x, value){
+
+  summary <-
+    dplyr::filter(x,
+                  !is.na({{value}})) |>
+    dplyr::summarize(min_value = min({{value}}),
+                     q1 = quantile({{value}}, 0.25),
+                     q2 = median({{value}}),
+                     q3 = quantile({{value}}, 0.75),
+                     max_value = max({{value}})) |>
+    dplyr::mutate(lower_whisker = q1 - 1.5*(q3 - q1),
+                  higher_whisker = q3 + 1.5*(q3 - q1)) |>
+    dplyr::select(min_value,
+                  lower_whisker,
+                  q1,
+                  q2,
+                  q3,
+                  higher_whisker,
+                  max_value)
+  
+  if(inherits(x, "ArrowObject") | inherits(x, "arrow_dplyr_query")){
+    summary <- dplyr::collect(summary)
+  }
+
+  return(summary)
+}
+```
+
+
+```{r example-compute_num_summary}
+
+data.frame(x = rnorm(200, mean = 5)) |>
+  arrow::arrow_table() |>
+  compute_num_summary(x)
+
+```
+
+
+## summary_to_boxplot
+
+```{r function-show_boxplot}
+#' Display boxplot chart based of a summary.
+#'
+#' @param x A data.frame
+#' @param y_title A character value indicating the title to describe the y axis.
+#' @param y_break_width A number to define the width related to y axis.
+#' 
+#' @importFrom ggplot2 ggplot geom_boxplot scale_y_continuous labs theme_light
+#' @importFrom scales breaks_width
+#'
+#' @return A ggplot
+#' @export
+summary_to_boxplot <- function(x, y_title = "", y_break_width = 2) {
+  
+  ggplot2::ggplot(x)+
+    ggplot2::geom_boxplot(
+      aes(x = "", y = q2,
+          ymin = pmax(min_value, lower_whisker), 
+          lower = q1, 
+          middle = q2, 
+          upper = q3, 
+          ymax = pmin(max_value, higher_whisker)),
+      stat = "identity",
+      width = 0.3
+    )+
+    ggplot2::scale_y_continuous(breaks = scales::breaks_width(y_break_width))+
+    ggplot2::labs(y = y_title,
+                  x = "") +
+    ggplot2::theme_light()
+  
+}
+```
+
+
+# Inflate the functions
+
+```{r development-inflate, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+
+c("R", "man") |>
+  sapply(FUN = list.files,
+         pattern = "\\.Rd?", 
+         full.names = TRUE) |>
+  file.remove()
+
+fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
+               vignette_name = NA,
+               vignettes = FALSE)
+```
+
+
+```{r development-building-website, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+
+remove.packages("project.nyc.taxi")
+
+rstudioapi::restartSession()
+
+install_local()
+
+pkgdown::build_site()
+```

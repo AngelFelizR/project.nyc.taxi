@@ -17,8 +17,7 @@ knitr::opts_chunk$set(
 
 After completing the [business understanding](https://github.com/AngelFelizR/nyc-taxi-project/tree/master/notebooks/02-business-understanding) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
 
-1. Examining the distribution of variables available before arriving at the pick-up location.
-2. Examining the distribution of the target variable.
+1. Exploring the individual distribution of variables.
 3. Taking a subset of the data to fit in RAM.
 4. Exploring correlations between predictors and target variable.
 5. Exploring correlations between predictors.
@@ -40,7 +39,7 @@ To setting the `R` environment up we just need to apply the following 4 steps:
 
 1. Loading the packages to use.
 
-```{r}
+```{r warning = FALSE, message = FALSE}
 library(project.nyc.taxi)
 library(here)
 library(data.table)
@@ -97,17 +96,21 @@ glimpse(TripsZoneDistribution)
 ```
 
 
-## Distribution of variables available before arriving at the pick-up location
+## Individual distribution
 
 ### Categorical variables
 
-- `company`: The majority number of trips are done by *Uber* (HV003) and the rest for *Lyft*.
+#### company
+
+The majority number of trips are done by *Uber* (HV003) and the rest for *Lyft*.
 
 ```{r}
 NycTrips2022 |> count_pct(company)
 ```
 
-- `dispatching_base_num`: For most of the trips the dispatching number is **B03404** for Uber and **B03406** related for Lyft. Uber also has other 27 dispatching number, but they are really weird to see.
+#### dispatching_base_num
+
+For most of the trips the dispatching number is **B03404** for Uber and **B03406** related for Lyft. Uber also has other 27 dispatching number, but they are really weird to see.
 
 ```{r}
 NycTrips2022 |>
@@ -122,7 +125,9 @@ NycTrips2022 |>
           ][order(-n)] )()
 ```
 
-- `originating_base_num`: This column has the same information as `dispatching_base_num` or has missing values, so we don't need to use it.
+#### originating_base_num
+
+This column has the same information as `dispatching_base_num` or has missing values, so we don't need to use it.
 
 ```{r}
 NycTrips2022 |>
@@ -130,13 +135,17 @@ NycTrips2022 |>
             same_id = originating_base_num == dispatching_base_num)
 ```
 
-- `shared_request_flag`: Most of passengers don't agree to a shared/pooled ride.
+#### shared_request_flag
+
+Most of passengers don't agree to a shared/pooled ride.
 
 ```{r}
 NycTrips2022 |> count_pct(shared_request_flag)
 ```
 
-- `shared_match_flag`: From the subset of trips that agreed to share the ride only 24% achieved the match, we even can see some weird cases when the passenger did not initially agree to a shared/pooled ride (shared_request_flag = N), but ended up sharing the vehicle with another passenger who booked separately at some point during the trip (shared_match_flag = Y).
+#### shared_match_flag
+
+From the subset of trips that agreed to share the ride only 24% achieved the match, we even can see some weird cases when the passenger did not initially agree to a shared/pooled ride (shared_request_flag = N), but ended up sharing the vehicle with another passenger who booked separately at some point during the trip (shared_match_flag = Y).
 
 ```{r}
 NycTrips2022 |> 
@@ -367,7 +376,9 @@ Based on the results, we can highlight the next points:
 
 ### Time variables
 
-Let's start confirming if `request_datetime` has any missing value.
+#### request_datetime
+
+Let's start confirming the variable doesn't have any missing value.
 
 ```{r}
 NycTrips2022 |>
@@ -554,18 +565,18 @@ RequestTimeSummary[year(request_month) == 2022,
 
 ### Numeric variables
 
-- `trip_miles`:
+#### trip_miles
 
 ```{r}
 TripMilesSummary <-
   NycTrips2022 |>
-  compute_boxplot(trip_miles)
+  compute_num_summary(trip_miles)
 
 TripMilesSummary
 ```
 
 ```{r}
-show_boxplot(TripMilesSummary, "trip_miles")
+summary_to_boxplot(TripMilesSummary, "trip_miles")
 ```
 
 
@@ -576,20 +587,19 @@ NycTrips2022 |>
   comma()
 ```
 
-
-- `base_passenger_fare`:
+#### base_passenger_fare
 
 ```{r}
 BaseFareSummary <-
   NycTrips2022 |>
-  compute_boxplot(base_passenger_fare) |>
+  compute_num_summary(base_passenger_fare) |>
   collect()
 
 BaseFareSummary
 ```
 
 ```{r}
-show_boxplot(BaseFareSummary, "base_passenger_fare", 10)
+summary_to_boxplot(BaseFareSummary, "base_passenger_fare", 10)
 ```
 
 ```{r}

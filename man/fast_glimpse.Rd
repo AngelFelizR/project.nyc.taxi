@@ -2,12 +2,12 @@
 % Please edit documentation in R/fast_glimpse.R
 \name{fast_glimpse}
 \alias{fast_glimpse}
-\title{glimpse for arrow connections}
+\title{Glimpse for arrow connections}
 \usage{
 fast_glimpse(x)
 }
 \arguments{
-\item{x}{an arrow connection}
+\item{x}{An arrow connection}
 }
 \value{
 The schema related to the connection
