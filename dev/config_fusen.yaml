@@ -36,6 +36,7 @@ flat_functions.Rmd:
   tests:
   - tests/testthat/test-simulate_trips.R
   - tests/testthat/test-fast_glimpse.R
+  - tests/testthat/test-count_pct.R
   - tests/testthat/test-factor_weekday.R
   vignettes: []
   inflate:

@@ -31,7 +31,13 @@ arrow_con <-
              char2 = sample(LETTERS[4:6], 100, replace = TRUE)) |>
   arrow::arrow_table()
 
+# One var
 count_pct(arrow_con, char1)
-count_pct(arrow_con, char2)
-count_pct(arrow_con, char1, char2)
+
+# Two vars
+dt1 <-count_pct(arrow_con, char1, char2)
+dt1
+
+# You can use the wt function
+count_pct(dt1, char1, wt = n)
 }

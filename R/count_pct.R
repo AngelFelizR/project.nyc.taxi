@@ -12,7 +12,7 @@
 #' @param sort If TRUE, will show the largest groups at the top.
 #' 
 #' @importFrom dplyr count collect
-#' @importFrom rlang quos
+#' @importFrom rlang quos enquo
 #' @importFrom data.table setDT `:=`
 #'
 #' @return A data.frame
@@ -26,16 +26,23 @@
 #'              char2 = sample(LETTERS[4:6], 100, replace = TRUE)) |>
 #'   arrow::arrow_table()
 #'
+#' # One var
 #' count_pct(arrow_con, char1)
-#' count_pct(arrow_con, char2)
-#' count_pct(arrow_con, char1, char2)
+#'
+#' # Two vars
+#' dt1 <-count_pct(arrow_con, char1, char2)
+#' dt1
+#'
+#' # You can use the wt function
+#' count_pct(dt1, char1, wt = n)
 count_pct <- function(x, ..., wt = NULL,  sort = TRUE){
   
   grouping_vars_expr <- rlang::quos(...)
-
+  wt_expr <- rlang::enquo(wt)
+  
   counted_data <-
-    if(!is.null(wt)){
-      dplyr::count(x,!!! grouping_vars_expr , wt = wt, sort = sort)
+    if(!is.null(wt_expr)){
+      dplyr::count(x,!!! grouping_vars_expr , wt = {{wt}}, sort = sort)
     }else{
       dplyr::count(x,!!! grouping_vars_expr, sort = sort)
     }

@@ -18,7 +18,7 @@ library(testthat)
 pkgload::load_all(export_all = FALSE)
 ```
 
-# Personal funtions
+# Internal funtions
 
 ```{r function-is_arrow_con}
 #' Validate if is an arrow table
@@ -469,7 +469,7 @@ testthat::test_that("We don't method for data.frame",{
 #' @param sort If TRUE, will show the largest groups at the top.
 #' 
 #' @importFrom dplyr count collect
-#' @importFrom rlang quos
+#' @importFrom rlang quos enquo
 #' @importFrom data.table setDT `:=`
 #'
 #' @return A data.frame
@@ -479,10 +479,11 @@ testthat::test_that("We don't method for data.frame",{
 count_pct <- function(x, ..., wt = NULL,  sort = TRUE){
   
   grouping_vars_expr <- rlang::quos(...)
-
+  wt_expr <- rlang::enquo(wt)
+  
   counted_data <-
-    if(!is.null(wt)){
-      dplyr::count(x,!!! grouping_vars_expr , wt = wt, sort = sort)
+    if(!is.null(wt_expr)){
+      dplyr::count(x,!!! grouping_vars_expr , wt = {{wt}}, sort = sort)
     }else{
       dplyr::count(x,!!! grouping_vars_expr, sort = sort)
     }
@@ -511,10 +512,44 @@ arrow_con <-
              char2 = sample(LETTERS[4:6], 100, replace = TRUE)) |>
   arrow::arrow_table()
 
+# One var
 count_pct(arrow_con, char1)
-count_pct(arrow_con, char2)
-count_pct(arrow_con, char1, char2)
+
+# Two vars
+dt1 <-count_pct(arrow_con, char1, char2)
+dt1
+
+# You can use the wt function
+count_pct(dt1, char1, wt = n)
 ```
+
+
+```{r test-count_pct}
+set.seed(1234)
+
+arrow_con <- 
+  data.frame(char1 = sample(LETTERS[1:3], 100, replace = TRUE),
+             char2 = sample(LETTERS[4:6], 100, replace = TRUE)) |>
+  arrow::arrow_table()
+
+# One var
+dt1 <- count_pct(arrow_con, char1)
+
+# Two vars
+dt2 <-
+  count_pct(arrow_con, char1, char2) |>
+  count_pct(char1, wt = n)
+
+testthat::test_that("wt is working",{
+  
+  expect_equivalent(
+    dt2, dt1
+  )
+  
+})
+
+```
+
 
 
 ## join_zones
@@ -713,10 +748,11 @@ summary_to_boxplot <- function(x, y_title = "", y_break_width = 2) {
 # Run but keep eval=FALSE to avoid infinite loop
 # Execute in the console directly
 
-c("R", "man") |>
+c("R", "man", "tests/testthat") |>
   sapply(FUN = list.files,
          pattern = "\\.Rd?", 
          full.names = TRUE) |>
+  unlist() |>
   file.remove()
 
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
