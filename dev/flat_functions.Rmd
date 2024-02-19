@@ -542,7 +542,7 @@ dt2 <-
 
 testthat::test_that("wt is working",{
   
-  expect_equivalent(
+  expect_equal(
     dt2, dt1
   )
   
