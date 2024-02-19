@@ -149,7 +149,7 @@ simulate_trips <- function(arrow_con,
                       s_tips = tips)
     
     # If arrow we need to collect
-    if(inherits(arrow_con, "ArrowObject")){
+    if(is_arrow_con(arrow_con)){
       
       simulated_trip <- dplyr::collect(simulated_trip)
     

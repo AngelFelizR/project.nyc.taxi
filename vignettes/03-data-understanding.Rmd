@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 
-After completing the [business understanding](https://github.com/AngelFelizR/nyc-taxi-project/tree/master/notebooks/02-business-understanding) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
+After completing the [business understanding](https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
 
 1. Exploring the individual distribution of variables.
 3. Taking a subset of the data to fit in RAM.
@@ -27,11 +27,8 @@ In order to:
 
 - Ensure data quality
 - Identify key predictors
-- Inform model choice
 - Detect multicollinearity
-- Guide feature engineering
-- Inform data collection strategy
-
+- Guide model choice and feature engineering
 
 ## Setting the environment up
 
@@ -49,6 +46,8 @@ library(forcats)
 library(lubridate)
 library(dplyr)
 library(arrow)
+
+options(datatable.print.nrows = 15)
 ```
 
 2. Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
@@ -88,15 +87,14 @@ glimpse(ZoneCodes)
 ```{r}
 TripsZoneDistribution <-
   NycTrips2022 |>
-  count(PULocationID, DOLocationID) |>
-  collect() |>
+  count_pct(PULocationID, DOLocationID) |>
   join_zones(zone_tb = ZoneCodes)
 
 glimpse(TripsZoneDistribution)
 ```
 
 
-## Individual distribution
+## Individual distributions
 
 ### Categorical variables
 
@@ -105,273 +103,104 @@ glimpse(TripsZoneDistribution)
 The majority number of trips are done by *Uber* (HV003) and the rest for *Lyft*.
 
 ```{r}
-NycTrips2022 |> count_pct(company)
+NycTrips2022 |> 
+  count_pct(company)
 ```
 
 #### dispatching_base_num
 
-For most of the trips the dispatching number is **B03404** for Uber and **B03406** related for Lyft. Uber also has other 27 dispatching number, but they are really weird to see.
+For most of the trips the dispatching number is **B03404** and **B03406**. The remaining codes represent a small proportion of observations.
 
 ```{r}
 NycTrips2022 |>
-  count_pct(company, dispatching_base_num) |>
-  as.data.table() |>
-  (\(dt) dt[, .(n_unique_code = uniqueN(dispatching_base_num),
-                n_missing = sum(is.na(dispatching_base_num)),
-                n = sum(n),
-                pct = sum(pct) |> round(4L)),
-            by = .(company,
-                   common = pct > 0.01)
-          ][order(-n)] )()
+  count_pct(dispatching_base_num)
 ```
 
 #### originating_base_num
 
-This column has the same information as `dispatching_base_num` or has missing values, so we don't need to use it.
+For most of the trips the originating number is **B03404** and the second is missing. The remaining codes represent a small proportion of observations.
 
 ```{r}
 NycTrips2022 |>
-  count_pct(company,
-            same_id = originating_base_num == dispatching_base_num)
+  count_pct(originating_base_num)
+```
+
+#### access_a_ride_flag
+
+Must of the trips doesn't provide any information related to whether they were administered on behalf of the Metropolitan Transportation Authority (MTA) and the remaining confirm that there aren't.
+
+```{r}
+NycTrips2022 |>
+  count_pct(access_a_ride_flag)
 ```
 
 #### shared_request_flag
 
-Most of passengers don't agree to a shared/pooled ride.
+Most of passengers don't request to a shared/pooled ride.
 
 ```{r}
-NycTrips2022 |> count_pct(shared_request_flag)
+NycTrips2022 |>
+  count_pct(shared_request_flag)
 ```
 
 #### shared_match_flag
 
-From the subset of trips that agreed to share the ride only 24% achieved the match, we even can see some weird cases when the passenger did not initially agree to a shared/pooled ride (shared_request_flag = N), but ended up sharing the vehicle with another passenger who booked separately at some point during the trip (shared_match_flag = Y).
+Most of passengers don't agree to a shared/pooled ride.
 
 ```{r}
 NycTrips2022 |> 
-  count(shared_request_flag, shared_match_flag) |>
-  collect() |>
-  group_by(shared_request_flag) |>
-  mutate(pct = n / sum(n)) |>
-  arrange(desc(shared_request_flag), desc(shared_match_flag))
+  count_pct(shared_match_flag)
 ```
 
-- `access_a_ride_flag`: *Uber* isn't reporting whether their trips were administered on behalf of the Metropolitan Transportation Authority and for *Lyft* the answer is always "N", so we will **erase** this column as it doesn't show any useful information.
+#### wav_request_flag
 
-```{r}
-NycTrips2022 |> count_pct(company, access_a_ride_flag)
-```
-
-- `wav_request_flag`: It's really unusual for a passenger to request a wheelchair-accessible vehicle.
-
-```{r}
-NycTrips2022 |> count_pct(wav_request_flag)
-```
-
-- `wav_match_flag`: If someone ask for a wheelchair-accessible vehicle it's really often that passenger get that type of vehicle.
+It's really unusual for a passenger to request a wheelchair-accessible vehicle.
 
 ```{r}
 NycTrips2022 |> 
-  count(wav_request_flag, wav_match_flag) |>
-  collect() |>
-  group_by(wav_request_flag) |>
-  mutate(pct = n / sum(n)) |>
-  arrange(desc(wav_request_flag), desc(wav_match_flag))
+  count_pct(wav_request_flag)
 ```
 
-- `start_borough` and `end_borough`: After exploring the next distribution of trips we can highlight that:
+#### wav_match_flag
 
-  - 94% of the trips take place in *Manhattan*, *Brooklyn*, *Queens* and *Bronx*. As consequence, there is no reason to keep exploring trips related to *Staten Island*, *EWR* or *Unknown* as they are the minority.
-  - 70% the trips take place without going to outside the start borough.
+The number trips that take place in wheelchair-accessible vehicles is low but much higher that the number of trips requested with that capacity.
 
 ```{r}
-TripsZoneDistribution[, .(n = sum(n)),
-                      by = c("start_borough", "end_borough")
-][order(n)
-][, c("start_borough", "end_borough") := 
-    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
-  .SDcols = c("start_borough", "end_borough")
-][, end_borough := fct_rev(end_borough)] |>
-  ggplot(aes(end_borough, start_borough))+
-  geom_tile(aes(fill = n)) +
-  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
-  scale_fill_gradient(low = "white", 
-                      high = "red",
-                      labels= comma_format())+
-  scale_x_discrete(position = "top") +
-  labs(title = "Distribution of Trips by Borough in NYC 2022",
-       x = "Trip End", 
-       y = "Trip Start", 
-       fill = "Number of Trips") +
-  theme_classic() +
-  theme(plot.title = element_text(face = "bold"),
-        axis.ticks = element_blank(),
-        axis.line = element_blank(),
-        axis.text = element_text(color = "black"),
-        axis.title = element_text(face = "italic"))
+NycTrips2022 |> 
+  count_pct(wav_match_flag)
 ```
 
-- `start_service_zone` and `end_service_zone`: 52% of the trips take place at the *Boro Zone*, 26% of trips take place at the *Yellow Zone* and only small fraction goes to the *Airports*.
+#### start_borough
+
+**87% of trips** start in *Manhattan*, *Brooklyn* or *Queens*.
 
 ```{r}
-TripsZoneDistribution[  
-  !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
-    !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
-  .(n = sum(n)),
-  by = c("start_service_zone",
-         "end_service_zone")
-][order(n)
-][, c("start_service_zone", "end_service_zone") := 
-    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
-  .SDcols = c("start_service_zone", "end_service_zone")
-][, end_service_zone := fct_rev(end_service_zone)] |>
-  ggplot(aes(end_service_zone, start_service_zone))+
-  geom_tile(aes(fill = n)) +
-  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
-  scale_fill_gradient(low = "white", 
-                      high = "red",
-                      labels= comma_format())+
-  scale_x_discrete(position = "top") +
-  labs(title = "Distribution of Trips by Service Zone in NYC 2022",
-       x = "Trip End", 
-       y = "Trip Start", 
-       fill = "Number of Trips") +
-  theme_classic() +
-  theme(plot.title = element_text(face = "bold"),
-        axis.ticks = element_blank(),
-        axis.line = element_blank(),
-        axis.text = element_text(color = "black"),
-        axis.title = element_text(face = "italic"))
+TripsZoneDistribution |>
+  count_pct(start_borough, wt =  n)
 ```
 
+#### end_borough
+
+**82% of trips** end in *Manhattan*, *Brooklyn* or *Queens*.
 
 ```{r}
-#| echo: false
-#| include: false
-
-ZoneUniqueComb <-
-  TripsZoneDistribution[ 
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
-    unique(.SD),
-    .SDcols = c("start_zone", "end_zone")
-  ][, .N] |>
-  comma()
-
-EndingUniqueZones <-
-  TripsZoneDistribution[ 
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
-    uniqueN(end_zone),] |>
-  comma()
+TripsZoneDistribution |>
+  count_pct(end_borough, wt =  n)
 ```
 
-
-- `start_zone` and `end_zone`: As our data has `r ZoneUniqueComb` rows of relations between both columns, we opted to transform data in a way what each unique zone represent a row reducing the points to be plotted to only `r EndingUniqueZones` by following the next steps: 
-
-  1. Summarizing the total number of trips for each **starting point** independently to its destination 
-  2. Summarizing the total number of trips for each **ending point** independently to its origin.
-  3. Joining both tables into one.
+#### start_service_zone
 
 ```{r}
-# 1. Summarizing Staring Zones
-StartingZonesCount <-
-  TripsZoneDistribution[
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
-    .(start_trips = sum(n)),
-    by =  .(borough = start_borough, 
-            zone = start_zone)
-  ]
-
-# 2. Summarizing Ending Zones
-EndingZonesCount <-
-  TripsZoneDistribution[
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
-    .(end_trips = sum(n)),
-    by =  .(borough = end_borough, 
-            zone = end_zone)
-  ]
-
-# 3. Inner Joining Starting and Ending Zones Counts
-JoinedZonesCount <-
-  StartingZonesCount[
-    EndingZonesCount,
-    on = c("borough", "zone"),
-    nomatch = 0
-  ]
+TripsZoneDistribution |>
+  count_pct(start_borough, start_service_zone, wt =  n)
 ```
 
-Once we have a much simpler data to work with, we is easy to confirm with the next linear regression that `start_trips` and `end_trips` has almost the same values the model has an slope of one. That means that in must of cases **if someone takes a taxi to go to any place it's really likely to take another taxi back**.
+#### end_service_zone
 
 ```{r}
-lm(end_trips ~ start_trips, 
-   data = JoinedZonesCount) |>
-  summary()
+TripsZoneDistribution |>
+  count_pct(end_borough, end_service_zone, wt =  n)
 ```
-
-Let's now explore the zones where there is **no balance** between the `start_trips` and the `end_trips` in the most visited zoned of each Borough. To do so, we defined the rate `end_trips`/`start_trips` and highlight zones with lower rate than the 15% percentile or higher rate than 85% percentile.
-
-```{r}
-# Creating dataset to plot
-ZonesCountToPlot <-
-  copy(JoinedZonesCount)[
-    j = `:=`(ending_starting_rate = end_trips/start_trips,
-             borough = fct_reorder(borough, -end_trips, .fun = sum, na.rm = TRUE),
-             end_m_trips = end_trips / 1e6L,
-             start_m_trips = start_trips / 1e6L)
-  ][, unbalance_situation := fcase(
-    ending_starting_rate < quantile(ending_starting_rate, 0.15),
-    "More starts than ends",
-    ending_starting_rate > quantile(ending_starting_rate, 0.85),
-    "More ends than starts",
-    default = "Balanced"
-  )
-  ][order(-(start_trips + end_trips)), 
-    .SD[1:6],
-    by = "borough"] 
-
-# Creating the scatted plot
-ggplot(ZonesCountToPlot,
-       aes(start_m_trips, end_m_trips))+
-  geom_blank(aes(pmax(start_m_trips, end_m_trips),
-                 pmax(start_m_trips, end_m_trips)))+
-  geom_abline(linewidth = 0.8,
-              alpha = 0.5)+
-  geom_point(aes(color = borough),
-             size = 3.5,
-             alpha = 0.75)+
-  geom_text(data = ZonesCountToPlot[unbalance_situation ==
-                                      "More starts than ends"],
-            aes(label = zone),
-            size = 3.5,
-            hjust = -0.12,
-            check_overlap = TRUE)+
-  geom_text(data = ZonesCountToPlot[unbalance_situation ==
-                                      "More ends than starts"],
-            aes(label = zone),
-            size = 3.5,
-            hjust = 1.12,
-            check_overlap = TRUE)+
-  scale_x_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
-  scale_y_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
-  coord_equal() +
-  labs(title = "Top 6 Most Important Zones by Borough",
-       color = "Borough",
-       x = "Number of Trips Starting",
-       y = "Number of Trips Ending")+
-  theme_light()+
-  theme(legend.position = "top",
-        text = element_text(color = "black"),
-        plot.title = element_text(face = "bold"))
-```
-
-Based on the results, we can highlight the next points:
-
-1. The airports present in Queens, *LaGuardia Airport* and *JFK Airport*, have many more trips going to the airport than going out of airport. This might happen due that there are more transportation options like other taxis, shuttles, and public transportation.
-
-2. The remaining zones, *Jackson Heights*, *East Village* and *TriBeCa/Civic Center*, are residential zones with a variety of public transportation options.
 
 
 ### Time variables
@@ -382,8 +211,7 @@ Let's start confirming the variable doesn't have any missing value.
 
 ```{r}
 NycTrips2022 |>
-  count(request_datetime_missing = is.na(request_datetime)) |>
-  collect()
+  count_pct(request_datetime_missing = is.na(request_datetime))
 ```
 
 To describe this variable, we decomposed it in different parts and count the number trips by each element and store the summary as a `data.table` to explore each part using visualizations.
@@ -615,3 +443,201 @@ NycTrips2022 |>
   nrow() |>
   comma()
 ```
+
+
+## Additinal exploration
+
+- `start_borough` and `end_borough`: After exploring the next distribution of trips we can highlight that:
+
+  - 94% of the trips take place in *Manhattan*, *Brooklyn*, *Queens* and *Bronx*. As consequence, there is no reason to keep exploring trips related to *Staten Island*, *EWR* or *Unknown* as they are the minority.
+  - 70% the trips take place without going to outside the start borough.
+
+```{r}
+TripsZoneDistribution[, .(n = sum(n)),
+                      by = c("start_borough", "end_borough")
+][order(n)
+][, c("start_borough", "end_borough") := 
+    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
+  .SDcols = c("start_borough", "end_borough")
+][, end_borough := fct_rev(end_borough)] |>
+  ggplot(aes(end_borough, start_borough))+
+  geom_tile(aes(fill = n)) +
+  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
+  scale_fill_gradient(low = "white", 
+                      high = "red",
+                      labels= comma_format())+
+  scale_x_discrete(position = "top") +
+  labs(title = "Distribution of Trips by Borough in NYC 2022",
+       x = "Trip End", 
+       y = "Trip Start", 
+       fill = "Number of Trips") +
+  theme_classic() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_text(color = "black"),
+        axis.title = element_text(face = "italic"))
+```
+
+- `start_service_zone` and `end_service_zone`: 52% of the trips take place at the *Boro Zone*, 26% of trips take place at the *Yellow Zone* and only small fraction goes to the *Airports*.
+
+```{r}
+TripsZoneDistribution[  
+  !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+    !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
+  .(n = sum(n)),
+  by = c("start_service_zone",
+         "end_service_zone")
+][order(n)
+][, c("start_service_zone", "end_service_zone") := 
+    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
+  .SDcols = c("start_service_zone", "end_service_zone")
+][, end_service_zone := fct_rev(end_service_zone)] |>
+  ggplot(aes(end_service_zone, start_service_zone))+
+  geom_tile(aes(fill = n)) +
+  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
+  scale_fill_gradient(low = "white", 
+                      high = "red",
+                      labels= comma_format())+
+  scale_x_discrete(position = "top") +
+  labs(title = "Distribution of Trips by Service Zone in NYC 2022",
+       x = "Trip End", 
+       y = "Trip Start", 
+       fill = "Number of Trips") +
+  theme_classic() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_text(color = "black"),
+        axis.title = element_text(face = "italic"))
+```
+
+
+```{r}
+#| echo: false
+#| include: false
+
+ZoneUniqueComb <-
+  TripsZoneDistribution[ 
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    unique(.SD),
+    .SDcols = c("start_zone", "end_zone")
+  ][, .N] |>
+  comma()
+
+EndingUniqueZones <-
+  TripsZoneDistribution[ 
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    uniqueN(end_zone),] |>
+  comma()
+```
+
+
+- `start_zone` and `end_zone`: As our data has `r ZoneUniqueComb` rows of relations between both columns, we opted to transform data in a way what each unique zone represent a row reducing the points to be plotted to only `r EndingUniqueZones` by following the next steps: 
+
+  1. Summarizing the total number of trips for each **starting point** independently to its destination 
+  2. Summarizing the total number of trips for each **ending point** independently to its origin.
+  3. Joining both tables into one.
+
+```{r}
+# 1. Summarizing Staring Zones
+StartingZonesCount <-
+  TripsZoneDistribution[
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    .(start_trips = sum(n)),
+    by =  .(borough = start_borough, 
+            zone = start_zone)
+  ]
+
+# 2. Summarizing Ending Zones
+EndingZonesCount <-
+  TripsZoneDistribution[
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
+    .(end_trips = sum(n)),
+    by =  .(borough = end_borough, 
+            zone = end_zone)
+  ]
+
+# 3. Inner Joining Starting and Ending Zones Counts
+JoinedZonesCount <-
+  StartingZonesCount[
+    EndingZonesCount,
+    on = c("borough", "zone"),
+    nomatch = 0
+  ]
+```
+
+Once we have a much simpler data to work with, we is easy to confirm with the next linear regression that `start_trips` and `end_trips` has almost the same values the model has an slope of one. That means that in must of cases **if someone takes a taxi to go to any place it's really likely to take another taxi back**.
+
+```{r}
+lm(end_trips ~ start_trips, 
+   data = JoinedZonesCount) |>
+  summary()
+```
+
+Let's now explore the zones where there is **no balance** between the `start_trips` and the `end_trips` in the most visited zoned of each Borough. To do so, we defined the rate `end_trips`/`start_trips` and highlight zones with lower rate than the 15% percentile or higher rate than 85% percentile.
+
+```{r}
+# Creating dataset to plot
+ZonesCountToPlot <-
+  copy(JoinedZonesCount)[
+    j = `:=`(ending_starting_rate = end_trips/start_trips,
+             borough = fct_reorder(borough, -end_trips, .fun = sum, na.rm = TRUE),
+             end_m_trips = end_trips / 1e6L,
+             start_m_trips = start_trips / 1e6L)
+  ][, unbalance_situation := fcase(
+    ending_starting_rate < quantile(ending_starting_rate, 0.15),
+    "More starts than ends",
+    ending_starting_rate > quantile(ending_starting_rate, 0.85),
+    "More ends than starts",
+    default = "Balanced"
+  )
+  ][order(-(start_trips + end_trips)), 
+    .SD[1:6],
+    by = "borough"] 
+
+# Creating the scatted plot
+ggplot(ZonesCountToPlot,
+       aes(start_m_trips, end_m_trips))+
+  geom_blank(aes(pmax(start_m_trips, end_m_trips),
+                 pmax(start_m_trips, end_m_trips)))+
+  geom_abline(linewidth = 0.8,
+              alpha = 0.5)+
+  geom_point(aes(color = borough),
+             size = 3.5,
+             alpha = 0.75)+
+  geom_text(data = ZonesCountToPlot[unbalance_situation ==
+                                      "More starts than ends"],
+            aes(label = zone),
+            size = 3.5,
+            hjust = -0.12,
+            check_overlap = TRUE)+
+  geom_text(data = ZonesCountToPlot[unbalance_situation ==
+                                      "More ends than starts"],
+            aes(label = zone),
+            size = 3.5,
+            hjust = 1.12,
+            check_overlap = TRUE)+
+  scale_x_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
+  scale_y_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
+  coord_equal() +
+  labs(title = "Top 6 Most Important Zones by Borough",
+       color = "Borough",
+       x = "Number of Trips Starting",
+       y = "Number of Trips Ending")+
+  theme_light()+
+  theme(legend.position = "top",
+        text = element_text(color = "black"),
+        plot.title = element_text(face = "bold"))
+```
+
+Based on the results, we can highlight the next points:
+
+1. The airports present in Queens, *LaGuardia Airport* and *JFK Airport*, have many more trips going to the airport than going out of airport. This might happen due that there are more transportation options like other taxis, shuttles, and public transportation.
+
+2. The remaining zones, *Jackson Heights*, *East Village* and *TriBeCa/Civic Center*, are residential zones with a variety of public transportation options.
+

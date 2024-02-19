@@ -8,6 +8,7 @@
 #' @param value A column vector to summarize
 #' 
 #' @importFrom dplyr filter summarize mutate select collect
+#' @importFrom stats median quantile
 #'
 #' @return A data.frame with summary values
 #' @export
@@ -38,7 +39,7 @@ compute_num_summary <- function(x, value){
                   higher_whisker,
                   max_value)
   
-  if(inherits(x, "ArrowObject") | inherits(x, "arrow_dplyr_query")){
+  if(is_arrow_con(x)){
     summary <- dplyr::collect(summary)
   }
 

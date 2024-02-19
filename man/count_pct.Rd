@@ -4,12 +4,14 @@
 \alias{count_pct}
 \title{Counts rows based con columns provided}
 \usage{
-count_pct(x, ..., sort = TRUE)
+count_pct(x, ..., wt = NULL, sort = TRUE)
 }
 \arguments{
 \item{x}{A lazy data frame arrow connection.}
 
 \item{...}{Variables to group by}
+
+\item{wt}{If a variable, computes sum(wt) for each group.}
 
 \item{sort}{If TRUE, will show the largest groups at the top.}
 }

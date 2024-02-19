@@ -8,10 +8,12 @@
 #'
 #' @param x A lazy data frame arrow connection.
 #' @param ... Variables to group by
+#' @param wt  If a variable, computes sum(wt) for each group.
 #' @param sort If TRUE, will show the largest groups at the top.
 #' 
-#' @importFrom dplyr count collect mutate
+#' @importFrom dplyr count collect
 #' @importFrom rlang quos
+#' @importFrom data.table setDT `:=`
 #'
 #' @return A data.frame
 #' @export
@@ -27,12 +29,28 @@
 #' count_pct(arrow_con, char1)
 #' count_pct(arrow_con, char2)
 #' count_pct(arrow_con, char1, char2)
-count_pct <- function(x, ..., sort = TRUE){
+count_pct <- function(x, ..., wt = NULL,  sort = TRUE){
   
   grouping_vars_expr <- rlang::quos(...)
 
-  dplyr::count(x, !!! grouping_vars_expr, sort = sort) |>
-    dplyr::collect() |>
-    dplyr::mutate(pct = n / sum(n))
+  counted_data <-
+    if(!is.null(wt)){
+      dplyr::count(x,!!! grouping_vars_expr , wt = wt, sort = sort)
+    }else{
+      dplyr::count(x,!!! grouping_vars_expr, sort = sort)
+    }
+  
+  
+  if(is_arrow_con(x)){
+    counted_data <- dplyr::collect(counted_data)
+  }
+  
+  data.table::setDT(counted_data)
+  
+  counted_data[, pct := round(n / sum(n), 3)]
+  
+  counted_data[, pct_cumulative := cumsum(pct)]
+  
+  return(counted_data[])
 
 }

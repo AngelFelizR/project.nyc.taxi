@@ -1,54 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/404.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/404.html</loc>
   </url>
   <url>
-    <loc>/articles/01-data-collection-process.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/articles/01-data-collection-process.html</loc>
   </url>
   <url>
-    <loc>/articles/02-business-understanding.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html</loc>
   </url>
   <url>
-    <loc>/articles/03-data-understanding.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/articles/03-data-understanding.html</loc>
   </url>
   <url>
-    <loc>/articles/index.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/articles/index.html</loc>
   </url>
   <url>
-    <loc>/authors.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/authors.html</loc>
   </url>
   <url>
-    <loc>/index.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/index.html</loc>
   </url>
   <url>
-    <loc>/LICENSE.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/LICENSE.html</loc>
   </url>
   <url>
-    <loc>/reference/BaseLineSimulation.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/BaseLineSimulation.html</loc>
   </url>
   <url>
-    <loc>/reference/compute_boxplot.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/compute_boxplot.html</loc>
   </url>
   <url>
-    <loc>/reference/count_pct.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/compute_num_summary.html</loc>
   </url>
   <url>
-    <loc>/reference/factor_weekday.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/count_pct.html</loc>
   </url>
   <url>
-    <loc>/reference/fast_glimpse.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/factor_weekday.html</loc>
   </url>
   <url>
-    <loc>/reference/index.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/fast_glimpse.html</loc>
   </url>
   <url>
-    <loc>/reference/join_zones.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/index.html</loc>
   </url>
   <url>
-    <loc>/reference/show_boxplot.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/join_zones.html</loc>
   </url>
   <url>
-    <loc>/reference/simulate_trips.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/show_boxplot.html</loc>
+  </url>
+  <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/simulate_trips.html</loc>
+  </url>
+  <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/summary_to_boxplot.html</loc>
   </url>
 </urlset>

@@ -5,5 +5,8 @@ articles:
   01-data-collection-process: 01-data-collection-process.html
   02-business-understanding: 02-business-understanding.html
   03-data-understanding: 03-data-understanding.html
-last_built: 2024-02-15T08:05Z
+last_built: 2024-02-16T13:15Z
+urls:
+  reference: https://angelfelizr.github.io/project.nyc.taxi/reference
+  article: https://angelfelizr.github.io/project.nyc.taxi/articles
 

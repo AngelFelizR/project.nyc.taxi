@@ -18,6 +18,21 @@ library(testthat)
 pkgload::load_all(export_all = FALSE)
 ```
 
+# Personal funtions
+
+```{r function-is_arrow_con}
+#' Validate if is an arrow table
+#'
+#' @param x An object
+#'
+#' @return A boolean variable
+is_arrow_con <- function(x){
+  inherits(x, "ArrowObject") | 
+    inherits(x, "arrow_dplyr_query")
+}
+```
+
+
 # Bussiness Understanding
 
 ## simulate_trips
@@ -126,7 +141,7 @@ simulate_trips <- function(arrow_con,
                       s_tips = tips)
     
     # If arrow we need to collect
-    if(inherits(arrow_con, "ArrowObject")){
+    if(is_arrow_con(arrow_con)){
       
       simulated_trip <- dplyr::collect(simulated_trip)
     
@@ -365,8 +380,7 @@ testthat::test_that("Missing column stop is working",{
 #' @examples
 fast_glimpse <- function(x){
   
-  stopifnot("x is not an arrow connection" = 
-              inherits(x, "ArrowObject") | inherits(x, "arrow_dplyr_query"))
+  stopifnot("x is not an arrow connection" = is_arrow_con(x))
   
   if(inherits(x, "arrow_dplyr_query")){
     print(x)
@@ -451,22 +465,40 @@ testthat::test_that("We don't method for data.frame",{
 #'
 #' @param x A lazy data frame arrow connection.
 #' @param ... Variables to group by
+#' @param wt  If a variable, computes sum(wt) for each group.
 #' @param sort If TRUE, will show the largest groups at the top.
 #' 
-#' @importFrom dplyr count collect mutate
+#' @importFrom dplyr count collect
 #' @importFrom rlang quos
+#' @importFrom data.table setDT `:=`
 #'
 #' @return A data.frame
 #' @export
 #'
 #' @examples
-count_pct <- function(x, ..., sort = TRUE){
+count_pct <- function(x, ..., wt = NULL,  sort = TRUE){
   
   grouping_vars_expr <- rlang::quos(...)
 
-  dplyr::count(x, !!! grouping_vars_expr, sort = sort) |>
-    dplyr::collect() |>
-    dplyr::mutate(pct = n / sum(n))
+  counted_data <-
+    if(!is.null(wt)){
+      dplyr::count(x,!!! grouping_vars_expr , wt = wt, sort = sort)
+    }else{
+      dplyr::count(x,!!! grouping_vars_expr, sort = sort)
+    }
+  
+  
+  if(is_arrow_con(x)){
+    counted_data <- dplyr::collect(counted_data)
+  }
+  
+  data.table::setDT(counted_data)
+  
+  counted_data[, pct := round(n / sum(n), 3)]
+  
+  counted_data[, pct_cumulative := cumsum(pct)]
+  
+  return(counted_data[])
 
 }
 ```
@@ -595,6 +627,7 @@ test_that("x must have values from 1 to 7",{
 #' @param value A column vector to summarize
 #' 
 #' @importFrom dplyr filter summarize mutate select collect
+#' @importFrom stats median quantile
 #'
 #' @return A data.frame with summary values
 #' @export
@@ -620,7 +653,7 @@ compute_num_summary <- function(x, value){
                   higher_whisker,
                   max_value)
   
-  if(inherits(x, "ArrowObject") | inherits(x, "arrow_dplyr_query")){
+  if(is_arrow_con(x)){
     summary <- dplyr::collect(summary)
   }
 

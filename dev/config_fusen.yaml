@@ -28,6 +28,7 @@ flat_functions.Rmd:
   - R/count_pct.R
   - R/factor_weekday.R
   - R/fast_glimpse.R
+  - R/is_arrow_con.R
   - R/join_zones.R
   - R/simulate_trips.R
   - R/summary_to_boxplot.R

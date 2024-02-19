@@ -19,7 +19,8 @@ Imports:
     ggplot2,
     lubridate,
     rlang,
-    scales
+    scales,
+    stats
 Suggests: 
     arrow,
     DiagrammeR,
