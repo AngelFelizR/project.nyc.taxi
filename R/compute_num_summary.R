@@ -27,14 +27,18 @@ compute_num_summary <- function(x, value){
     dplyr::summarize(min_value = min({{value}}),
                      q1 = quantile({{value}}, 0.25),
                      q2 = median({{value}}),
+                     mean = mean({{value}}),
                      q3 = quantile({{value}}, 0.75),
-                     max_value = max({{value}})) |>
+                     max_value = max({{value}}),
+                     sd = sd({{value}})) |>
     dplyr::mutate(lower_whisker = q1 - 1.5*(q3 - q1),
                   higher_whisker = q3 + 1.5*(q3 - q1)) |>
-    dplyr::select(min_value,
+    dplyr::select(sd,
+                  min_value,
                   lower_whisker,
                   q1,
                   q2,
+                  mean,
                   q3,
                   higher_whisker,
                   max_value)

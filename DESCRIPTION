@@ -16,21 +16,21 @@ Depends:
 Imports: 
     data.table,
     dplyr,
-    ggplot2,
     lubridate,
     rlang,
-    scales,
     stats
 Suggests: 
     arrow,
     DiagrammeR,
     forcats,
     fs,
+    ggplot2,
     here,
     infer,
     knitr,
     rmarkdown,
     rvest,
+    scales,
     testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr

@@ -584,14 +584,18 @@ compute_num_summary <- function(x, value){
     dplyr::summarize(min_value = min({{value}}),
                      q1 = quantile({{value}}, 0.25),
                      q2 = median({{value}}),
+                     mean = mean({{value}}),
                      q3 = quantile({{value}}, 0.75),
-                     max_value = max({{value}})) |>
+                     max_value = max({{value}}),
+                     sd = sd({{value}})) |>
     dplyr::mutate(lower_whisker = q1 - 1.5*(q3 - q1),
                   higher_whisker = q3 + 1.5*(q3 - q1)) |>
-    dplyr::select(min_value,
+    dplyr::select(sd,
+                  min_value,
                   lower_whisker,
                   q1,
                   q2,
+                  mean,
                   q3,
                   higher_whisker,
                   max_value)
@@ -614,42 +618,6 @@ data.frame(x = rnorm(200, mean = 5)) |>
 ```
 
 
-## summary_to_boxplot
-
-```{r function-show_boxplot}
-#' Display boxplot chart based of a summary.
-#'
-#' @param x A data.frame
-#' @param y_title A character value indicating the title to describe the y axis.
-#' @param y_break_width A number to define the width related to y axis.
-#' 
-#' @importFrom ggplot2 ggplot geom_boxplot scale_y_continuous labs theme_light
-#' @importFrom scales breaks_width
-#'
-#' @return A ggplot
-#' @export
-summary_to_boxplot <- function(x, y_title = "", y_break_width = 2) {
-  
-  ggplot2::ggplot(x)+
-    ggplot2::geom_boxplot(
-      aes(x = "", y = q2,
-          ymin = pmax(min_value, lower_whisker), 
-          lower = q1, 
-          middle = q2, 
-          upper = q3, 
-          ymax = pmin(max_value, higher_whisker)),
-      stat = "identity",
-      width = 0.3
-    )+
-    ggplot2::scale_y_continuous(breaks = scales::breaks_width(y_break_width))+
-    ggplot2::labs(y = y_title,
-                  x = "") +
-    ggplot2::theme_light()
-  
-}
-```
-
-
 # Inflate the functions
 
 ```{r development-inflate, eval=FALSE}
@@ -665,7 +633,8 @@ c("R", "man", "tests/testthat") |>
 
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
                vignette_name = NA,
-               vignettes = FALSE)
+               vignettes = FALSE,
+               check = FALSE)
 ```
 
 
