@@ -27,7 +27,6 @@ flat_functions.Rmd:
   - R/compute_num_summary.R
   - R/count_pct.R
   - R/factor_weekday.R
-  - R/fast_glimpse.R
   - R/is_arrow_con.R
   - R/join_zones.R
   - R/simulate_trips.R
@@ -35,7 +34,6 @@ flat_functions.Rmd:
   - R/bussiness-understanding-baselinesimulation.R
   tests:
   - tests/testthat/test-simulate_trips.R
-  - tests/testthat/test-fast_glimpse.R
   - tests/testthat/test-count_pct.R
   - tests/testthat/test-factor_weekday.R
   vignettes: []

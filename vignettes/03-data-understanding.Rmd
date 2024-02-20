@@ -55,17 +55,9 @@ options(datatable.print.nrows = 15)
 ```{r}
 NycTrips2022 <- 
   here("raw-data/trip-data/year=2022") |>
-  open_dataset() |>
-  mutate(company = case_when(
-    hvfhs_license_num == "HV0002" ~ "Juno",
-    hvfhs_license_num == "HV0003" ~ "Uber",
-    hvfhs_license_num == "HV0004" ~ "Via",
-    hvfhs_license_num == "HV0005" ~ "Lyft"
-  )) |>
-  select(-hvfhs_license_num)
+  open_dataset()
 
-
-fast_glimpse(NycTrips2022)
+NycTrips2022
 ```
 
 4. Importing the zone code description.
@@ -98,18 +90,23 @@ glimpse(TripsZoneDistribution)
 
 ### Categorical variables
 
+
+
 #### company
 
 The majority number of trips are done by *Uber* (HV003) and the rest for *Lyft*.
 
 ```{r}
 NycTrips2022 |> 
-  count_pct(company)
+  count_pct(company = case_when(hvfhs_license_num == "HV0002" ~ "Juno",
+                                hvfhs_license_num == "HV0003" ~ "Uber",
+                                hvfhs_license_num == "HV0004" ~ "Via",
+                                hvfhs_license_num == "HV0005" ~ "Lyft"))
 ```
 
 #### dispatching_base_num
 
-For most of the trips the dispatching number is **B03404** and **B03406**. The remaining codes represent a small proportion of observations.
+For most of the trips the dispatching number are **B03404** and **B03406**. The remaining codes represent a small proportion of observations.
 
 ```{r}
 NycTrips2022 |>
@@ -136,7 +133,7 @@ NycTrips2022 |>
 
 #### shared_request_flag
 
-Most of passengers don't request to a shared/pooled ride.
+Most of passengers **don't request** to a shared/pooled ride.
 
 ```{r}
 NycTrips2022 |>
@@ -145,7 +142,7 @@ NycTrips2022 |>
 
 #### shared_match_flag
 
-Most of passengers don't agree to a shared/pooled ride.
+Most of passengers don't request to a shared/pooled ride, but even **fewer achieved to share the ride**.
 
 ```{r}
 NycTrips2022 |> 
@@ -154,7 +151,7 @@ NycTrips2022 |>
 
 #### wav_request_flag
 
-It's really unusual for a passenger to request a wheelchair-accessible vehicle.
+It's really **unusual to request a wheelchair-accessible** vehicle.
 
 ```{r}
 NycTrips2022 |> 
@@ -163,7 +160,7 @@ NycTrips2022 |>
 
 #### wav_match_flag
 
-The number trips that take place in wheelchair-accessible vehicles is low but much higher that the number of trips requested with that capacity.
+It's really unusual to request a wheelchair-accessible vehicle, but we have more tips take place in wheelchair-accessible vehicles, so **it seems that the service has the capacity to meet the demand**.
 
 ```{r}
 NycTrips2022 |> 
@@ -190,18 +187,25 @@ TripsZoneDistribution |>
 
 #### start_service_zone
 
+**96% of trips** start in *Boro Zone* and *Yellow Zone*.
+
 ```{r}
 TripsZoneDistribution |>
-  count_pct(start_borough, start_service_zone, wt =  n)
+  count_pct(start_service_zone, wt =  n)
 ```
+
+> We need to recode EWR are Airports to keep the classification consistent.
 
 #### end_service_zone
 
+**91% of trips** start in *Boro Zone* and *Yellow Zone*.
+
 ```{r}
 TripsZoneDistribution |>
-  count_pct(end_borough, end_service_zone, wt =  n)
+  count_pct(end_service_zone, wt =  n)
 ```
 
+> We need to recode EWR are Airports to keep the classification consistent.
 
 ### Time variables
 
