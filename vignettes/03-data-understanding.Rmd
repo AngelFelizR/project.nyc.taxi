@@ -210,6 +210,136 @@ TripsZoneDistribution |>
 
 > We need to recode EWR are Airports to keep the classification consistent.
 
+#### start_service vs end_service zones
+
+```{r}
+#| echo: false
+#| include: false
+
+ZoneUniqueComb <-
+  TripsZoneDistribution[ 
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    unique(.SD),
+    .SDcols = c("start_zone", "end_zone")
+  ][, .N] |>
+  comma()
+
+EndingUniqueZones <-
+  TripsZoneDistribution[ 
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    uniqueN(end_zone),] |>
+  comma()
+```
+
+
+- `start_zone` and `end_zone`: As our data has `r ZoneUniqueComb` rows of relations between both columns, we opted to transform data in a way what each unique zone represent a row reducing the points to be plotted to only `r EndingUniqueZones` by following the next steps: 
+
+  1. Summarizing the total number of trips for each **starting point** independently to its destination 
+  2. Summarizing the total number of trips for each **ending point** independently to its origin.
+  3. Joining both tables into one.
+
+```{r}
+# 1. Summarizing Staring Zones
+StartingZonesCount <-
+  TripsZoneDistribution[
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
+    .(start_trips = sum(n)),
+    by =  .(borough = start_borough, 
+            zone = start_zone)
+  ]
+
+# 2. Summarizing Ending Zones
+EndingZonesCount <-
+  TripsZoneDistribution[
+    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
+      !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
+    .(end_trips = sum(n)),
+    by =  .(borough = end_borough, 
+            zone = end_zone)
+  ]
+
+# 3. Inner Joining Starting and Ending Zones Counts
+JoinedZonesCount <-
+  StartingZonesCount[
+    EndingZonesCount,
+    on = c("borough", "zone"),
+    nomatch = 0
+  ]
+```
+
+Once we have a much simpler data to work with, we is easy to confirm with the next linear regression that `start_trips` and `end_trips` has almost the same values the model has an slope of one. That means that in must of cases **if someone takes a taxi to go to any place it's really likely to take another taxi back**.
+
+```{r}
+lm(end_trips ~ start_trips, 
+   data = JoinedZonesCount) |>
+  summary()
+```
+
+Let's now explore the zones where there is **no balance** between the `start_trips` and the `end_trips` in the most visited zoned of each Borough. To do so, we defined the rate `end_trips`/`start_trips` and highlight zones with lower rate than the 15% percentile or higher rate than 85% percentile.
+
+```{r}
+# Creating dataset to plot
+ZonesCountToPlot <-
+  copy(JoinedZonesCount)[
+    j = `:=`(ending_starting_rate = end_trips/start_trips,
+             borough = fct_reorder(borough, -end_trips, .fun = sum, na.rm = TRUE),
+             end_m_trips = end_trips / 1e6L,
+             start_m_trips = start_trips / 1e6L)
+  ][, unbalance_situation := fcase(
+    ending_starting_rate < quantile(ending_starting_rate, 0.15),
+    "More starts than ends",
+    ending_starting_rate > quantile(ending_starting_rate, 0.85),
+    "More ends than starts",
+    default = "Balanced"
+  )
+  ][order(-(start_trips + end_trips)), 
+    .SD[1:6],
+    by = "borough"] 
+
+# Creating the scatted plot
+ggplot(ZonesCountToPlot,
+       aes(start_m_trips, end_m_trips))+
+  geom_blank(aes(pmax(start_m_trips, end_m_trips),
+                 pmax(start_m_trips, end_m_trips)))+
+  geom_abline(linewidth = 0.8,
+              alpha = 0.5)+
+  geom_point(aes(color = borough),
+             size = 3.5,
+             alpha = 0.75)+
+  geom_text(data = ZonesCountToPlot[unbalance_situation ==
+                                      "More starts than ends"],
+            aes(label = zone),
+            size = 3.5,
+            hjust = -0.12,
+            check_overlap = TRUE)+
+  geom_text(data = ZonesCountToPlot[unbalance_situation ==
+                                      "More ends than starts"],
+            aes(label = zone),
+            size = 3.5,
+            hjust = 1.12,
+            check_overlap = TRUE)+
+  scale_x_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
+  scale_y_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
+  coord_equal() +
+  labs(title = "Top 6 Most Important Zones by Borough",
+       color = "Borough",
+       x = "Number of Trips Starting",
+       y = "Number of Trips Ending")+
+  theme_light()+
+  theme(legend.position = "top",
+        text = element_text(color = "black"),
+        plot.title = element_text(face = "bold"))
+```
+
+Based on the results, we can highlight the next points:
+
+1. The airports present in Queens, *LaGuardia Airport* and *JFK Airport*, have many more trips going to the airport than going out of airport. This might happen due that there are more transportation options like other taxis, shuttles, and public transportation.
+
+2. The remaining zones, *Jackson Heights*, *East Village* and *TriBeCa/Civic Center*, are residential zones with a variety of public transportation options.
+
 ### Time variables
 
 As we want to predict the **profit rate** related to each trip, we just need to consider for this analysis `request_datetime` as is the only variable available to the driver before starting a trip and the `dropoff_datetime` the point used to defining the end of a trip.
@@ -375,36 +505,47 @@ RequestTimeSummary[year(request_month) == 2022,
 
 ### Numeric variables
 
+Last but not least, it time check explore the individual distribution of numeric variable based of summary metrics by using the custom `compute_num_summary` to use all the power under the `arrow` package.
 
 #### trip_miles
+
+Below we can see that the min distance was **0 miles** which can be possible if the trip duration was also short, but we need to check those cases and the higher distance was **634 miles**, which can be a valid outlier taking in consideration that the higher whisker is 13.2 miles.
 
 ```{r}
 NycTrips2022 |>
   compute_num_summary(trip_miles)
 ```
 
+We can also check that only 24.4K trips are over 100 miles.
+
 ```{r}
 NycTrips2022 |>
-  count_pct(trip_miles_status = case_when(trip_miles < 100 ~ "Normal trip",
-                                          trip_miles >= 100 ~ "Long Trip"))
+  count_pct(trip_miles_status = case_when(trip_miles < 100 ~ "Normal trips",
+                                          trip_miles >= 100 ~ "Long Trips"),
+            digits = 4L)
 ```
+
+But even just taking the long trips we can see that 90% of those trips were shorter than **300 miles**, those trips doesn't look like good examples to train the model.
 
 ```{r}
 NycTrips2022 |>
   filter(trip_miles >= 100) |>
-  count_pct(trip_miles_status = case_when(trip_miles >= 600 ~ ">=600",
-                                          trip_miles >= 500 ~ ">=500",
-                                          trip_miles >= 400 ~ ">=400",
-                                          trip_miles >= 300 ~ ">=300",
-                                          trip_miles >= 200 ~ ">=200",
-                                          trip_miles >= 150 ~ ">=150",
-                                          trip_miles >= 130 ~ ">=130",
-                                          trip_miles >= 115 ~ ">=115",
-                                          trip_miles >= 100 ~ ">=100"))
+  count_pct(miles_interval = case_when(trip_miles >= 600 ~ ">=600",
+                                       trip_miles >= 500 ~ "[500, 600)",
+                                       trip_miles >= 400 ~ "[400, 500)",
+                                       trip_miles >= 300 ~ "[300, 400)",
+                                       trip_miles >= 200 ~ "[200, 300)",
+                                       trip_miles >= 150 ~ "[150, 200)",
+                                       trip_miles >= 130 ~ "[130, 150)",
+                                       trip_miles >= 115 ~ "[115, 130)",
+                                       trip_miles >= 100 ~ "[100,115)"),
+            digits = 4L)
 ```
 
 
 #### base_passenger_fare
+
+Having a negative number as base fare doesn't have any sense, so any negative number needs more investigation. On the other side we all also can see a **5k trip** which doesn't make sense as well.
 
 ```{r}
 NycTrips2022 |>
@@ -414,15 +555,30 @@ NycTrips2022 |>
 
 #### tips
 
+The column looks really good, it makes sense that for more than 75% of trips the tip is 0 as it is not mandatory, but having a trip with a $294 tip is not hard to believe.
+
 ```{r}
 NycTrips2022 |>
   compute_num_summary(tips)
 ```
 
+After braking the `tips` we can see that `80%` of trips don't present any tip and must of the tips are lower than **50 dollars**, so gets really hard to achieved more than that based on tips.
+
+```{r}
+NycTrips2022 |>
+  count_pct(tips_interval = case_when(tips >= 250 ~ ">=250",
+                                      tips >= 200 ~ "[200, 250)",
+                                      tips >= 150 ~ "[150, 200)",
+                                      tips >= 100 ~ "[100, 150)",
+                                      tips >= 50 ~ "[50, 100)",
+                                      tips > 0 ~ "(0, 50)",
+                                      TRUE ~ "0"),
+            digits = 8L)
+```
 
 #### trip_minutes
 
-There is some problems.
+After taking the difference in minutes between the request time and the drop off time in minutes, we can see negative trips and some other much longer than an hour.
 
 ```{r}
 NycTrips2022 |>
@@ -430,210 +586,20 @@ NycTrips2022 |>
   compute_num_summary(trip_minutes)
 ```
 
-The proportion of problems is tiny.
+Now we can see that 99% of trips takes less than 2 hours and only 152,049 trips have more than 2 hour trip.
 
 ```{r}
 NycTrips2022 |>
   mutate(trip_minutes = arrow_minutes_between(request_datetime, dropoff_datetime)) |>
   count_pct(trip_minutes_status = case_when(trip_minutes < 0 ~ "Negative",
-                                            trip_minutes > 120 ~ "Over 2 hours",
-                                            TRUE ~ "Normal"))
+                                            trip_minutes <= 60   ~ "1 hour or less",
+                                            trip_minutes <= (60*2) ~ "(1:00, 2:00]",
+                                            trip_minutes <= (60*3) ~ "(2:00, 3:00]",
+                                            trip_minutes > (60*3) ~ ">3 hours"),
+            digits = 6L)
 ```
 
-
-## Additinal exploration
-
-- `start_borough` and `end_borough`: After exploring the next distribution of trips we can highlight that:
-
-  - 94% of the trips take place in *Manhattan*, *Brooklyn*, *Queens* and *Bronx*. As consequence, there is no reason to keep exploring trips related to *Staten Island*, *EWR* or *Unknown* as they are the minority.
-  - 70% the trips take place without going to outside the start borough.
-
-```{r}
-TripsZoneDistribution[, .(n = sum(n)),
-                      by = c("start_borough", "end_borough")
-][order(n)
-][, c("start_borough", "end_borough") := 
-    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
-  .SDcols = c("start_borough", "end_borough")
-][, end_borough := fct_rev(end_borough)] |>
-  ggplot(aes(end_borough, start_borough))+
-  geom_tile(aes(fill = n)) +
-  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
-  scale_fill_gradient(low = "white", 
-                      high = "red",
-                      labels= comma_format())+
-  scale_x_discrete(position = "top") +
-  labs(title = "Distribution of Trips by Borough in NYC 2022",
-       x = "Trip End", 
-       y = "Trip Start", 
-       fill = "Number of Trips") +
-  theme_classic() +
-  theme(plot.title = element_text(face = "bold"),
-        axis.ticks = element_blank(),
-        axis.line = element_blank(),
-        axis.text = element_text(color = "black"),
-        axis.title = element_text(face = "italic"))
-```
-
-- `start_service_zone` and `end_service_zone`: 52% of the trips take place at the *Boro Zone*, 26% of trips take place at the *Yellow Zone* and only small fraction goes to the *Airports*.
-
-```{r}
-TripsZoneDistribution[  
-  !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
-    !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
-  .(n = sum(n)),
-  by = c("start_service_zone",
-         "end_service_zone")
-][order(n)
-][, c("start_service_zone", "end_service_zone") := 
-    lapply(.SD, \(x) factor(x, levels = unique(x, fromLast = TRUE)) ),
-  .SDcols = c("start_service_zone", "end_service_zone")
-][, end_service_zone := fct_rev(end_service_zone)] |>
-  ggplot(aes(end_service_zone, start_service_zone))+
-  geom_tile(aes(fill = n)) +
-  geom_text(aes(label = percent(n/sum(n), accuracy = 0.01))) +
-  scale_fill_gradient(low = "white", 
-                      high = "red",
-                      labels= comma_format())+
-  scale_x_discrete(position = "top") +
-  labs(title = "Distribution of Trips by Service Zone in NYC 2022",
-       x = "Trip End", 
-       y = "Trip Start", 
-       fill = "Number of Trips") +
-  theme_classic() +
-  theme(plot.title = element_text(face = "bold"),
-        axis.ticks = element_blank(),
-        axis.line = element_blank(),
-        axis.text = element_text(color = "black"),
-        axis.title = element_text(face = "italic"))
-```
+## Sampling data
 
 
-```{r}
-#| echo: false
-#| include: false
-
-ZoneUniqueComb <-
-  TripsZoneDistribution[ 
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
-    unique(.SD),
-    .SDcols = c("start_zone", "end_zone")
-  ][, .N] |>
-  comma()
-
-EndingUniqueZones <-
-  TripsZoneDistribution[ 
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") & 
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
-    uniqueN(end_zone),] |>
-  comma()
-```
-
-
-- `start_zone` and `end_zone`: As our data has `r ZoneUniqueComb` rows of relations between both columns, we opted to transform data in a way what each unique zone represent a row reducing the points to be plotted to only `r EndingUniqueZones` by following the next steps: 
-
-  1. Summarizing the total number of trips for each **starting point** independently to its destination 
-  2. Summarizing the total number of trips for each **ending point** independently to its origin.
-  3. Joining both tables into one.
-
-```{r}
-# 1. Summarizing Staring Zones
-StartingZonesCount <-
-  TripsZoneDistribution[
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"),
-    .(start_trips = sum(n)),
-    by =  .(borough = start_borough, 
-            zone = start_zone)
-  ]
-
-# 2. Summarizing Ending Zones
-EndingZonesCount <-
-  TripsZoneDistribution[
-    !start_borough %chin% c("Staten Island", "Unknown", "EWR") &
-      !end_borough %chin% c("Staten Island", "Unknown", "EWR"), 
-    .(end_trips = sum(n)),
-    by =  .(borough = end_borough, 
-            zone = end_zone)
-  ]
-
-# 3. Inner Joining Starting and Ending Zones Counts
-JoinedZonesCount <-
-  StartingZonesCount[
-    EndingZonesCount,
-    on = c("borough", "zone"),
-    nomatch = 0
-  ]
-```
-
-Once we have a much simpler data to work with, we is easy to confirm with the next linear regression that `start_trips` and `end_trips` has almost the same values the model has an slope of one. That means that in must of cases **if someone takes a taxi to go to any place it's really likely to take another taxi back**.
-
-```{r}
-lm(end_trips ~ start_trips, 
-   data = JoinedZonesCount) |>
-  summary()
-```
-
-Let's now explore the zones where there is **no balance** between the `start_trips` and the `end_trips` in the most visited zoned of each Borough. To do so, we defined the rate `end_trips`/`start_trips` and highlight zones with lower rate than the 15% percentile or higher rate than 85% percentile.
-
-```{r}
-# Creating dataset to plot
-ZonesCountToPlot <-
-  copy(JoinedZonesCount)[
-    j = `:=`(ending_starting_rate = end_trips/start_trips,
-             borough = fct_reorder(borough, -end_trips, .fun = sum, na.rm = TRUE),
-             end_m_trips = end_trips / 1e6L,
-             start_m_trips = start_trips / 1e6L)
-  ][, unbalance_situation := fcase(
-    ending_starting_rate < quantile(ending_starting_rate, 0.15),
-    "More starts than ends",
-    ending_starting_rate > quantile(ending_starting_rate, 0.85),
-    "More ends than starts",
-    default = "Balanced"
-  )
-  ][order(-(start_trips + end_trips)), 
-    .SD[1:6],
-    by = "borough"] 
-
-# Creating the scatted plot
-ggplot(ZonesCountToPlot,
-       aes(start_m_trips, end_m_trips))+
-  geom_blank(aes(pmax(start_m_trips, end_m_trips),
-                 pmax(start_m_trips, end_m_trips)))+
-  geom_abline(linewidth = 0.8,
-              alpha = 0.5)+
-  geom_point(aes(color = borough),
-             size = 3.5,
-             alpha = 0.75)+
-  geom_text(data = ZonesCountToPlot[unbalance_situation ==
-                                      "More starts than ends"],
-            aes(label = zone),
-            size = 3.5,
-            hjust = -0.12,
-            check_overlap = TRUE)+
-  geom_text(data = ZonesCountToPlot[unbalance_situation ==
-                                      "More ends than starts"],
-            aes(label = zone),
-            size = 3.5,
-            hjust = 1.12,
-            check_overlap = TRUE)+
-  scale_x_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
-  scale_y_continuous(labels = comma_format(accuracy = 0.1, suffix = " M"))+
-  coord_equal() +
-  labs(title = "Top 6 Most Important Zones by Borough",
-       color = "Borough",
-       x = "Number of Trips Starting",
-       y = "Number of Trips Ending")+
-  theme_light()+
-  theme(legend.position = "top",
-        text = element_text(color = "black"),
-        plot.title = element_text(face = "bold"))
-```
-
-Based on the results, we can highlight the next points:
-
-1. The airports present in Queens, *LaGuardia Airport* and *JFK Airport*, have many more trips going to the airport than going out of airport. This might happen due that there are more transportation options like other taxis, shuttles, and public transportation.
-
-2. The remaining zones, *Jackson Heights*, *East Village* and *TriBeCa/Civic Center*, are residential zones with a variety of public transportation options.
 

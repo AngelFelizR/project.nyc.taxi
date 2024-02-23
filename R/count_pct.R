@@ -10,6 +10,7 @@
 #' @param ... Variables to group by
 #' @param wt  If a variable, computes sum(wt) for each group.
 #' @param sort If TRUE, will show the largest groups at the top.
+#' @param digits Integer indicating the number of decimal places
 #' 
 #' @importFrom dplyr count collect
 #' @importFrom rlang quos enquo
@@ -35,7 +36,7 @@
 #'
 #' # You can use the wt function
 #' count_pct(dt1, char1, wt = n)
-count_pct <- function(x, ..., wt = NULL,  sort = TRUE){
+count_pct <- function(x, ..., wt = NULL,  sort = TRUE, digits = 3L){
   
   grouping_vars_expr <- rlang::quos(...)
   wt_expr <- rlang::enquo(wt)
@@ -54,7 +55,7 @@ count_pct <- function(x, ..., wt = NULL,  sort = TRUE){
   
   data.table::setDT(counted_data)
   
-  counted_data[, pct := round(n / sum(n), 3)]
+  counted_data[, pct := round(n / sum(n), digits)]
   
   counted_data[, pct_cumulative := cumsum(pct)]
   

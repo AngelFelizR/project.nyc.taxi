@@ -4,7 +4,7 @@
 \alias{count_pct}
 \title{Counts rows based con columns provided}
 \usage{
-count_pct(x, ..., wt = NULL, sort = TRUE)
+count_pct(x, ..., wt = NULL, sort = TRUE, digits = 3L)
 }
 \arguments{
 \item{x}{A lazy data frame arrow connection.}
@@ -14,6 +14,8 @@ count_pct(x, ..., wt = NULL, sort = TRUE)
 \item{wt}{If a variable, computes sum(wt) for each group.}
 
 \item{sort}{If TRUE, will show the largest groups at the top.}
+
+\item{digits}{Integer indicating the number of decimal places}
 }
 \value{
 A data.frame
