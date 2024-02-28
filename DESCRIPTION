@@ -18,7 +18,8 @@ Imports:
     dplyr,
     lubridate,
     rlang,
-    stats
+    stats,
+    withr
 Suggests: 
     arrow,
     DiagrammeR,

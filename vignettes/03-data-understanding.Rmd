@@ -601,5 +601,36 @@ NycTrips2022 |>
 
 ## Sampling data
 
+To limit the experiment let's just pick the zone related to Manhattan, Brooklyn and Queens.
+
+```{r}
+ValidZones <-
+  ZoneCodes[Borough %chin% c("Manhattan", "Brooklyn", "Queens"), 
+            LocationID]
+```
+
+Let's define the size of each group.
+
+```{r}
+here("raw-data/trip-data/year=2022/month=01/part-0.parquet") |> 
+  read_parquet()
+
+SamplePlan <-
+  NycTrips2022 |>
+  filter(PULocationID %in% ValidZones,
+         DOLocationID %in% ValidZones) |>
+  plan_sample_by_group(month, PULocationID, DOLocationID, seed = 1)
+
+setkey(SamplePlan, row_id)
+
+SamplePlan
+```
+
+```{r, eval=FALSE}
+NycTrips2022 |> nrow() |> scales::comma()
+```
+
+
+
 
 

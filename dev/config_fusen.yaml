@@ -29,12 +29,14 @@ flat_functions.Rmd:
   - R/factor_weekday.R
   - R/is_arrow_con.R
   - R/join_zones.R
+  - R/plan_sample_by_group.R
   - R/simulate_trips.R
   - R/bussiness-understanding-baselinesimulation.R
   tests:
   - tests/testthat/test-simulate_trips.R
   - tests/testthat/test-count_pct.R
   - tests/testthat/test-factor_weekday.R
+  - tests/testthat/test-plan_sample_by_group.R
   vignettes: []
   inflate:
     flat_file: dev/flat_functions.Rmd
