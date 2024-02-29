@@ -26,6 +26,6 @@ TLC Trip Record Data
 BaseLineSimulation
 }
 \description{
-Trips returned after runing the simulation.
+Trips returned after running the simulation.
 }
 \keyword{datasets}

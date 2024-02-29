@@ -2,7 +2,7 @@
 
 #' BaseLineSimulation
 #'
-#' Trips returned after runing the simulation.
+#' Trips returned after running the simulation.
 #'
 #' @format A data frame of 10 variables:
 #' \describe{

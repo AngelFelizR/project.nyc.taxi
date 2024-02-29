@@ -53,9 +53,9 @@ options(datatable.print.nrows = 15)
 2. Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
 
 ```{r}
-NycTrips2022 <- 
-  here("raw-data/trip-data/year=2022") |>
-  open_dataset()
+data_path <- here("raw-data/trip-data/year=2022")
+
+NycTrips2022 <- open_dataset(data_path)
 
 dim(NycTrips2022) |> comma()
 
@@ -601,30 +601,23 @@ NycTrips2022 |>
 
 ## Sampling data
 
-To limit the experiment let's just pick the zone related to Manhattan, Brooklyn and Queens.
+Due our limited compute power capacity we will need to down sample the data to be able to unlock all R capacities.
 
-```{r}
-ValidZones <-
-  ZoneCodes[Borough %chin% c("Manhattan", "Brooklyn", "Queens"), 
-            LocationID]
+As most of the trips take place between Manhattan, Brooklyn and Queens, we are going to focus first in those zones.
+
+```{r, eval=FALSE}
+BoroughToKeep <- c("Manhattan", "Brooklyn", "Queens")
+
+TrainingTrips <-
+  dir(data_path,
+      full.names = TRUE,
+      recursive = TRUE) |>
+  lapply(sample_parquet,
+         valid_zones = ZoneCodes[Borough %chin% BoroughToKeep, LocationID]) |>
+  rbindlist()
 ```
 
 Let's define the size of each group.
-
-```{r}
-here("raw-data/trip-data/year=2022/month=01/part-0.parquet") |> 
-  read_parquet()
-
-SamplePlan <-
-  NycTrips2022 |>
-  filter(PULocationID %in% ValidZones,
-         DOLocationID %in% ValidZones) |>
-  plan_sample_by_group(month, PULocationID, DOLocationID, seed = 1)
-
-setkey(SamplePlan, row_id)
-
-SamplePlan
-```
 
 ```{r, eval=FALSE}
 NycTrips2022 |> nrow() |> scales::comma()
