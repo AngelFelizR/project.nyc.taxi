@@ -15,21 +15,6 @@ navbar:
     left:  [intro, articles, reference, tutorials, news]
     right: [search, github]
 
-reference:
-  - title: Bussiness Understanding
-    contents:
-    - simulate_trips
-    - BaseLineSimulation
-  - title: Data Understanding
-    contents:
-    - fast_glimpse
-    - count_pct
-    - join_zones
-    - factor_weekday
-    - compute_num_summary
-    - summary_to_boxplot
-
-
 authors:
   Angel Feliz:
     href: https://angelfeliz.com

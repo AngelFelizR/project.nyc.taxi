@@ -16,22 +16,24 @@ test_that("The prob is working",{
 test_that("The zone is working",{
   
   df <- data.frame(x = 1:100,
-                        PULocationID = rep(1:5, each = 20),
-                        DOLocationID = rep(5:1, each = 20))
+                   PULocationID = rep(1:5, each = 20),
+                   DOLocationID = rep(5:1, each = 20))
   
   file_path <- tempfile(fileext = ".parquet")
   
   arrow::write_parquet(df, file_path)
   
+  valid_zones <-  c(2L, 3L)
+  
   taken_sample <- sample_parquet(file_path,
-                                 valid_zones = 3L,
+                                 valid_zones = valid_zones,
                                  prob = 0.10)
   
   expect_equal(nrow(taken_sample), 2L)
   
-  expect_true(all(taken_sample$PULocationID == 3L))
-  
-  expect_true(all(taken_sample$DOLocationID == 3L))
+  expect_true(all(taken_sample$PULocationID %in% valid_zones))
+  expect_true(all(taken_sample$DOLocationID %in% valid_zones))
+  expect_true(any(taken_sample$DOLocationID != taken_sample$PULocationID))
   
   file.remove(file_path)
 })

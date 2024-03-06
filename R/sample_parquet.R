@@ -42,11 +42,12 @@ if(is.null(valid_zones)) {
   
 }
 
-data.table::setkeyv(raw_data, c("PULocationID", "DOLocationID"))
-
 sampled_data <-
-  raw_data[.(valid_zones, valid_zones),
-           .SD[sample.int(.N, size = as.integer(.N * prob))]]
+  raw_data[.(valid_zones),
+           on = "PULocationID"
+  ][.(valid_zones),
+    on = "DOLocationID"
+  ][, .SD[sample.int(.N, size = as.integer(.N * prob))]]
 
 return(sampled_data)
   

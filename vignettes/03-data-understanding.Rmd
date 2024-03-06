@@ -617,12 +617,64 @@ TrainingTrips <-
   rbindlist()
 ```
 
-Let's define the size of each group.
+## Solving quality problems
 
-```{r, eval=FALSE}
-NycTrips2022 |> nrow() |> scales::comma()
+```{r}
+
+TrainingTrips[, .N, .(same = PULocationID == DOLocationID)]
+
+# Selecting variables to use
+TrainingTrips[, join_zones(.SD,
+                           zone_tb = ZoneCodes)
+][,.(company = 
+       data.table::fcase(hvfhs_license_num == "HV0002", "Juno",
+                         hvfhs_license_num == "HV0003", "Uber",
+                         hvfhs_license_num == "HV0004", "Via",
+                         hvfhs_license_num == "HV0005", "Lyft"),
+     dispatching_base_num =
+       data.table::fifelse(dispatching_base_num %chin% c("B03404", "B03406"),
+                           dispatching_base_num,
+                           "Other"),
+     originating_base_num = 
+       data.table::fcase(is.na(dispatching_base_num), "Missing", 
+                         dispatching_base_num == "B03404", "B03404",
+                         default = "Other"),
+     access_a_ride_flag = 
+       data.table::fifelse(!access_a_ride_flag %like% "//w", 
+                           "Missing", 
+                           access_a_ride_flag),
+     shared_request_flag,
+     shared_match_flag,
+     wav_request_flag,
+     wav_match_flag,
+     
+     start_borough,
+     end_borough,
+     same_borough = as.integer(start_borough == end_borough), 
+     
+     start_service_zone,
+     end_service_zone,
+     same_service_zone = as.integer(start_service_zone == end_service_zone),
+     
+     start_zone,
+     end_zone,
+     same_zone = as.integer(start_zone == end_zone),
+     
+     dropoff_datetime,
+     driver_pay,
+     tips)][, View(.SD)]
 ```
 
+
+
+## Correlations between predictors and target variable
+
+Before exploring correlations we need to transforming the sampled data by:
+
+- Solving quality problems.
+- Transforming categorical variables into boolean ones.
+- Transforming zone code to factors.
+- Adding new features.
 
 
 

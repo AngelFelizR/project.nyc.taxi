@@ -36,9 +36,6 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item">
-  <a class="nav-link" href="../reference/index.html">Reference</a>
-</li>
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
@@ -46,6 +43,9 @@
     <a class="dropdown-item" href="../articles/02-business-understanding.html">02 - Business Understanding</a>
     <a class="dropdown-item" href="../articles/03-data-understanding.html">03 - Data Understanding</a>
   </div>
+</li>
+<li class="nav-item">
+  <a class="nav-link" href="../reference/index.html">Reference</a>
 </li>
       </ul>
 <form class="form-inline my-2 my-lg-0" role="search">
@@ -80,7 +80,7 @@
 
     
     
-<p>After completing the <a href="https://github.com/AngelFelizR/nyc-taxi-project/tree/master/notebooks/02-business-understanding" class="external-link">business
+<p>After completing the <a href="https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html">business
 understanding</a> phase we are ready to perform the <strong>data
 understanding</strong> phase by performing an EDA with the following
 steps:</p>
@@ -94,10 +94,8 @@ steps:</p>
 <ul>
 <li>Ensure data quality</li>
 <li>Identify key predictors</li>
-<li>Inform model choice</li>
 <li>Detect multicollinearity</li>
-<li>Guide feature engineering</li>
-<li>Inform data collection strategy</li>
+<li>Guide model choice and feature engineering</li>
 </ul>
 <div class="section level2">
 <h2 id="setting-the-environment-up">Setting the environment up<a class="anchor" aria-label="anchor" href="#setting-the-environment-up"></a>
@@ -116,29 +114,25 @@ the following 4 steps:</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://forcats.tidyverse.org/" class="external-link">forcats</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lubridate.tidyverse.org" class="external-link">lubridate</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/apache/arrow/" class="external-link">arrow</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/apache/arrow/" class="external-link">arrow</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>datatable.print.nrows <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span></code></pre></div>
 <ol start="2" style="list-style-type: decimal">
 <li>Creating an Arrow connection object to perform some
 <strong>manipulations in disk</strong> before taking the data into the
 RAM memory.</li>
 </ol>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"raw-data/trip-data/year=2022"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>company <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span></span>
-<span>    <span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0002"</span> <span class="op">~</span> <span class="st">"Juno"</span>,</span>
-<span>    <span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0003"</span> <span class="op">~</span> <span class="st">"Uber"</span>,</span>
-<span>    <span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0004"</span> <span class="op">~</span> <span class="st">"Via"</span>,</span>
-<span>    <span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0005"</span> <span class="op">~</span> <span class="st">"Lyft"</span></span>
-<span>  <span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">hvfhs_license_num</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">data_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"raw-data/trip-data/year=2022"</span><span class="op">)</span></span>
 <span></span>
+<span><span class="va">NycTrips2022</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="va">data_path</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/fast_glimpse.html">fast_glimpse</a></span><span class="op">(</span><span class="va">NycTrips2022</span><span class="op">)</span></span>
-<span><span class="co">#&gt; FileSystemDataset (query)</span></span>
-<span><span class="co">#&gt; 212,416,083 rows x 25 columns</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">NycTrips2022</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "212,416,083" "25"</span></span>
+<span></span>
+<span><span class="va">NycTrips2022</span></span>
+<span><span class="co">#&gt; FileSystemDataset with 12 Parquet files</span></span>
+<span><span class="co">#&gt; hvfhs_license_num: string</span></span>
 <span><span class="co">#&gt; dispatching_base_num: string</span></span>
 <span><span class="co">#&gt; originating_base_num: string</span></span>
 <span><span class="co">#&gt; request_datetime: timestamp[us]</span></span>
@@ -163,7 +157,8 @@ RAM memory.</li>
 <span><span class="co">#&gt; wav_request_flag: string</span></span>
 <span><span class="co">#&gt; wav_match_flag: string</span></span>
 <span><span class="co">#&gt; month: int32</span></span>
-<span><span class="co">#&gt; company: string</span></span></code></pre></div>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; See $metadata for additional Schema metadata</span></span></code></pre></div>
 <ol start="4" style="list-style-type: decimal">
 <li>Importing the zone code description.</li>
 </ol>
@@ -190,244 +185,243 @@ translating the zone codes.</li>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">TripsZoneDistribution</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">PULocationID</span>, <span class="va">DOLocationID</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">PULocationID</span>, <span class="va">DOLocationID</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/join_zones.html">join_zones</a></span><span class="op">(</span>zone_tb <span class="op">=</span> <span class="va">ZoneCodes</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">TripsZoneDistribution</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 65,445</span></span>
-<span><span class="co">#&gt; Columns: 7</span></span>
-<span><span class="co">#&gt; $ start_borough      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Manhattan", "Manhattan", "Manhattan", "Manhattan",…</span></span>
-<span><span class="co">#&gt; $ start_zone         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Murray Hill", "Upper East Side South", "Yorkville …</span></span>
-<span><span class="co">#&gt; $ start_service_zone <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Yellow Zone", "Yellow Zone", "Yellow Zone", "Yello…</span></span>
-<span><span class="co">#&gt; $ end_borough        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Manhattan", "Manhattan", "Manhattan", "Manhattan",…</span></span>
-<span><span class="co">#&gt; $ end_zone           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Midtown Center", "Midtown Center", "Sutton Place/T…</span></span>
-<span><span class="co">#&gt; $ end_service_zone   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Yellow Zone", "Yellow Zone", "Yellow Zone", "Yello…</span></span>
-<span><span class="co">#&gt; $ n                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 65271, 87040, 18209, 34465, 17883, 11167, 16980, 21…</span></span></code></pre></div>
+<span><span class="co">#&gt; Columns: 9</span></span>
+<span><span class="co">#&gt; $ start_borough      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Queens", "Brooklyn", "Queens", "Brooklyn", "Brookl…</span></span>
+<span><span class="co">#&gt; $ start_zone         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "JFK Airport", "East New York", "LaGuardia Airport"…</span></span>
+<span><span class="co">#&gt; $ start_service_zone <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Airports", "Boro Zone", "Airports", "Boro Zone", "…</span></span>
+<span><span class="co">#&gt; $ end_borough        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "Unknown", "Brooklyn", "Unknown", "Brooklyn", "Broo…</span></span>
+<span><span class="co">#&gt; $ end_zone           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "NA", "East New York", "NA", "Borough Park", "Canar…</span></span>
+<span><span class="co">#&gt; $ end_service_zone   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N/A", "Boro Zone", "N/A", "Boro Zone", "Boro Zone"…</span></span>
+<span><span class="co">#&gt; $ n                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 690618, 640891, 453413, 383687, 368971, 324967, 272…</span></span>
+<span><span class="co">#&gt; $ pct                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.003, 0.003, 0.002, 0.002, 0.002, 0.002, 0.001, 0.…</span></span>
+<span><span class="co">#&gt; $ pct_cumulative     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.003, 0.006, 0.008, 0.010, 0.012, 0.014, 0.015, 0.…</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="individual-distribution">Individual distribution<a class="anchor" aria-label="anchor" href="#individual-distribution"></a>
+<h2 id="individual-distributions">Individual distributions<a class="anchor" aria-label="anchor" href="#individual-distributions"></a>
 </h2>
 <div class="section level3">
 <h3 id="categorical-variables">Categorical variables<a class="anchor" aria-label="anchor" href="#categorical-variables"></a>
 </h3>
+<p>Let’s starting counting and checking the proportions related to each
+category.</p>
 <div class="section level4">
 <h4 id="company">company<a class="anchor" aria-label="anchor" href="#company"></a>
 </h4>
 <p>The majority number of trips are done by <em>Uber</em> (HV003) and
 the rest for <em>Lyft</em>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">company</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
-<span><span class="co">#&gt;   company         n   pct</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Uber    153<span style="text-decoration: underline;">847</span>310 0.724</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Lyft     58<span style="text-decoration: underline;">568</span>773 0.276</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span>company <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0002"</span> <span class="op">~</span> <span class="st">"Juno"</span>,</span>
+<span>                                <span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0003"</span> <span class="op">~</span> <span class="st">"Uber"</span>,</span>
+<span>                                <span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0004"</span> <span class="op">~</span> <span class="st">"Via"</span>,</span>
+<span>                                <span class="va">hvfhs_license_num</span> <span class="op">==</span> <span class="st">"HV0005"</span> <span class="op">~</span> <span class="st">"Lyft"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    company         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;     &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:    Uber 153847310 0.724          0.724</span></span>
+<span><span class="co">#&gt; 2:    Lyft  58568773 0.276          1.000</span></span></code></pre></div>
+<blockquote>
+<p>To improve interpretavility we need to make the same translation
+after sampling the data.</p>
+</blockquote>
 </div>
 <div class="section level4">
 <h4 id="dispatching_base_num">dispatching_base_num<a class="anchor" aria-label="anchor" href="#dispatching_base_num"></a>
 </h4>
-<p>For most of the trips the dispatching number is
-<strong>B03404</strong> for Uber and <strong>B03406</strong> related for
-Lyft. Uber also has other 27 dispatching number, but they are really
-weird to see.</p>
+<p>For most of the trips the dispatching number are
+<strong>B03404</strong> and <strong>B03406</strong>. The remaining codes
+represent a small proportion of observations.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">company</span>, <span class="va">dispatching_base_num</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="op">(</span>\<span class="op">(</span><span class="va">dt</span><span class="op">)</span> <span class="va">dt</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>n_unique_code <span class="op">=</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/duplicated.html" class="external-link">uniqueN</a></span><span class="op">(</span><span class="va">dispatching_base_num</span><span class="op">)</span>,</span>
-<span>                n_missing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">dispatching_base_num</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>,</span>
-<span>                pct <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">pct</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fl">4L</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>            by <span class="op">=</span> <span class="fu">.</span><span class="op">(</span><span class="va">company</span>,</span>
-<span>                   common <span class="op">=</span> <span class="va">pct</span> <span class="op">&gt;</span> <span class="fl">0.01</span><span class="op">)</span></span>
-<span>          <span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">n</span><span class="op">)</span><span class="op">]</span> <span class="op">)</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    company common n_unique_code n_missing         n    pct</span></span>
-<span><span class="co">#&gt;     &lt;char&gt; &lt;lgcl&gt;         &lt;int&gt;     &lt;int&gt;     &lt;int&gt;  &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1:    Uber   TRUE             1         0 153732577 0.7237</span></span>
-<span><span class="co">#&gt; 2:    Lyft   TRUE             1         0  58568773 0.2757</span></span>
-<span><span class="co">#&gt; 3:    Uber  FALSE            27         0    114733 0.0005</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">dispatching_base_num</span><span class="op">)</span></span>
+<span><span class="co">#&gt;     dispatching_base_num         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;                   &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt;  1:               B03404 153732577 0.724          0.724</span></span>
+<span><span class="co">#&gt;  2:               B03406  58568773 0.276          1.000</span></span>
+<span><span class="co">#&gt;  3:               B02764     54512 0.000          1.000</span></span>
+<span><span class="co">#&gt;  4:               B02872      6078 0.000          1.000</span></span>
+<span><span class="co">#&gt;  5:               B02395      4789 0.000          1.000</span></span>
+<span><span class="co">#&gt; ---                                                    </span></span>
+<span><span class="co">#&gt; 25:               B02878       591 0.000          1.000</span></span>
+<span><span class="co">#&gt; 26:               B02879       458 0.000          1.000</span></span>
+<span><span class="co">#&gt; 27:               B02875       213 0.000          1.000</span></span>
+<span><span class="co">#&gt; 28:               B02883       137 0.000          1.000</span></span>
+<span><span class="co">#&gt; 29:               B02865         3 0.000          1.000</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="originating_base_num">originating_base_num<a class="anchor" aria-label="anchor" href="#originating_base_num"></a>
 </h4>
-<p>This column has the same information as
-<code>dispatching_base_num</code> or has missing values, so we don’t
-need to use it.</p>
+<p>For most of the trips the originating number is
+<strong>B03404</strong> and the second is missing. The remaining codes
+represent a small proportion of observations.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">company</span>,</span>
-<span>            same_id <span class="op">=</span> <span class="va">originating_base_num</span> <span class="op">==</span> <span class="va">dispatching_base_num</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 4</span></span></span>
-<span><span class="co">#&gt;   company same_id         n        pct</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Uber    TRUE    153<span style="text-decoration: underline;">844</span>893 0.724     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Lyft    <span style="color: #BB0000;">NA</span>       58<span style="text-decoration: underline;">497</span>292 0.275     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Lyft    TRUE        <span style="text-decoration: underline;">71</span>481 0.000<span style="text-decoration: underline;">337</span>  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> Uber    <span style="color: #BB0000;">NA</span>           <span style="text-decoration: underline;">1</span>432 0.000<span style="text-decoration: underline;">006</span>74</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> Uber    FALSE         985 0.000<span style="text-decoration: underline;">004</span>64</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">originating_base_num</span><span class="op">)</span></span>
+<span><span class="co">#&gt;     originating_base_num         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;                   &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt;  1:               B03404 153730161 0.724          0.724</span></span>
+<span><span class="co">#&gt;  2:                 &lt;NA&gt;  58498724 0.275          0.999</span></span>
+<span><span class="co">#&gt;  3:               B03406     71481 0.000          0.999</span></span>
+<span><span class="co">#&gt;  4:               B02764     54511 0.000          0.999</span></span>
+<span><span class="co">#&gt;  5:               B02872      6078 0.000          0.999</span></span>
+<span><span class="co">#&gt; ---                                                    </span></span>
+<span><span class="co">#&gt; 33:               B02003        10 0.000          0.999</span></span>
+<span><span class="co">#&gt; 34:               B00446         6 0.000          0.999</span></span>
+<span><span class="co">#&gt; 35:               B01985         5 0.000          0.999</span></span>
+<span><span class="co">#&gt; 36:               B02865         3 0.000          0.999</span></span>
+<span><span class="co">#&gt; 37:               B02826         1 0.000          0.999</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="access_a_ride_flag">access_a_ride_flag<a class="anchor" aria-label="anchor" href="#access_a_ride_flag"></a>
+</h4>
+<p>Must of the trips doesn’t provide any information related to whether
+they were administered on behalf of the Metropolitan Transportation
+Authority (MTA) and the remaining confirm that there aren’t.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">access_a_ride_flag</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    access_a_ride_flag         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;                &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:                    153847310 0.724          0.724</span></span>
+<span><span class="co">#&gt; 2:                  N  58568773 0.276          1.000</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="shared_request_flag">shared_request_flag<a class="anchor" aria-label="anchor" href="#shared_request_flag"></a>
 </h4>
-<p>Most of passengers don’t agree to a shared/pooled ride.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">shared_request_flag</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
-<span><span class="co">#&gt;   shared_request_flag         n     pct</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> N                   210<span style="text-decoration: underline;">564</span>721 0.991  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Y                     1<span style="text-decoration: underline;">851</span>362 0.008<span style="text-decoration: underline;">72</span></span></span></code></pre></div>
+<p>Most of passengers <strong>don’t request</strong> to a shared/pooled
+ride.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">shared_request_flag</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    shared_request_flag         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;                 &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:                   N 210564721 0.991          0.991</span></span>
+<span><span class="co">#&gt; 2:                   Y   1851362 0.009          1.000</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="shared_match_flag">shared_match_flag<a class="anchor" aria-label="anchor" href="#shared_match_flag"></a>
 </h4>
-<p>From the subset of trips that agreed to share the ride only 24%
-achieved the match, we even can see some weird cases when the passenger
-did not initially agree to a shared/pooled ride (shared_request_flag =
-N), but ended up sharing the vehicle with another passenger who booked
-separately at some point during the trip (shared_match_flag = Y).</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">shared_request_flag</span>, <span class="va">shared_match_flag</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">shared_request_flag</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pct <span class="op">=</span> <span class="va">n</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">shared_request_flag</span><span class="op">)</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">shared_match_flag</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Groups:   shared_request_flag [2]</span></span></span>
-<span><span class="co">#&gt;   shared_request_flag shared_match_flag         n      pct</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Y                   Y                    <span style="text-decoration: underline;">452</span>035 0.244   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Y                   N                   1<span style="text-decoration: underline;">399</span>327 0.756   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> N                   Y                     <span style="text-decoration: underline;">47</span>973 0.000<span style="text-decoration: underline;">228</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> N                   N                 210<span style="text-decoration: underline;">516</span>748 1.00</span></span></code></pre></div>
-<ul>
-<li>
-<code>access_a_ride_flag</code>: <em>Uber</em> isn’t reporting
-whether their trips were administered on behalf of the Metropolitan
-Transportation Authority and for <em>Lyft</em> the answer is always “N”,
-so we will <strong>erase</strong> this column as it doesn’t show any
-useful information.</li>
-</ul>
+<p>Most of passengers don’t request to a shared/pooled ride, but even
+<strong>fewer achieved to share the ride</strong>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">company</span>, <span class="va">access_a_ride_flag</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
-<span><span class="co">#&gt;   company access_a_ride_flag         n   pct</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Uber    <span style="color: #949494;">"</span> <span style="color: #949494;">"</span>                153<span style="text-decoration: underline;">847</span>310 0.724</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Lyft    <span style="color: #949494;">"</span>N<span style="color: #949494;">"</span>                 58<span style="text-decoration: underline;">568</span>773 0.276</span></span></code></pre></div>
-<ul>
-<li>
-<code>wav_request_flag</code>: It’s really unusual for a passenger
-to request a wheelchair-accessible vehicle.</li>
-</ul>
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">shared_match_flag</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    shared_match_flag         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;               &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:                 N 211916075 0.998          0.998</span></span>
+<span><span class="co">#&gt; 2:                 Y    500008 0.002          1.000</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="wav_request_flag">wav_request_flag<a class="anchor" aria-label="anchor" href="#wav_request_flag"></a>
+</h4>
+<p>It’s really <strong>unusual to request a
+wheelchair-accessible</strong> vehicle.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">wav_request_flag</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
-<span><span class="co">#&gt;   wav_request_flag         n     pct</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> N                212<span style="text-decoration: underline;">142</span>808 0.999  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Y                   <span style="text-decoration: underline;">273</span>275 0.001<span style="text-decoration: underline;">29</span></span></span></code></pre></div>
-<ul>
-<li>
-<code>wav_match_flag</code>: If someone ask for a
-wheelchair-accessible vehicle it’s really often that passenger get that
-type of vehicle.</li>
-</ul>
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">wav_request_flag</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    wav_request_flag         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;              &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:                N 212142808 0.999          0.999</span></span>
+<span><span class="co">#&gt; 2:                Y    273275 0.001          1.000</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="wav_match_flag">wav_match_flag<a class="anchor" aria-label="anchor" href="#wav_match_flag"></a>
+</h4>
+<p>It’s really unusual to request a wheelchair-accessible vehicle, but
+we have more tips take place in wheelchair-accessible vehicles, so
+<strong>it seems that the service has the capacity to meet the
+demand</strong>.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">wav_request_flag</span>, <span class="va">wav_match_flag</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">wav_request_flag</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pct <span class="op">=</span> <span class="va">n</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">wav_request_flag</span><span class="op">)</span>, <span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">wav_match_flag</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 4</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Groups:   wav_request_flag [2]</span></span></span>
-<span><span class="co">#&gt;   wav_request_flag wav_match_flag         n    pct</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> Y                Y                 <span style="text-decoration: underline;">266</span>935 0.977 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> Y                N                   <span style="text-decoration: underline;">6</span>340 0.023<span style="text-decoration: underline;">2</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> N                Y               12<span style="text-decoration: underline;">369</span>744 0.058<span style="text-decoration: underline;">3</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> N                N              199<span style="text-decoration: underline;">773</span>064 0.942</span></span></code></pre></div>
-<ul>
-<li>
-<p><code>start_borough</code> and <code>end_borough</code>: After
-exploring the next distribution of trips we can highlight that:</p>
-<ul>
-<li>94% of the trips take place in <em>Manhattan</em>,
-<em>Brooklyn</em>, <em>Queens</em> and <em>Bronx</em>. As consequence,
-there is no reason to keep exploring trips related to <em>Staten
-Island</em>, <em>EWR</em> or <em>Unknown</em> as they are the
-minority.</li>
-<li>70% the trips take place without going to outside the start
-borough.</li>
-</ul>
-</li>
-</ul>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">wav_match_flag</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    wav_match_flag         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;            &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:              N 199779404 0.941          0.941</span></span>
+<span><span class="co">#&gt; 2:              Y  12636679 0.059          1.000</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="start_borough">start_borough<a class="anchor" aria-label="anchor" href="#start_borough"></a>
+</h4>
+<p><strong>87% of trips</strong> start in <em>Manhattan</em>,
+<em>Brooklyn</em> or <em>Queens</em>.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">TripsZoneDistribution</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                      by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start_borough"</span>, <span class="st">"end_borough"</span><span class="op">)</span></span>
-<span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
-<span><span class="op">]</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start_borough"</span>, <span class="st">"end_borough"</span><span class="op">)</span> <span class="op">:=</span> </span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">.SD</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">x</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">x</span>, fromLast <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">)</span>,</span>
-<span>  .SDcols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start_borough"</span>, <span class="st">"end_borough"</span><span class="op">)</span></span>
-<span><span class="op">]</span><span class="op">[</span>, <span class="va">end_borough</span> <span class="op">:=</span> <span class="fu"><a href="https://forcats.tidyverse.org/reference/fct_rev.html" class="external-link">fct_rev</a></span><span class="op">(</span><span class="va">end_borough</span><span class="op">)</span><span class="op">]</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">end_borough</span>, <span class="va">start_borough</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_tile</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/percent_format.html" class="external-link">percent</a></span><span class="op">(</span><span class="va">n</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, accuracy <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"white"</span>, </span>
-<span>                      high <span class="op">=</span> <span class="st">"red"</span>,</span>
-<span>                      labels<span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma_format</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_discrete.html" class="external-link">scale_x_discrete</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Distribution of Trips by Borough in NYC 2022"</span>,</span>
-<span>       x <span class="op">=</span> <span class="st">"Trip End"</span>, </span>
-<span>       y <span class="op">=</span> <span class="st">"Trip Start"</span>, </span>
-<span>       fill <span class="op">=</span> <span class="st">"Number of Trips"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_classic</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span>,</span>
-<span>        axis.ticks <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>        axis.line <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>        axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span>,</span>
-<span>        axis.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"italic"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="03-data-understanding_files/figure-html/unnamed-chunk-14-1.png" width="700"></p>
-<ul>
-<li>
-<code>start_service_zone</code> and <code>end_service_zone</code>:
-52% of the trips take place at the <em>Boro Zone</em>, 26% of trips take
-place at the <em>Yellow Zone</em> and only small fraction goes to the
-<em>Airports</em>.</li>
-</ul>
+<code class="sourceCode R"><span><span class="va">TripsZoneDistribution</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">start_borough</span>, wt <span class="op">=</span>  <span class="va">n</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    start_borough        n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;           &lt;char&gt;    &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:     Manhattan 88031630 0.414          0.414</span></span>
+<span><span class="co">#&gt; 2:      Brooklyn 54874948 0.258          0.672</span></span>
+<span><span class="co">#&gt; 3:        Queens 41897696 0.197          0.869</span></span>
+<span><span class="co">#&gt; 4:         Bronx 24797734 0.117          0.986</span></span>
+<span><span class="co">#&gt; 5: Staten Island  2803425 0.013          0.999</span></span>
+<span><span class="co">#&gt; 6:       Unknown    10625 0.000          0.999</span></span>
+<span><span class="co">#&gt; 7:           EWR       25 0.000          0.999</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="end_borough">end_borough<a class="anchor" aria-label="anchor" href="#end_borough"></a>
+</h4>
+<p><strong>82% of trips</strong> end in <em>Manhattan</em>,
+<em>Brooklyn</em> or <em>Queens</em>.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">TripsZoneDistribution</span><span class="op">[</span>  </span>
-<span>  <span class="op">!</span><span class="va">start_borough</span> <span class="op"><a href="https://rdatatable.gitlab.io/data.table/reference/chmatch.html" class="external-link">%chin%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Staten Island"</span>, <span class="st">"Unknown"</span>, <span class="st">"EWR"</span><span class="op">)</span> <span class="op">&amp;</span></span>
-<span>    <span class="op">!</span><span class="va">end_borough</span> <span class="op"><a href="https://rdatatable.gitlab.io/data.table/reference/chmatch.html" class="external-link">%chin%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Staten Island"</span>, <span class="st">"Unknown"</span>, <span class="st">"EWR"</span><span class="op">)</span>, </span>
-<span>  <span class="fu">.</span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start_service_zone"</span>,</span>
-<span>         <span class="st">"end_service_zone"</span><span class="op">)</span></span>
-<span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
-<span><span class="op">]</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start_service_zone"</span>, <span class="st">"end_service_zone"</span><span class="op">)</span> <span class="op">:=</span> </span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">.SD</span>, \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">x</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">x</span>, fromLast <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">)</span>,</span>
-<span>  .SDcols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start_service_zone"</span>, <span class="st">"end_service_zone"</span><span class="op">)</span></span>
-<span><span class="op">]</span><span class="op">[</span>, <span class="va">end_service_zone</span> <span class="op">:=</span> <span class="fu"><a href="https://forcats.tidyverse.org/reference/fct_rev.html" class="external-link">fct_rev</a></span><span class="op">(</span><span class="va">end_service_zone</span><span class="op">)</span><span class="op">]</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">end_service_zone</span>, <span class="va">start_service_zone</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_tile</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/percent_format.html" class="external-link">percent</a></span><span class="op">(</span><span class="va">n</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span>, accuracy <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_gradient.html" class="external-link">scale_fill_gradient</a></span><span class="op">(</span>low <span class="op">=</span> <span class="st">"white"</span>, </span>
-<span>                      high <span class="op">=</span> <span class="st">"red"</span>,</span>
-<span>                      labels<span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma_format</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_discrete.html" class="external-link">scale_x_discrete</a></span><span class="op">(</span>position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Distribution of Trips by Service Zone in NYC 2022"</span>,</span>
-<span>       x <span class="op">=</span> <span class="st">"Trip End"</span>, </span>
-<span>       y <span class="op">=</span> <span class="st">"Trip Start"</span>, </span>
-<span>       fill <span class="op">=</span> <span class="st">"Number of Trips"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_classic</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span>,</span>
-<span>        axis.ticks <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>        axis.line <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>        axis.text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span>,</span>
-<span>        axis.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"italic"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="03-data-understanding_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
+<code class="sourceCode R"><span><span class="va">TripsZoneDistribution</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">end_borough</span>, wt <span class="op">=</span>  <span class="va">n</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      end_borough        n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;           &lt;char&gt;    &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:     Manhattan 80967388 0.381          0.381</span></span>
+<span><span class="co">#&gt; 2:      Brooklyn 54143716 0.255          0.636</span></span>
+<span><span class="co">#&gt; 3:        Queens 40982171 0.193          0.829</span></span>
+<span><span class="co">#&gt; 4:         Bronx 23541369 0.111          0.940</span></span>
+<span><span class="co">#&gt; 5:       Unknown  8659223 0.041          0.981</span></span>
+<span><span class="co">#&gt; 6: Staten Island  2755107 0.013          0.994</span></span>
+<span><span class="co">#&gt; 7:           EWR  1367109 0.006          1.000</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="start_service_zone">start_service_zone<a class="anchor" aria-label="anchor" href="#start_service_zone"></a>
+</h4>
+<p><strong>96% of trips</strong> start in <em>Boro Zone</em> and
+<em>Yellow Zone</em>.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">TripsZoneDistribution</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">start_service_zone</span>, wt <span class="op">=</span>  <span class="va">n</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    start_service_zone         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;                &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:          Boro Zone 129107636 0.608          0.608</span></span>
+<span><span class="co">#&gt; 2:        Yellow Zone  75817668 0.357          0.965</span></span>
+<span><span class="co">#&gt; 3:           Airports   7480129 0.035          1.000</span></span>
+<span><span class="co">#&gt; 4:                N/A     10625 0.000          1.000</span></span>
+<span><span class="co">#&gt; 5:                EWR        25 0.000          1.000</span></span></code></pre></div>
+<blockquote>
+<p>We need to recode EWR are Airports to keep the classification
+consistent.</p>
+</blockquote>
+</div>
+<div class="section level4">
+<h4 id="end_service_zone">end_service_zone<a class="anchor" aria-label="anchor" href="#end_service_zone"></a>
+</h4>
+<p><strong>91% of trips</strong> start in <em>Boro Zone</em> and
+<em>Yellow Zone</em>.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">TripsZoneDistribution</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span><span class="va">end_service_zone</span>, wt <span class="op">=</span>  <span class="va">n</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    end_service_zone         n   pct pct_cumulative</span></span>
+<span><span class="co">#&gt;              &lt;char&gt;     &lt;int&gt; &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:        Boro Zone 124765613 0.587          0.587</span></span>
+<span><span class="co">#&gt; 2:      Yellow Zone  69100865 0.325          0.912</span></span>
+<span><span class="co">#&gt; 3:              N/A   8659223 0.041          0.953</span></span>
+<span><span class="co">#&gt; 4:         Airports   8523273 0.040          0.993</span></span>
+<span><span class="co">#&gt; 5:              EWR   1367109 0.006          0.999</span></span></code></pre></div>
+<blockquote>
+<p>We need to recode EWR are Airports to keep the classification
+consistent.</p>
+</blockquote>
+</div>
+<div class="section level4">
+<h4 id="start_service-vs-end_service-zones">start_service vs end_service zones<a class="anchor" aria-label="anchor" href="#start_service-vs-end_service-zones"></a>
+</h4>
 <ul>
 <li>
 <p><code>start_zone</code> and <code>end_zone</code>: As our data
@@ -443,7 +437,7 @@ point</strong> independently to its origin.</li>
 </ol>
 </li>
 </ul>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Summarizing Staring Zones</span></span>
 <span><span class="va">StartingZonesCount</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">TripsZoneDistribution</span><span class="op">[</span></span>
@@ -477,7 +471,7 @@ with the next linear regression that <code>start_trips</code> and
 of one. That means that in must of cases <strong>if someone takes a taxi
 to go to any place it’s really likely to take another taxi
 back</strong>.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">end_trips</span> <span class="op">~</span> <span class="va">start_trips</span>, </span>
 <span>   data <span class="op">=</span> <span class="va">JoinedZonesCount</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -505,7 +499,7 @@ balance</strong> between the <code>start_trips</code> and the
 so, we defined the rate <code>end_trips</code>/<code>start_trips</code>
 and highlight zones with lower rate than the 15% percentile or higher
 rate than 85% percentile.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Creating dataset to plot</span></span>
 <span><span class="va">ZonesCountToPlot</span> <span class="op">&lt;-</span></span>
 <span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/copy.html" class="external-link">copy</a></span><span class="op">(</span><span class="va">JoinedZonesCount</span><span class="op">)</span><span class="op">[</span></span>
@@ -557,7 +551,7 @@ rate than 85% percentile.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"top"</span>,</span>
 <span>        text <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span>,</span>
 <span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="03-data-understanding_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
+<p><img src="03-data-understanding_files/figure-html/unnamed-chunk-21-1.png" width="700"></p>
 <p>Based on the results, we can highlight the next points:</p>
 <ol style="list-style-type: decimal">
 <li><p>The airports present in Queens, <em>LaGuardia Airport</em> and
@@ -574,66 +568,34 @@ with a variety of public transportation options.</p></li>
 <div class="section level3">
 <h3 id="time-variables">Time variables<a class="anchor" aria-label="anchor" href="#time-variables"></a>
 </h3>
-<div class="section level4">
-<h4 id="request_datetime">request_datetime<a class="anchor" aria-label="anchor" href="#request_datetime"></a>
-</h4>
-<p>Let’s start confirming the variable doesn’t have any missing
-value.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span>request_datetime_missing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">request_datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;   request_datetime_missing         n</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>                        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> FALSE                    212<span style="text-decoration: underline;">416</span>083</span></span></code></pre></div>
+<p>As we want to predict the <strong>profit rate</strong> related to
+each trip, we just need to consider for this analysis
+<code>request_datetime</code> as is the only variable available to the
+driver before starting a trip and the <code>dropoff_datetime</code> the
+point used to defining the end of a trip.</p>
+<p>We know that a taxi trip takes more less than a day doesn’t make more
+sense to explore each variable related to time. Instead, it is better to
+consecrate the efforts to understand the distribution of the exploratory
+variable later to explore the difference between
+<code>request_datetime</code> and <code>dropoff_datetime</code> as a
+<strong>numeric variable</strong>.</p>
 <p>To describe this variable, we decomposed it in different parts and
 count the number trips by each element and store the summary as a
 <code>data.table</code> to explore each part using visualizations.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">RequestTimeSummary</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/transmute.html" class="external-link">transmute</a></span><span class="op">(</span>parquet_month <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/make_datetime.html" class="external-link">make_date</a></span><span class="op">(</span><span class="fl">2022L</span>, <span class="va">month</span><span class="op">)</span>,</span>
-<span>            <span class="va">request_datetime</span>,</span>
-<span>            request_date <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/as_date.html" class="external-link">as_date</a></span><span class="op">(</span><span class="va">request_datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">parquet_month</span>,</span>
-<span>        request_month <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html" class="external-link">floor_date</a></span><span class="op">(</span><span class="va">request_date</span>, unit <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>request_date <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/as_date.html" class="external-link">as_date</a></span><span class="op">(</span><span class="va">request_datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span>request_month <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html" class="external-link">floor_date</a></span><span class="op">(</span><span class="va">request_date</span>, unit <span class="op">=</span> <span class="st">"month"</span><span class="op">)</span>,</span>
 <span>        request_week <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/round_date.html" class="external-link">floor_date</a></span><span class="op">(</span><span class="va">request_date</span>, unit <span class="op">=</span> <span class="st">"week"</span><span class="op">)</span>,</span>
 <span>        request_day <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/day.html" class="external-link">day</a></span><span class="op">(</span><span class="va">request_date</span><span class="op">)</span>,</span>
-<span>        request_hour <span class="op">=</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/IDateTime.html" class="external-link">hour</a></span><span class="op">(</span><span class="va">request_datetime</span><span class="op">)</span>,</span>
-<span>        request_weekday <span class="op">=</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/IDateTime.html" class="external-link">wday</a></span><span class="op">(</span><span class="va">request_date</span>, week_start <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>        request_weekday <span class="op">=</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/IDateTime.html" class="external-link">wday</a></span><span class="op">(</span><span class="va">request_date</span>, week_start <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>        request_hour <span class="op">=</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/IDateTime.html" class="external-link">hour</a></span><span class="op">(</span><span class="va">request_datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<ul>
-<li>
-<code>month</code>: As we can see below most the months related to
-parquet files match with the request, as consequence there is no reason
-to keep that variable.</li>
-</ul>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">RequestTimeSummary</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                   by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"parquet_month"</span>, <span class="st">"request_month"</span><span class="op">)</span><span class="op">]</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">request_month</span>, <span class="va">parquet_month</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span>color <span class="op">=</span> <span class="st">"grey60"</span>,</span>
-<span>              linewidth <span class="op">=</span> <span class="fl">1.1</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>size <span class="op">=</span> <span class="va">n</span><span class="op">)</span>,</span>
-<span>             color <span class="op">=</span> <span class="st">"dodgerblue4"</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_date.html" class="external-link">scale_x_date</a></span><span class="op">(</span>date_labels <span class="op">=</span> <span class="st">"%y-%m"</span>,</span>
-<span>               date_breaks <span class="op">=</span> <span class="st">"2 months"</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_date.html" class="external-link">scale_y_date</a></span><span class="op">(</span>date_labels <span class="op">=</span> <span class="st">"%y-%m"</span>,</span>
-<span>               date_breaks <span class="op">=</span> <span class="st">"months"</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_size.html" class="external-link">scale_size_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma_format</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>                        breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5e3</span>, <span class="fl">1.5e7</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Comparting Request and Parquet File Months"</span>,</span>
-<span>       x <span class="op">=</span> <span class="st">"Trips Request Month"</span>,</span>
-<span>       y <span class="op">=</span> <span class="st">"Trips per Parquet File"</span>,</span>
-<span>       size <span class="op">=</span> <span class="st">"Number of Trips"</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_equal</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_light</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
-<span>        panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>        legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="03-data-understanding_files/figure-html/unnamed-chunk-22-1.png" width="700"></p>
+<div class="section level4">
+<h4 id="request_datetime-by-month">request_datetime by month<a class="anchor" aria-label="anchor" href="#request_datetime-by-month"></a>
+</h4>
 <p>In the next chart, we can see that the number trips keeps almost
 constant must of the year, but we have some fewer trips during the first
 2 months and some extra trips in October and December.</p>
@@ -659,6 +621,10 @@ constant must of the year, but we have some fewer trips during the first
 <span>        panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>        legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="03-data-understanding_files/figure-html/unnamed-chunk-23-1.png" width="700"></p>
+</div>
+<div class="section level4">
+<h4 id="request_datetime-by-week">request_datetime by week<a class="anchor" aria-label="anchor" href="#request_datetime-by-week"></a>
+</h4>
 <p>By breaking the months into weeks we can confirm we have fewer trips
 in the first 2 months, in relation to October we don’t see a big change
 in he number of trips we see is that it has more weeks than November,
@@ -686,6 +652,10 @@ weeks.</p>
 <span>        panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>        legend.position <span class="op">=</span> <span class="st">"top"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="03-data-understanding_files/figure-html/unnamed-chunk-24-1.png" width="700"></p>
+</div>
+<div class="section level4">
+<h4 id="request_datetime-by-month-day">request_datetime by month day<a class="anchor" aria-label="anchor" href="#request_datetime-by-month-day"></a>
+</h4>
 <p>If we explore the number of trips by month day we can not see any
 consistent pattern after plotting a line with total of trips for each
 month.</p>
@@ -712,6 +682,10 @@ month.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>panel.grid <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="03-data-understanding_files/figure-html/unnamed-chunk-25-1.png" width="700"></p>
+</div>
+<div class="section level4">
+<h4 id="request_datetime-by-week-day">request_datetime by week day<a class="anchor" aria-label="anchor" href="#request_datetime-by-week-day"></a>
+</h4>
 <p>By if we change the month day in the prior chart with week day we can
 find that the number of trips trends to be higher Fridays and
 Saturdays.</p>
@@ -736,9 +710,12 @@ Saturdays.</p>
 <span>       x <span class="op">=</span> <span class="st">"Day of Week"</span><span class="op">)</span><span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_light</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in labels(...): One of the number is not from 1 to 7</span></span></code></pre></div>
+<span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="03-data-understanding_files/figure-html/unnamed-chunk-26-1.png" width="700"></p>
+</div>
+<div class="section level4">
+<h4 id="request_datetime-by-week-day-and-hour">request_datetime by week day and hour<a class="anchor" aria-label="anchor" href="#request_datetime-by-week-day-and-hour"></a>
+</h4>
 <p>To understand better what is happening Fridays and Saturdays let’s
 break each week day by hour. In the next chart, we can see how the
 higher number of trips start at 17:00 and end at 1:00 of next day for
@@ -774,64 +751,186 @@ Fridays and Saturdays.</p>
 <div class="section level3">
 <h3 id="numeric-variables">Numeric variables<a class="anchor" aria-label="anchor" href="#numeric-variables"></a>
 </h3>
+<p>Last but not least, it time check explore the individual distribution
+of numeric variable based of summary metrics by using the custom
+<code>compute_num_summary</code> to use all the power under the
+<code>arrow</code> package.</p>
 <div class="section level4">
 <h4 id="trip_miles">trip_miles<a class="anchor" aria-label="anchor" href="#trip_miles"></a>
 </h4>
+<p>Below we can see that the min distance was <strong>0 miles</strong>
+which can be possible if the trip duration was also short, but we need
+to check those cases and the higher distance was <strong>634
+miles</strong>, which can be a valid outlier taking in consideration
+that the higher whisker is 13.2 miles.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">TripMilesSummary</span> <span class="op">&lt;-</span></span>
-<span>  <span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/compute_num_summary.html">compute_num_summary</a></span><span class="op">(</span><span class="va">trip_miles</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: quantile() currently returns an approximate quantile in Arrow</span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
 <span><span class="co">#&gt; Warning: median() currently returns an approximate median in Arrow</span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
-<span></span>
-<span><span class="va">TripMilesSummary</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
-<span><span class="co">#&gt;   min_value lower_whisker    q1    q2    q3 higher_whisker max_value</span></span>
-<span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         0         -<span style="color: #BB0000;">5.35</span>  1.61  3.02  6.25           13.2      634.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  5.87         0         -<span style="color: #BB0000;">5.35</span>  1.61  3.02  5.03  6.25           13.2      634.</span></span></code></pre></div>
+<p>We can also check that only 24.4K trips are over 100 miles.</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/summary_to_boxplot.html">summary_to_boxplot</a></span><span class="op">(</span><span class="va">TripMilesSummary</span>, <span class="st">"trip_miles"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="03-data-understanding_files/figure-html/unnamed-chunk-29-1.png" width="700"></p>
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span>trip_miles_status <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="va">trip_miles</span> <span class="op">&lt;</span> <span class="fl">100</span> <span class="op">~</span> <span class="st">"Normal trips"</span>,</span>
+<span>                                          <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">100</span> <span class="op">~</span> <span class="st">"Long Trips"</span><span class="op">)</span>,</span>
+<span>            digits <span class="op">=</span> <span class="fl">4L</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    trip_miles_status         n    pct pct_cumulative</span></span>
+<span><span class="co">#&gt;               &lt;char&gt;     &lt;int&gt;  &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      Normal trips 212391618 0.9999         0.9999</span></span>
+<span><span class="co">#&gt; 2:        Long Trips     24465 0.0001         1.0000</span></span></code></pre></div>
+<p>But even just taking the long trips we can see that 90% of those
+trips were shorter than <strong>300 miles</strong>, those trips doesn’t
+look like good examples to train the model.</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">trip_miles</span> <span class="op">&gt;</span> <span class="fl">15</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "12,748,872"</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">100</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span>miles_interval <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">600</span> <span class="op">~</span> <span class="st">"&gt;=600"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">500</span> <span class="op">~</span> <span class="st">"[500, 600)"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">400</span> <span class="op">~</span> <span class="st">"[400, 500)"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">300</span> <span class="op">~</span> <span class="st">"[300, 400)"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">200</span> <span class="op">~</span> <span class="st">"[200, 300)"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">150</span> <span class="op">~</span> <span class="st">"[150, 200)"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">130</span> <span class="op">~</span> <span class="st">"[130, 150)"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">115</span> <span class="op">~</span> <span class="st">"[115, 130)"</span>,</span>
+<span>                                       <span class="va">trip_miles</span> <span class="op">&gt;=</span> <span class="fl">100</span> <span class="op">~</span> <span class="st">"[100,115)"</span><span class="op">)</span>,</span>
+<span>            digits <span class="op">=</span> <span class="fl">4L</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    miles_interval     n    pct pct_cumulative</span></span>
+<span><span class="co">#&gt;            &lt;char&gt; &lt;int&gt;  &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      [100,115) 11735 0.4797         0.4797</span></span>
+<span><span class="co">#&gt; 2:     [115, 130)  5292 0.2163         0.6960</span></span>
+<span><span class="co">#&gt; 3:     [130, 150)  2802 0.1145         0.8105</span></span>
+<span><span class="co">#&gt; 4:     [150, 200)  2370 0.0969         0.9074</span></span>
+<span><span class="co">#&gt; 5:     [200, 300)  1675 0.0685         0.9759</span></span>
+<span><span class="co">#&gt; 6:     [300, 400)   248 0.0101         0.9860</span></span>
+<span><span class="co">#&gt; 7:     [400, 500)   233 0.0095         0.9955</span></span>
+<span><span class="co">#&gt; 8:     [500, 600)    95 0.0039         0.9994</span></span>
+<span><span class="co">#&gt; 9:          &gt;=600    15 0.0006         1.0000</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="base_passenger_fare">base_passenger_fare<a class="anchor" aria-label="anchor" href="#base_passenger_fare"></a>
 </h4>
+<p>Having a negative number as base fare doesn’t have any sense, so any
+negative number needs more investigation. On the other side we all also
+can see a <strong>5k trip</strong> which doesn’t make sense as well.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">BaseFareSummary</span> <span class="op">&lt;-</span></span>
-<span>  <span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/compute_num_summary.html">compute_num_summary</a></span><span class="op">(</span><span class="va">base_passenger_fare</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">BaseFareSummary</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
-<span><span class="co">#&gt;   min_value lower_whisker    q1    q2    q3 higher_whisker max_value</span></span>
-<span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     -<span style="color: #BB0000;">520.</span>         -<span style="color: #BB0000;">15.0</span>  11.4  18.2  29.1           55.5     <span style="text-decoration: underline;">4</span>996.</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/compute_num_summary.html">compute_num_summary</a></span><span class="op">(</span><span class="va">base_passenger_fare</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  19.7     -<span style="color: #BB0000;">520.</span>         -<span style="color: #BB0000;">15.0</span>  11.4  18.2  23.7  29.1           55.5     <span style="text-decoration: underline;">4</span>996.</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="tips">tips<a class="anchor" aria-label="anchor" href="#tips"></a>
+</h4>
+<p>The column looks really good, it makes sense that for more than 75%
+of trips the tip is 0 as it is not mandatory, but having a trip with a
+$294 tip is not hard to believe.</p>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/summary_to_boxplot.html">summary_to_boxplot</a></span><span class="op">(</span><span class="va">BaseFareSummary</span>, <span class="st">"base_passenger_fare"</span>, <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
-<p><img src="03-data-understanding_files/figure-html/unnamed-chunk-32-1.png" width="700"></p>
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/compute_num_summary.html">compute_num_summary</a></span><span class="op">(</span><span class="va">tips</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  3.04         0             0     0     0  1.08     0              0      294.</span></span></code></pre></div>
+<p>After braking the <code>tips</code> we can see that <code>80%</code>
+of trips don’t present any tip and must of the tips are lower than
+<strong>50 dollars</strong>, so gets really hard to achieved more than
+that based on tips.</p>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">base_passenger_fare</span> <span class="op">&gt;</span> <span class="fl">500</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "4,066"</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span>tips_interval <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="va">tips</span> <span class="op">&gt;=</span> <span class="fl">250</span> <span class="op">~</span> <span class="st">"&gt;=250"</span>,</span>
+<span>                                      <span class="va">tips</span> <span class="op">&gt;=</span> <span class="fl">200</span> <span class="op">~</span> <span class="st">"[200, 250)"</span>,</span>
+<span>                                      <span class="va">tips</span> <span class="op">&gt;=</span> <span class="fl">150</span> <span class="op">~</span> <span class="st">"[150, 200)"</span>,</span>
+<span>                                      <span class="va">tips</span> <span class="op">&gt;=</span> <span class="fl">100</span> <span class="op">~</span> <span class="st">"[100, 150)"</span>,</span>
+<span>                                      <span class="va">tips</span> <span class="op">&gt;=</span> <span class="fl">50</span> <span class="op">~</span> <span class="st">"[50, 100)"</span>,</span>
+<span>                                      <span class="va">tips</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">~</span> <span class="st">"(0, 50)"</span>,</span>
+<span>                                      <span class="cn">TRUE</span> <span class="op">~</span> <span class="st">"0"</span><span class="op">)</span>,</span>
+<span>            digits <span class="op">=</span> <span class="fl">8L</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    tips_interval         n        pct pct_cumulative</span></span>
+<span><span class="co">#&gt;           &lt;char&gt;     &lt;int&gt;      &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:             0 170057940 0.80058881      0.8005888</span></span>
+<span><span class="co">#&gt; 2:       (0, 50)  42325635 0.19925815      0.9998470</span></span>
+<span><span class="co">#&gt; 3:     [50, 100)     31872 0.00015005      0.9999970</span></span>
+<span><span class="co">#&gt; 4:    [100, 150)       572 0.00000269      0.9999997</span></span>
+<span><span class="co">#&gt; 5:    [150, 200)        56 0.00000026      1.0000000</span></span>
+<span><span class="co">#&gt; 6:    [200, 250)         7 0.00000003      1.0000000</span></span>
+<span><span class="co">#&gt; 7:         &gt;=250         1 0.00000000      1.0000000</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="trip_minutes">trip_minutes<a class="anchor" aria-label="anchor" href="#trip_minutes"></a>
+</h4>
+<p>After taking the difference in minutes between the request time and
+the drop off time in minutes, we can see negative trips and some other
+much longer than an hour.</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">base_passenger_fare</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "233,608"</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>trip_minutes <span class="op">=</span> <span class="fu">arrow_minutes_between</span><span class="op">(</span><span class="va">request_datetime</span>, <span class="va">dropoff_datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/compute_num_summary.html">compute_num_summary</a></span><span class="op">(</span><span class="va">trip_minutes</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  14.7      -<span style="color: #BB0000;">314</span>         -<span style="color: #BB0000;">9.28</span>  14.6  21.0  24.6  30.5           54.4      <span style="text-decoration: underline;">2</span>469</span></span></code></pre></div>
+<p>Now we can see that 99% of trips takes less than 2 hours and only
+152,049 trips have more than 2 hour trip.</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>trip_minutes <span class="op">=</span> <span class="fu">arrow_minutes_between</span><span class="op">(</span><span class="va">request_datetime</span>, <span class="va">dropoff_datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/count_pct.html">count_pct</a></span><span class="op">(</span>trip_minutes_status <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case_when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="va">trip_minutes</span> <span class="op">&lt;</span> <span class="fl">0</span> <span class="op">~</span> <span class="st">"Negative"</span>,</span>
+<span>                                            <span class="va">trip_minutes</span> <span class="op">&lt;=</span> <span class="fl">60</span>   <span class="op">~</span> <span class="st">"1 hour or less"</span>,</span>
+<span>                                            <span class="va">trip_minutes</span> <span class="op">&lt;=</span> <span class="op">(</span><span class="fl">60</span><span class="op">*</span><span class="fl">2</span><span class="op">)</span> <span class="op">~</span> <span class="st">"(1:00, 2:00]"</span>,</span>
+<span>                                            <span class="va">trip_minutes</span> <span class="op">&lt;=</span> <span class="op">(</span><span class="fl">60</span><span class="op">*</span><span class="fl">3</span><span class="op">)</span> <span class="op">~</span> <span class="st">"(2:00, 3:00]"</span>,</span>
+<span>                                            <span class="va">trip_minutes</span> <span class="op">&gt;</span> <span class="op">(</span><span class="fl">60</span><span class="op">*</span><span class="fl">3</span><span class="op">)</span> <span class="op">~</span> <span class="st">"&gt;3 hours"</span><span class="op">)</span>,</span>
+<span>            digits <span class="op">=</span> <span class="fl">6L</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    trip_minutes_status         n      pct pct_cumulative</span></span>
+<span><span class="co">#&gt;                 &lt;char&gt;     &lt;int&gt;    &lt;num&gt;          &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1:      1 hour or less 206298571 0.971200       0.971200</span></span>
+<span><span class="co">#&gt; 2:        (1:00, 2:00]   5740869 0.027027       0.998227</span></span>
+<span><span class="co">#&gt; 3:            Negative    224594 0.001057       0.999284</span></span>
+<span><span class="co">#&gt; 4:        (2:00, 3:00]    132341 0.000623       0.999907</span></span>
+<span><span class="co">#&gt; 5:            &gt;3 hours     19708 0.000093       1.000000</span></span></code></pre></div>
 </div>
 </div>
+</div>
+<div class="section level2">
+<h2 id="sampling-data">Sampling data<a class="anchor" aria-label="anchor" href="#sampling-data"></a>
+</h2>
+<p>Due our limited compute power capacity we will need to down sample
+the data to be able to unlock all R capacities.</p>
+<p>As most of the trips take place between Manhattan, Brooklyn and
+Queens, we are going to focus first in those zones.</p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">BoroughToKeep</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Manhattan"</span>, <span class="st">"Brooklyn"</span>, <span class="st">"Queens"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">TrainingTrips</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">data_path</span>,</span>
+<span>      full.names <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>      recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">sample_parquet</span>,</span>
+<span>         valid_zones <span class="op">=</span> <span class="va">ZoneCodes</span><span class="op">[</span><span class="va">Borough</span> <span class="op"><a href="https://rdatatable.gitlab.io/data.table/reference/chmatch.html" class="external-link">%chin%</a></span> <span class="va">BoroughToKeep</span>, <span class="va">LocationID</span><span class="op">]</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/rbindlist.html" class="external-link">rbindlist</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="solving-quality-problems">Solving quality problems<a class="anchor" aria-label="anchor" href="#solving-quality-problems"></a>
+</h2>
+</div>
+<div class="section level2">
+<h2 id="correlations-between-predictors-and-target-variable">Correlations between predictors and target variable<a class="anchor" aria-label="anchor" href="#correlations-between-predictors-and-target-variable"></a>
+</h2>
+<p>Before exploring correlations we need to transforming the sampled
+data by:</p>
+<ul>
+<li>Solving quality problems.</li>
+<li>Transforming categorical variables into boolean ones.</li>
+<li>Transforming zone code to factors.</li>
+<li>Adding new features.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
