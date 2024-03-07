@@ -44,9 +44,11 @@ if(is.null(valid_zones)) {
 
 sampled_data <-
   raw_data[.(valid_zones),
-           on = "PULocationID"
+           on = "PULocationID",
+           nomatch = 0
   ][.(valid_zones),
-    on = "DOLocationID"
+    on = "DOLocationID",
+    nomatch = 0
   ][, .SD[sample.int(.N, size = as.integer(.N * prob))]]
 
 return(sampled_data)

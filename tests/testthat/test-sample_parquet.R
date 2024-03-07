@@ -21,7 +21,7 @@ test_that("The zone is working",{
                    PULocationID = sample.int(3L, 100, TRUE),
                    DOLocationID = sample.int(3L, 100, TRUE))
   
-  file_path <- tempfile(fileext = ".parquet")
+  file_path <- withr::local_tempfile(fileext = ".parquet")
   
   arrow::write_parquet(df, file_path)
   
@@ -31,14 +31,14 @@ test_that("The zone is working",{
                                  valid_zones = valid_zones,
                                  prob = 0.10)
   
-  # Start in valid zone
+  # Start and End in valid zone
   expect_true(all(taken_sample$PULocationID %in% valid_zones))
-  
-  # End in valid zone
   expect_true(all(taken_sample$DOLocationID %in% valid_zones))
+  
+  # We don't need NA zones
+  expect_false(any(is.na(taken_sample$PULocationID)))
+  expect_false(any(is.na(taken_sample$DOLocationID)))
   
   # We don't always end where we started
   expect_true(any(taken_sample$DOLocationID != taken_sample$PULocationID))
-  
-  file.remove(file_path)
 })

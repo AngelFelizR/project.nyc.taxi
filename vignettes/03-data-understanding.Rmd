@@ -50,6 +50,11 @@ library(arrow)
 options(datatable.print.nrows = 15)
 ```
 
+```{r include=FALSE, eval=TRUE}
+TrainingTrips <- fst::read_fst("raw-data/TrainingTrips.fst",
+                               as.data.table = TRUE)
+```
+
 2. Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
 
 ```{r}
@@ -623,18 +628,9 @@ fst::write_fst(TrainingTrips,
                100)
 ```
 
-```{r include=FALSE, eval=TRUE}
-TrainingTrips <- fst::read_fst("raw-data/TrainingTrips.fst",
-                               as.data.table = TRUE)
-```
-
-
-
 ## Solving quality problems
 
 ```{r}
-
-TrainingTrips[, .N, .(same = PULocationID == DOLocationID)]
 
 # Selecting variables to use
 TrainingTrips[, join_zones(.SD,
