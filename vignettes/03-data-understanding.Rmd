@@ -617,6 +617,19 @@ TrainingTrips <-
   rbindlist()
 ```
 
+```{r, include=FALSE, eval=FALSE}
+fst::write_fst(TrainingTrips,
+               "raw-data/TrainingTrips.fst",
+               100)
+```
+
+```{r include=FALSE, eval=TRUE}
+TrainingTrips <- fst::read_fst("raw-data/TrainingTrips.fst",
+                               as.data.table = TRUE)
+```
+
+
+
 ## Solving quality problems
 
 ```{r}

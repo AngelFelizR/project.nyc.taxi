@@ -25,6 +25,7 @@ Suggests:
     DiagrammeR,
     forcats,
     fs,
+    fst,
     ggplot2,
     here,
     infer,

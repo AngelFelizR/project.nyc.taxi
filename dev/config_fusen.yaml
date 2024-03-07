@@ -32,7 +32,6 @@ flat_functions.Rmd:
   - R/sample_parquet.R
   - R/simulate_trips.R
   - R/bussiness-understanding-baselinesimulation.R
-  - R/sampling-trainingtrips.R
   tests:
   - tests/testthat/test-simulate_trips.R
   - tests/testthat/test-count_pct.R

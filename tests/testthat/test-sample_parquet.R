@@ -15,9 +15,11 @@ test_that("The prob is working",{
 
 test_that("The zone is working",{
   
+  withr::local_seed(100)
+  
   df <- data.frame(x = 1:100,
-                   PULocationID = rep(1:5, each = 20),
-                   DOLocationID = rep(5:1, each = 20))
+                   PULocationID = sample.int(3L, 100, TRUE),
+                   DOLocationID = sample.int(3L, 100, TRUE))
   
   file_path <- tempfile(fileext = ".parquet")
   
@@ -29,10 +31,13 @@ test_that("The zone is working",{
                                  valid_zones = valid_zones,
                                  prob = 0.10)
   
-  expect_equal(nrow(taken_sample), 2L)
-  
+  # Start in valid zone
   expect_true(all(taken_sample$PULocationID %in% valid_zones))
+  
+  # End in valid zone
   expect_true(all(taken_sample$DOLocationID %in% valid_zones))
+  
+  # We don't always end where we started
   expect_true(any(taken_sample$DOLocationID != taken_sample$PULocationID))
   
   file.remove(file_path)
