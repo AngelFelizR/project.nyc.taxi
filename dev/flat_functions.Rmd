@@ -731,29 +731,216 @@ test_that("The zone is working",{
 
 # Transformation
 
-## 
+## apply_base_cleaning
 
-```{r}
-dt <- fst::read_fst("raw-data/TrainingTrips.fst", as.data.table = TRUE)
 
-transform_for_correlation <- function(dt) {
+```{r function-apply_base_cleaning}
+#' Apply the transformations based on initial EDA
+#'
+#' @param dt A data.table with all columns of data and after translating the code zone with their meaning.
+#'
+#' @return A data.table
+#' @export
+#' 
+#' @importFrom data.table fcase fifelse %like% %between%
+#'
+#' @examples
+apply_base_cleaning <- function(dt) {
+
+  dt_cleaned <-
+    dt[,.(company = 
+            data.table::fcase(hvfhs_license_num == "HV0002", "Juno",
+                              hvfhs_license_num == "HV0003", "Uber",
+                              hvfhs_license_num == "HV0004", "Via",
+                              hvfhs_license_num == "HV0005", "Lyft") |>
+            factor(levels = c("Juno", "Uber", "Via", "Lyft")),
+          
+          dispatching_base_num =
+            data.table::fifelse(dispatching_base_num %chin% c("B03404", "B03406"),
+                                dispatching_base_num,
+                                "Other") |>
+            factor(levels = c("B03404", "B03406", "Other")),
+          
+          originating_base_num = 
+            data.table::fcase(is.na(dispatching_base_num), "Missing", 
+                              dispatching_base_num == "B03404", "B03404",
+                              default = "Other") |>
+            factor(levels = c("B03404", "Other","Missing")),
+          
+          
+          access_a_ride_flag = 
+            data.table::fifelse(!access_a_ride_flag %like% "//w", 
+                                "Missing", 
+                                access_a_ride_flag) |>
+            factor(levels = c("Y", "N", "Missing")),
+          
+          shared_request_flag = 
+            factor(shared_request_flag,
+                   levels = c("Y", "N")),
+          shared_match_flag = 
+            factor(shared_match_flag,
+                   levels = c("Y", "N")),
+          wav_request_flag = 
+            factor(wav_request_flag,
+                   levels = c("Y", "N")),
+          wav_match_flag = 
+            factor(wav_match_flag,
+                   levels = c("Y", "N")),
+          
+          start_borough = 
+            factor(start_borough,
+                   levels = c("Manhattan", "Brooklyn", "Queens")),
+          end_borough = 
+            factor(end_borough,
+                   levels = c("Manhattan", "Brooklyn", "Queens")),
+          same_borough = start_borough == end_borough, 
+          
+          start_service_zone = 
+            factor(start_service_zone,
+                   levels = c("Boro Zone", "Yellow Zone", "Airports")),
+          end_service_zone = 
+            factor(end_service_zone,
+                   levels = c("Boro Zone", "Yellow Zone", "Airports")),
+          same_service_zone = start_service_zone == end_service_zone,
+          
+          start_zone = factor(start_zone),
+          end_zone = factor(end_zone),
+          same_zone = start_zone == end_zone,
+          
+          request_datetime,
+          
+          # Paying more that 750 dollars or 
+          # less than 0 don't make sense
+          base_passenger_fare = 
+            data.table::fifelse(base_passenger_fare %between% c(0, 750),
+                                base_passenger_fare,
+                                NA_real_),
+          
+          # Having trips longer that 200 miles doesn't make sense
+          trip_miles =
+            data.table::fifelse(trip_miles %between% c(0, 200),
+                                trip_miles,
+                                NA_real_),
+          
+          trip_minutes = 
+            difftime(dropoff_datetime,
+                     request_datetime,
+                     units = "mins") |>
+            as.integer() |>
+            # More that 3 hours is too much time
+            # and we can not use negative times
+            (\(x) data.table::fifelse(x %between% c(0, 60*3), x, NA_integer_))(),
+          
+          tips,
+          
+          # Paying more that 750 dollars or 
+          # less than 0 don't make sense
+          driver_pay = 
+            data.table::fifelse(driver_pay %between% c(0, 750),
+                                driver_pay,
+                                NA_real_))]
   
-  # Assert validation
-  stopifnot("dt must be a data.table" = data.table::is.data.table(dt))
+    dt_cleaned[, profit_rate := 
+               (driver_pay + tips) / (trip_minutes / 60)]
   
-  # Copying the data to avoid transforming the original one
-  dt <- data.table::copy(dt)
   
-  # defining outcome to predict
-  dt[, profit_rate := 
-       (driver_pay + tips) / 
-       as.double(difftime(dropoff_datetime,
-                          request_datetime,
-                          units = "hour"))]
+  return(dt_cleaned[])
   
 }
 ```
 
+```{r examples-apply_base_cleaning}
+
+data.table::data.table(hvfhs_license_num = "HV0004",
+                       dispatching_base_num = "HOLA",
+                       originating_base_num = NA_character_,
+                       access_a_ride_flag = "",     
+                       shared_request_flag = "Y",
+                       shared_match_flag = "Y",
+                       wav_request_flag = "Y",
+                       wav_match_flag = "Y",
+                       start_borough = "Manhattan",
+                       end_borough = "Brooklyn",
+                       start_service_zone = "Boro Zone",
+                       end_service_zone = "Yellow Zone",
+                       start_zone = "1",
+                       end_zone = "2",
+                       base_passenger_fare = 800,
+                       trip_miles = 250,
+                       request_datetime = as.POSIXct("2022-05-18 7:25:00"), 
+                       dropoff_datetime = as.POSIXct("2022-05-18 8:15:00"),
+                       tips = 500,
+                       driver_pay = 800) |>
+  apply_base_cleaning()
+
+```
+
+
+## add_datetime_features
+
+```{r function-add_datetime_features}
+#' Add more features to explain a date
+#'
+#' @param df A data.frame with datetime column to use.
+#' @param date_col A string to define the column to be use
+#' 
+#' @return A data.frame with the new features.
+#' @export
+#' 
+#' @importFrom rlang sym
+#' @importFrom lubridate cyclic_encoding
+#' @importFrom recipes recipe step_date step_time step_holiday prep bake
+#' @importFrom timeDate listHolidays
+#' @importFrom data.table setattr
+#'
+#' @examples
+add_datetime_features <- function(df, date_col) {
+  
+  col_expr <- rlang::sym(date_col)
+  
+  cyclic_df <- 
+    lubridate::cyclic_encoding(df[[date_col]],
+                               periods = c("day", "week", "month")) |>
+    as.data.frame()
+  
+  data.table::setattr(cyclic_df, "names", paste0(date_col, "_", names(cyclic_df)))
+  
+  df_cleaned <- cbind(df, cyclic_df)
+  
+  df_cleaned <-
+    recipes::recipe(profit_rate ~ .,
+                    data = df_cleaned) |>
+    recipes::step_date({{col_expr}},
+                       features = c("dow",
+                                    "doy",
+                                    "week",
+                                    "month",
+                                    "decimal",
+                                    "quarter",
+                                    "semester")) |>
+    recipes::step_time({{col_expr}},
+                       features = c("am", 
+                                    "hour",
+                                    "hour12",
+                                    "decimal_day")) |>
+    recipes::step_holiday({{col_expr}},
+                          holidays = timeDate::listHolidays("^US"),
+                          keep_original_cols = FALSE) |>
+    recipes::prep(training = df_cleaned) |>
+    recipes::bake(new_data = NULL)
+  
+  return(df_cleaned)
+  
+}
+```
+
+```{r examples-add_datetime_features}
+data.frame(profit_rate = 15,
+           x = as.POSIXct("2024-05-18 08:00:15"),
+           y = as.POSIXct("2024-07-04 08:00:15")) |>
+  add_datetime_features(date_col = "x") |>
+  add_datetime_features(date_col = "y")
+```
 
 # Inflate the functions
 

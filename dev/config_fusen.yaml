@@ -24,6 +24,8 @@ flat_functions.Rmd:
   path: dev/flat_functions.Rmd
   state: active
   R:
+  - R/add_datetime_features.R
+  - R/apply_base_cleaning.R
   - R/compute_num_summary.R
   - R/count_pct.R
   - R/factor_weekday.R
