@@ -32,7 +32,6 @@ Suggests:
     here,
     infer,
     knitr,
-    mice,
     rmarkdown,
     rvest,
     scales,

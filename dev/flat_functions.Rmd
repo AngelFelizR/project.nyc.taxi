@@ -618,6 +618,28 @@ data.frame(x = rnorm(200, mean = 5)) |>
 
 ```
 
+## ZoneCodesArcgis
+
+```{r function-ZoneCodesArcgis, eval=FALSE, echo=FALSE}
+#' ZoneCodesArcgis
+#'
+#' Describe the locations used in the main data.
+#'
+#' @format A data frame of 7 variables:
+#' \describe{
+#'   \item{ LocationID }{ An unique id realted to each location}
+#'   \item{ Borough }{ Borough for the location }
+#'   \item{ Zone }{ Zone for the location }
+#'   \item{ service_zone }{ Define the zone type }
+#'   \item{ Address }{ A complete address for each location }
+#'   \item{ lat }{ A latitute estimation based on Address }
+#'   \item{ long }{ A longitute estimation based on Address }
+#' }
+#' @source TLC Trip Record Data and Arcgis
+"ZoneCodesArcgis"
+```
+
+
 # Sampling
 
 ## sample_parquet
@@ -958,7 +980,7 @@ c("R", "man", "tests/testthat") |>
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
                vignette_name = NA,
                vignettes = FALSE,
-               check = FALSE)
+               check = TRUE)
 ```
 
 

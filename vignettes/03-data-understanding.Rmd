@@ -68,21 +68,34 @@ dim(NycTrips2022) |> comma()
 NycTrips2022
 ```
 
-4. Importing the zone code description.
+3. Importing the zone code description with `lat` and `long`.
 
-```{r}
-ZoneCodes <- fread(
-  here("raw-data/taxi_zone_lookup.csv"),
-  colClasses = c("integer",
-                 "character",
-                 "character",
-                 "character")
-)
+```{r, eval=FALSE}
+ZoneCodesArcgis <- 
+  fread(here("raw-data/taxi_zone_lookup.csv"),
+        colClasses = c("integer",
+                       "character",
+                       "character",
+                       "character")
+  )[, Address := paste(Zone,
+                       Borough,
+                       "New York",
+                       "United States",
+                       sep = ", ")
+  ][, tidygeocoder::geocode(.SD,
+                            address = Address,
+                            method = 'arcgis')]
 
-glimpse(ZoneCodes)
+setDT(ZoneCodesArcgis)
+
+glimpse(ZoneCodesArcgis)
 ```
 
-5. Counting the number of trips for each code, collecting and translating the zone codes.
+```{r, echo=FALSE}
+glimpse(ZoneCodesArcgis)
+```
+
+4. Counting the number of trips for each code, collecting and translating the zone codes.
 
 ```{r}
 TripsZoneDistribution <-
