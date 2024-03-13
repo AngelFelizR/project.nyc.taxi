@@ -448,6 +448,19 @@
       ],
       "Hash": "c7844b32098dcbd1c59cbd8dddb4ecc6"
     },
+    "crosstalk": {
+      "Package": "crosstalk",
+      "Version": "1.2.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R6",
+        "htmltools",
+        "jsonlite",
+        "lazyeval"
+      ],
+      "Hash": "ab12c7b080a57475248a30f4db6298c0"
+    },
     "curl": {
       "Package": "curl",
       "Version": "5.2.0",
@@ -871,6 +884,20 @@
       "Repository": "CRAN",
       "Hash": "7a0051eef852c301b5efe2f7913dd45f"
     },
+    "gridExtra": {
+      "Package": "gridExtra",
+      "Version": "2.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "grDevices",
+        "graphics",
+        "grid",
+        "gtable",
+        "utils"
+      ],
+      "Hash": "7d7f283939f563670a697165b2cf5560"
+    },
     "gtable": {
       "Package": "gtable",
       "Version": "0.3.4",
@@ -1194,6 +1221,52 @@
       ],
       "Hash": "579303ca1e817d94cea694b319803380"
     },
+    "lazyeval": {
+      "Package": "lazyeval",
+      "Version": "0.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "d908914ae53b04d4c0c0fd72ecc35370"
+    },
+    "leaflet": {
+      "Package": "leaflet",
+      "Version": "2.2.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "RColorBrewer",
+        "crosstalk",
+        "htmltools",
+        "htmlwidgets",
+        "jquerylib",
+        "leaflet.providers",
+        "magrittr",
+        "methods",
+        "png",
+        "raster",
+        "scales",
+        "sp",
+        "stats",
+        "viridis",
+        "xfun"
+      ],
+      "Hash": "6e09cb2c9dc2e5a1e71a413e60c3834e"
+    },
+    "leaflet.providers": {
+      "Package": "leaflet.providers",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "htmltools"
+      ],
+      "Hash": "c0b81ad9d5d932772f7a457ac398cf36"
+    },
     "lifecycle": {
       "Package": "lifecycle",
       "Version": "1.0.4",
@@ -1497,6 +1570,16 @@
       ],
       "Hash": "876c618df5ae610be84356d5d7a5d124"
     },
+    "png": {
+      "Package": "png",
+      "Version": "0.1-8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "bd54ba8a0a5faded999a7aab6e46b374"
+    },
     "praise": {
       "Package": "praise",
       "Version": "1.0.0",
@@ -1650,6 +1733,20 @@
       ],
       "Hash": "5e3c5dc0b071b21fa128676560dbe94d"
     },
+    "raster": {
+      "Package": "raster",
+      "Version": "3.6-26",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "methods",
+        "sp",
+        "terra"
+      ],
+      "Hash": "7d6eda494f34a644420ac1bfd2a8023a"
+    },
     "rcmdcheck": {
       "Package": "rcmdcheck",
       "Version": "1.4.0",
@@ -1775,9 +1872,9 @@
     },
     "rmarkdown": {
       "Package": "rmarkdown",
-      "Version": "2.25",
+      "Version": "2.26",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "bslib",
@@ -1788,14 +1885,13 @@
         "jsonlite",
         "knitr",
         "methods",
-        "stringr",
         "tinytex",
         "tools",
         "utils",
         "xfun",
         "yaml"
       ],
-      "Hash": "d65e35823c817f09f4de424fcdfa812a"
+      "Hash": "9b148e7f95d33aac01f31282d49e4f44"
     },
     "roxygen2": {
       "Package": "roxygen2",
@@ -2002,6 +2098,23 @@
       ],
       "Hash": "5f5a7629f956619d519205ec475fe647"
     },
+    "sp": {
+      "Package": "sp",
+      "Version": "2.1-3",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "grid",
+        "lattice",
+        "methods",
+        "stats",
+        "utils"
+      ],
+      "Hash": "1a0cc0cec2915700e63fd0921085cf6a"
+    },
     "stringi": {
       "Package": "stringi",
       "Version": "1.8.3",
@@ -2065,6 +2178,18 @@
         "cpp11"
       ],
       "Hash": "15b594369e70b975ba9f064295983499"
+    },
+    "terra": {
+      "Package": "terra",
+      "Version": "1.7-71",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "methods"
+      ],
+      "Hash": "e8611881ab70a4fb7a1f629b31e6fcff"
     },
     "testthat": {
       "Package": "testthat",
@@ -2279,6 +2404,19 @@
         "rlang"
       ],
       "Hash": "c03fa420630029418f7e6da3667aac4a"
+    },
+    "viridis": {
+      "Package": "viridis",
+      "Version": "0.6.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "ggplot2",
+        "gridExtra",
+        "viridisLite"
+      ],
+      "Hash": "acd96d9fa70adeea4a5a1150609b9745"
     },
     "viridisLite": {
       "Package": "viridisLite",

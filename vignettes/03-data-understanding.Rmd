@@ -40,6 +40,7 @@ To setting the `R` environment up we just need to apply the following 4 steps:
 library(project.nyc.taxi)
 library(here)
 library(data.table)
+library(leaflet)
 library(ggplot2)
 library(scales)
 library(forcats)
