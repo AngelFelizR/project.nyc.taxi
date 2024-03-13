@@ -25,12 +25,12 @@ flat_functions.Rmd:
   state: active
   R:
   - R/add_datetime_features.R
+  - R/add_zone_description.R
   - R/apply_base_cleaning.R
   - R/compute_num_summary.R
   - R/count_pct.R
   - R/factor_weekday.R
   - R/is_arrow_con.R
-  - R/join_zones.R
   - R/sample_parquet.R
   - R/simulate_trips.R
   - R/bussiness-understanding-baselinesimulation.R
@@ -38,6 +38,7 @@ flat_functions.Rmd:
   tests:
   - tests/testthat/test-simulate_trips.R
   - tests/testthat/test-count_pct.R
+  - tests/testthat/test-add_zone_description.R
   - tests/testthat/test-factor_weekday.R
   - tests/testthat/test-sample_parquet.R
   vignettes: []
@@ -45,7 +46,7 @@ flat_functions.Rmd:
     flat_file: dev/flat_functions.Rmd
     vignette_name: .na
     open_vignette: true
-    check: true
+    check: false
     document: true
     overwrite: ask
     vignettes: false

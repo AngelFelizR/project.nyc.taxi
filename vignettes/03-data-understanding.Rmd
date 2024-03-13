@@ -88,11 +88,59 @@ ZoneCodesArcgis <-
 
 setDT(ZoneCodesArcgis)
 
+# Correcting manually after checking address on Google Map
+ZoneCodesArcgis[LocationID == 1L,
+                c("lat", "long") := .(40.689499,
+                                      -74.174484)]
+
 glimpse(ZoneCodesArcgis)
 ```
 
 ```{r, echo=FALSE}
 glimpse(ZoneCodesArcgis)
+```
+
+Now we can confirm if the new coordinates makes sense.
+
+```{r}
+NycBorough <- c(
+  'Manhattan',
+  'Queens',
+  'Brooklyn',
+  'Bronx',
+  'Staten Island',
+  'EWR'
+)
+
+NycBoroughColors <- c(
+  '#e41a1c',
+  '#377eb8',
+  '#4daf4a',
+  '#984ea3',
+  '#ff7f00',
+  '#a65628'
+)
+
+pal <- colorFactor(
+  palette = NycBoroughColors,
+  levels = NycBorough
+)
+
+leaflet() |>
+  addTiles() |>
+  addProviderTiles("CartoDB") |>
+  addCircleMarkers(
+    data = ZoneCodesArcgis[!Zone %chin% c("NA", "NV")],
+    lng = ~long,
+    lat = ~lat,
+    radius = 4,
+    color = ~pal(Borough),
+    label = ~Zone
+  ) |> addLegend(
+    position = "topleft",
+    pal = pal,
+    values = NycBorough
+  )
 ```
 
 4. Counting the number of trips for each code, collecting and translating the zone codes.
@@ -101,7 +149,10 @@ glimpse(ZoneCodesArcgis)
 TripsZoneDistribution <-
   NycTrips2022 |>
   count_pct(PULocationID, DOLocationID) |>
-  join_zones(zone_tb = ZoneCodes)
+  add_zone_description(zone_dt = ZoneCodesArcgis,
+                       start_id_col = "PULocationID",
+                       end_id_col = "DOLocationID",
+                       zone_id_col = "LocationID")
 
 glimpse(TripsZoneDistribution)
 ```
@@ -228,6 +279,19 @@ TripsZoneDistribution |>
 ```
 
 > We need to recode EWR are Airports to keep the classification consistent.
+
+#### lat and long
+
+```{r}
+ggplot(TripsZoneDistribution, aes(start_lat, start_long))+
+  geom_point(aes(color = start_borough,
+                 size = n),
+             alpha = 0.2)
+
+
+```
+
+
 
 ### Time variables
 
@@ -547,7 +611,7 @@ NycTrips2022 |>
 
 ## Sampling data
 
-Due our limited compute power capacity we will need to down sample the data to be able to unlock all R capacities.
+Due our limited compute power capacity we will need to sample the data to be able to unlock all R capacities.
 
 As most of the trips take place between Manhattan, Brooklyn and Queens, we are going to focus first in those zones.
 
@@ -559,7 +623,7 @@ TrainingTrips <-
       full.names = TRUE,
       recursive = TRUE) |>
   lapply(sample_parquet,
-         valid_zones = ZoneCodes[Borough %chin% BoroughToKeep, LocationID],
+         valid_zones = ZoneCodesArcgis[Borough %chin% BoroughToKeep, LocationID],
          prob = 0.01) |>
   rbindlist()
 ```
@@ -575,7 +639,10 @@ fst::write_fst(TrainingTrips,
 ```{r}
 TrainingTripsCleaned <-
   TrainingTrips |>
-  join_zones(zone_tb = ZoneCodes) |>
+  add_zone_description(zone_dt = ZoneCodesArcgis,
+                       start_id_col = "PULocationID",
+                       end_id_col = "DOLocationID",
+                       zone_id_col = "LocationID") |>
   apply_base_cleaning() |>
   add_datetime_features(date_col = "request_datetime")
 ```

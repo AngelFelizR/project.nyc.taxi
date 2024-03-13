@@ -461,56 +461,221 @@ testthat::test_that("wt is working",{
 
 
 
-## join_zones
+## add_zone_description
 
-```{r function-join_zones}
+```{r function-add_zone_description}
 #' Create a data.frame to show the zones
 #' 
-#' It creates the `start_borough`, `start_zone` and `start_service_zone` 
-#' columns based on the `PULocationID` column and the `end_borough`, `end_zone` 
-#' and `end_service_zone` columns based on the `DOLocationID` column.
+#' It translate the start and end ids with more detailed information.
 #'
-#' @param df A data.frame with all the code zones from main data.
-#' @param zone_tb A data.frame with zones from data dictionary.
+#' @param dt Main data.table to be use.
+#' @param zone_dt A data.table with zones from data dictionary.
+#' @param start_id_col A string indicating the id to be used as starting point.
+#' @param end_id_col A string indicating the id to be used as ending point.
+#' @param keep_dt_id_cols If `FALSE`, the columns indicated the `start_id_col` and `end_id_col` will be removed.
+#' @param zone_id_col A string indicating the id related to each location in the `zone_dt` table.
 #' 
-#' @importFrom data.table is.data.table `%chin%` uniqueN as.data.table
+#' @importFrom data.table is.data.table `%chin%` uniqueN as.data.table copy setnames
 #'
 #' @return A data.table
 #' @export
-join_zones <- function(df, zone_tb){
+add_zone_description <- function(dt, 
+                                 zone_dt,
+                                 start_id_col,
+                                 end_id_col,
+                                 zone_id_col,
+                                 keep_dt_id_cols = FALSE){
+  
+  ## assertive programming
+  
+  # Validate if any col name is missing
+  stopifnot("start_id_col must be length 1 character vector" =
+              length(start_id_col) == 1L && is.character(start_id_col))
+  stopifnot("end_id_col must be length 1 character vector" =
+              length(end_id_col) == 1L && is.character(end_id_col))
+  stopifnot("zone_id_col must be length 1 character vector" =
+              length(zone_id_col) == 1L && is.character(zone_id_col))
+  
+  # Data must be formatted in data.tables
+  stopifnot("dt must be a data.table" = data.table::is.data.table(dt))
+  stopifnot("zone_dt must be a data.table" = data.table::is.data.table(zone_dt))
   
   # Validating that the tables has the columns needed
-  stopifnot("df must have DOLocationID and PULocationID zone ids" = 
-              all(c("DOLocationID", "PULocationID") %chin% names(df)))
+  stopifnot("dt must have start_id_col and end_id_col columns" = all(c(start_id_col, end_id_col) %chin% names(dt)))
+  stopifnot("zone_dt must have zone_id_col" = zone_id_col %chin% names(zone_dt))
   
-  stopifnot("zone_tb must have LocationID, Borough, Zone and service_zone" = 
-              all(c("LocationID", "Borough", "Zone", "service_zone") %chin% names(zone_tb)))
+  # zone_dt can no have duplicated zones
+  stopifnot("All zone_dt rows must be unique" = uniqueN(zone_dt[[zone_id_col]]) == nrow(zone_dt))
+
+  ## Copying the data to avoid side effects
+  zone_tb_end <- data.table::copy(zone_dt)
+  zone_tb_start <- data.table::copy(zone_dt)
   
-  # zone_tb can no have duplicated zones
-  stopifnot("All zone_tb rows must be unique" = uniqueN(zone_tb$LocationID) == nrow(zone_tb))
+  ## Changing zone_td col names
+  
+  # Changing id column
+  data.table::setnames(zone_tb_end, zone_id_col, "end_id")
+  data.table::setnames(zone_tb_start, zone_id_col, "start_id")
+  
+  # Adding the correct prefix the remaining columns
+  remaining_cols <- names(zone_tb_end)[-1]
+  remaining_cols_lower <- tolower(remaining_cols)
+  data.table::setnames(zone_tb_end, 
+                       remaining_cols,
+                       paste0("end_", remaining_cols_lower))
+  data.table::setnames(zone_tb_start,
+                       remaining_cols,
+                       paste0("start_", remaining_cols_lower))
   
   
-  if(!data.table::is.data.table(df)){
-    df <- data.table::as.data.table(df)
+  ## Creating the table to export
+  
+  # Adding ending information
+  joined_dt <- zone_tb_end[dt, on = c("end_id" = end_id_col)]
+  joined_dt <- zone_tb_start[joined_dt, on = c("start_id" = start_id_col)]
+  
+  # Dealing with col id names
+  if(keep_dt_id_cols){
+    
+    # Restoring col id names
+    data.table::setnames(joined_dt,
+                         c("start_id", "end_id"),
+                         c(start_id_col, end_id_col))
+    
+  }else{
+    
+    # Removing original id columns
+    joined_dt[, c("start_id", "end_id") := NULL]
+    
   }
   
-  if(!data.table::is.data.table(zone_tb)){
-    zone_tb <- data.table::as.data.table(zone_tb)
-  }
-  
-  zone_tb[, .(end_id = LocationID,
-              end_borough = Borough,
-              end_zone = Zone,
-              end_service_zone = service_zone)
-  ][df, on = c("end_id" = "DOLocationID")
-  ][, zone_tb[, .(start_id = LocationID,
-                  start_borough = Borough,
-                  start_zone = Zone,
-                  start_service_zone = service_zone)
-      ][.SD, on = c("start_id" = "PULocationID")
-  ][, !c("start_id", "end_id")]]
+  return(joined_dt[])
 
 }
+```
+
+```{r examples-add_zone_description}
+set.seed(123)
+
+base_data <- data.table::data.table(
+  start_id = 1:5,
+  end_id = sample.int(5, 5),
+  value = seq(50, length.out = 5, by = 50)
+)
+
+zone_description <- data.table::data.table(
+  id = 1:5,
+  City = LETTERS[1:5],
+  Zone = tail(LETTERS, 5L)
+)
+
+add_zone_description(base_data,
+                     zone_description,
+                     start_id_col = "start_id",
+                     end_id_col = "end_id",
+                     zone_id_col = "id")
+```
+
+
+```{r test-add_zone_description}
+
+test_that("The add_zone_description is working",{
+  
+  # Defing the data to use
+  withr::local_seed(123)
+  
+  base_data <- data.table::data.table(
+    start_id = 1:5,
+    end_id = sample.int(5, 5),
+    value = seq(50, length.out = 5, by = 50)
+  )
+  
+  zone_description <- data.table::data.table(
+    id = 1:5,
+    City = LETTERS[1:5],
+    Zone = tail(LETTERS, 5L)
+  )
+  
+  
+  ## Running the function
+
+  # Running the function with defaults
+  final_dt <-
+    add_zone_description(base_data,
+                         zone_description,
+                         start_id_col = "start_id",
+                         end_id_col = "end_id",
+                         zone_id_col = "id")
+  
+  # Running the function keeping all columns
+  final_dt_id <-
+    add_zone_description(base_data,
+                         zone_description,
+                         start_id_col = "start_id",
+                         end_id_col = "end_id",
+                         zone_id_col = "id",
+                         keep_dt_id_cols = TRUE)
+  
+  # Validating column results
+  expect_equal(names(final_dt),
+               c("start_city",
+                 "start_zone",
+                 "end_city",
+                 "end_zone",
+                 "value"))
+
+  expect_equal(names(final_dt_id),
+               c("start_id",
+                 "start_city",
+                 "start_zone",
+                 "end_id",
+                 "end_city",
+                 "end_zone",
+                 "value"))
+  
+  # Making sure weren't adding rows
+  expect_equal(nrow(final_dt), 5L)
+  expect_equal(nrow(final_dt_id), 5L)
+  
+  
+  # Validating errors
+  
+  # We cannot missing start_id_col
+  expect_error(add_zone_description(base_data,
+                                    zone_description,
+                                    start_id_col = "no valid",
+                                    end_id_col = "end_id",
+                                    zone_id_col = "id"))
+  expect_error(add_zone_description(base_data,
+                                    zone_description,
+                                    start_id_col = c("start_id", "start_id"),
+                                    end_id_col = "end_id",
+                                    zone_id_col = "id"))
+  
+  # We cannot missing end_id_col
+  expect_error(add_zone_description(base_data,
+                                    zone_description,
+                                    start_id_col = "start_id",
+                                    end_id_col = "no valid",
+                                    zone_id_col = "id"))
+  expect_error(add_zone_description(base_data,
+                                    zone_description,
+                                    start_id_col = "start_id",
+                                    end_id_col = c("end_id", "end_id"),
+                                    zone_id_col = "id"))
+  
+  # We cannot missing zone_id_col
+  expect_error(add_zone_description(base_data,
+                                    zone_description,
+                                    start_id_col = "start_id",
+                                    end_id_col = "end_id",
+                                    zone_id_col = "no valid"))
+  expect_error(add_zone_description(base_data,
+                                    zone_description,
+                                    start_id_col = "start_id",
+                                    end_id_col = "end_id",
+                                    zone_id_col = c("id", "id")))
+})
 ```
 
 ## factor_weekday
@@ -980,7 +1145,7 @@ c("R", "man", "tests/testthat") |>
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
                vignette_name = NA,
                vignettes = FALSE,
-               check = TRUE)
+               check = FALSE)
 ```
 
 
@@ -1008,7 +1173,7 @@ reference:
     contents:
     - fast_glimpse
     - count_pct
-    - join_zones
+    - add_zone_description
     - factor_weekday
     - compute_num_summary
     - summary_to_boxplot
