@@ -8,7 +8,7 @@
 #' @param value A column vector to summarize
 #' 
 #' @importFrom dplyr filter summarize mutate select collect
-#' @importFrom stats median quantile
+#' @importFrom stats median quantile sd
 #'
 #' @return A data.frame with summary values
 #' @export

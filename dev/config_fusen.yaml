@@ -31,6 +31,7 @@ flat_functions.Rmd:
   - R/count_pct.R
   - R/factor_weekday.R
   - R/is_arrow_con.R
+  - R/plot_map.R
   - R/sample_parquet.R
   - R/simulate_trips.R
   - R/bussiness-understanding-baselinesimulation.R
@@ -39,6 +40,7 @@ flat_functions.Rmd:
   - tests/testthat/test-simulate_trips.R
   - tests/testthat/test-count_pct.R
   - tests/testthat/test-add_zone_description.R
+  - tests/testthat/test-plot_map.R
   - tests/testthat/test-factor_weekday.R
   - tests/testthat/test-sample_parquet.R
   vignettes: []
@@ -46,7 +48,7 @@ flat_functions.Rmd:
     flat_file: dev/flat_functions.Rmd
     vignette_name: .na
     open_vignette: true
-    check: false
+    check: true
     document: true
     overwrite: ask
     vignettes: false

@@ -40,7 +40,6 @@ To setting the `R` environment up we just need to apply the following 4 steps:
 library(project.nyc.taxi)
 library(here)
 library(data.table)
-library(leaflet)
 library(ggplot2)
 library(scales)
 library(forcats)
@@ -49,11 +48,12 @@ library(dplyr)
 library(arrow)
 library(recipes)
 
-options(datatable.print.nrows = 15)
+options(datatable.print.nrows = 15,
+        digits = 4)
 ```
 
 ```{r include=FALSE, eval=TRUE}
-TrainingTrips <- fst::read_fst("raw-data/TrainingTrips.fst",
+TrainingTrips <- fst::read_fst(here("raw-data/TrainingTrips.fst"),
                                as.data.table = TRUE)
 ```
 
@@ -104,44 +104,23 @@ glimpse(ZoneCodesArcgis)
 Now we can confirm if the new coordinates makes sense.
 
 ```{r}
-NycBorough <- c(
-  'Manhattan',
-  'Queens',
-  'Brooklyn',
-  'Bronx',
-  'Staten Island',
-  'EWR'
+BoroughColors <- c(
+  'Manhattan' = '#e41a1c',
+  'Queens' = '#377eb8',
+  'Brooklyn'= '#4daf4a',
+  'Bronx' = '#984ea3',
+  'Staten Island' = '#ff7f00',
+  'EWR' = '#a65628'
 )
 
-NycBoroughColors <- c(
-  '#e41a1c',
-  '#377eb8',
-  '#4daf4a',
-  '#984ea3',
-  '#ff7f00',
-  '#a65628'
+plot_map(
+  ZoneCodesArcgis,
+  lng_var = "long",
+  lat_var = "lat",
+  color_var = "Borough",
+  color_palette = BoroughColors,
+  label_var = "Zone"
 )
-
-pal <- colorFactor(
-  palette = NycBoroughColors,
-  levels = NycBorough
-)
-
-leaflet() |>
-  addTiles() |>
-  addProviderTiles("CartoDB") |>
-  addCircleMarkers(
-    data = ZoneCodesArcgis[!Zone %chin% c("NA", "NV")],
-    lng = ~long,
-    lat = ~lat,
-    radius = 4,
-    color = ~pal(Borough),
-    label = ~Zone
-  ) |> addLegend(
-    position = "topleft",
-    pal = pal,
-    values = NycBorough
-  )
 ```
 
 4. Counting the number of trips for each code, collecting and translating the zone codes.
@@ -250,6 +229,40 @@ TripsZoneDistribution |>
   count_pct(start_borough, wt =  n)
 ```
 
+#### start_zone
+
+##### Manhattan
+
+```{r}
+StartZoneTripsManhattan <-
+  TripsZoneDistribution[start_borough == "Manhattan"] |>
+  count_pct(start_zone,
+            start_long,
+            start_lat,
+            wt =  n/1e6)
+
+head(StartZoneTripsManhattan)
+```
+
+```{r}
+plot_map(
+  StartZoneTripsManhattan,
+  lng_var = "start_long",
+  lat_var = "start_lat",
+  color = unname(BoroughColors["Manhattan"]),
+  radius = 20,
+  radius_var = "n",
+  label_var = "start_zone"
+) |> leaflet::setView(
+  lng = StartZoneTripsManhattan[start_zone == "Union Sq",
+                                start_long],
+  lat = StartZoneTripsManhattan[start_zone == "Manhattanville",
+                                start_lat],
+  zoom = 12
+)
+```
+
+
 #### end_borough
 
 **82% of trips** end in *Manhattan*, *Brooklyn* or *Queens*.
@@ -280,18 +293,6 @@ TripsZoneDistribution |>
 ```
 
 > We need to recode EWR are Airports to keep the classification consistent.
-
-#### lat and long
-
-```{r}
-ggplot(TripsZoneDistribution, aes(start_lat, start_long))+
-  geom_point(aes(color = start_borough,
-                 size = n),
-             alpha = 0.2)
-
-
-```
-
 
 
 ### Time variables

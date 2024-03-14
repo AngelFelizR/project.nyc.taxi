@@ -17,6 +17,7 @@ Imports:
     arrow,
     data.table,
     dplyr,
+    leaflet,
     lubridate,
     recipes,
     rlang,
