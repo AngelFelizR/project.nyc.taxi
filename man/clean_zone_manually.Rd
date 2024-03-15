@@ -7,11 +7,19 @@
 clean_zone_manually(dt)
 }
 \arguments{
-\item{dt}{A \code{data.table} with columns \code{lat}, \code{long}, LocationID and Zone.}
+\item{dt}{A \code{data.table} with columns \code{lat}, \code{long}, \code{LocationID} and \code{Zone}.}
 }
 \value{
 A data.table
 }
 \description{
-Clean zone errors
+The purpose of this function is correcting wrong locations like happened with:
+\itemize{
+\item Newark Airport
+\item Governor's Island
+\item Ellis Island
+\item Liberty Island
+}
+
+It update the zone name to have a name for each location to avoid point overlapping.
 }
