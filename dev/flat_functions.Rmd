@@ -937,8 +937,130 @@ test_that("The map shows informative errors",{
 
 ```
 
+## clean_zone_manually
 
+```{r function-clean_zone_manually}
+#' Clean zone errors
+#'
+#' @param dt A `data.table` with columns `lat`, `long`, LocationID and Zone.
+#' 
+#' @importFrom data.table is.data.table
+#'
+#' @return A data.table
+#' @export
+#'
+#' @examples
+clean_zone_manually <- function(dt) {
+  
+  stopifnot("dt must be a data.table" = data.table::is.data.table(dt))
+  
+  dt <- data.table::copy(dt)
+  
+  # Corrected by looking the location on Google Maps
+  dt[Zone == "Newark Airport",
+     c("lat", "long") := .(40.689499,
+                           -74.174484)]
+  
+  dt[Zone == "Governor's Island", 
+     c("lat", 'long') := .(40.68759208028148,
+                           -74.02010657167092)]
+  
+  dt[Zone == "Ellis Island", 
+     c("lat", 'long') := .(40.69930943708351,
+                           -74.03975375195799)]
+  
+  dt[Zone == "Liberty Island", 
+     c("lat", 'long') := .(40.689975518189954,
+                           -74.04541235583368)]
+  
+  
+  # Conslidating Zone names with same locations
+  dt[, Zone := fcase(
+    LocationID %in% c(7L, 179L),
+    "(Old) Astoria",
+    
+    LocationID %in% c(21L, 22L),
+    "Bensonhurst (East|West)",
+    
+    LocationID %in% c(36L, 37L),
+    "Bushwick (North|South)",
+    
+    LocationID %in% c(41L, 42L),
+    "Central Harlem (North)",
+    
+    LocationID %in% c(48L, 50L),
+    "Clinton (East|West)",
+    
+    LocationID %in% c(61L, 62L),
+    "Crown Heights (North|South)",
+    
+    LocationID %in% c(71L, 72L),
+    "East Flatbush (Farragut|Remsen Village)",
+    
+    LocationID %in% c(74L, 75L),
+    "East Harlem (North|South)",
+    
+    LocationID %in% c(82L, 83L),
+    "Elmhurst (Maspeth)",
+    
+    LocationID %in% c(87L, 88L),
+    "Financial District (North|South)",
+    
+    LocationID %in% c(113L, 114L),
+    "Greenwich Village (North|South)",
+    
+    LocationID %in% c(140L, 141L),
+    "Lenox Hill (East|West)",
+    
+    LocationID %in% c(142L, 143L),
+    "Lincoln Square (East|West)",
+    
+    LocationID %in% c(158L, 249L),
+    "(Meatpacking) West Village",
+    
+    LocationID %in% c(177L, 178L),
+    "Ocean (Hill|Parkway South)",
+    
+    LocationID %in% c(218L, 219L),
+    "Springfield Gardens (North|South)",
+    
+    LocationID %in% c(227L, 228L),
+    "Sunset Park (East|West)",
+    
+    LocationID %in% c(236L, 237L),
+    "Upper East Side (North|South)",
+    
+    LocationID %in% c(238L, 239L),
+    "Upper West Side (North|South)",
+    
+    LocationID %in% c(262L, 263L),
+    "Yorkville (East|West)",
+    
+    LocationID %in% c(264L, 265L),
+    "NA"
+  )]
+  
+  return(dt)
+  
+}
+```
 
+```{r test-clean_zone_manually}
+
+test_that("Several zones represed as a single location", {
+  
+  clean_dt <- clean_zone_manually(ZoneCodesArcgis)
+  
+  expect_equal(
+    clean_dt[, .(zone_count = data.table::uniqueN(Zone)),
+             c("long", 'lat')
+    ][zone_count > 1L, .N],
+    0L
+  )
+  
+})
+
+```
 
 
 
@@ -1423,7 +1545,8 @@ rstudioapi::restartSession()
 
 install_local()
 
-pkgdown::build_site()
+#pkgdown::build_site()
+pkgdown::build_article("03-data-understanding")
 ```
 
 

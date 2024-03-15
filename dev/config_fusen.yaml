@@ -27,6 +27,7 @@ flat_functions.Rmd:
   - R/add_datetime_features.R
   - R/add_zone_description.R
   - R/apply_base_cleaning.R
+  - R/clean_zone_manually.R
   - R/compute_num_summary.R
   - R/count_pct.R
   - R/factor_weekday.R
@@ -34,13 +35,14 @@ flat_functions.Rmd:
   - R/plot_map.R
   - R/sample_parquet.R
   - R/simulate_trips.R
-  - R/bussiness-understanding-baselinesimulation.R
   - R/eda-functions-zonecodesarcgis.R
+  - R/bussiness-understanding-baselinesimulation.R
   tests:
   - tests/testthat/test-simulate_trips.R
   - tests/testthat/test-count_pct.R
   - tests/testthat/test-add_zone_description.R
   - tests/testthat/test-plot_map.R
+  - tests/testthat/test-clean_zone_manually.R
   - tests/testthat/test-factor_weekday.R
   - tests/testthat/test-sample_parquet.R
   vignettes: []

@@ -3,6 +3,7 @@
 export(add_datetime_features)
 export(add_zone_description)
 export(apply_base_cleaning)
+export(clean_zone_manually)
 export(compute_num_summary)
 export(count_pct)
 export(factor_weekday)

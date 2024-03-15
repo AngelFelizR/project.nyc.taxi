@@ -1,11 +1,18 @@
 ---
 title: "03 - Data Understanding"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{03-data-understanding}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+<style>
+h5.tabset {
+  display: none;
+}
+</style>
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -14,27 +21,25 @@ knitr::opts_chunk$set(
 )
 ```
 
-
 After completing the [business understanding](https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
 
-1. Exploring the individual distribution of variables.
-3. Taking a subset of the data to fit in RAM.
-4. Exploring correlations between predictors and target variable.
-5. Exploring correlations between predictors.
-
+1.  Exploring the individual distribution of variables.
+2.  Taking a subset of the data to fit in RAM.
+3.  Exploring correlations between predictors and target variable.
+4.  Exploring correlations between predictors.
 
 In order to:
 
-- Ensure data quality
-- Identify key predictors
-- Detect multicollinearity
-- Guide model choice and feature engineering
+-   Ensure data quality
+-   Identify key predictors
+-   Detect multicollinearity
+-   Guide model choice and feature engineering
 
 ## Setting the environment up
 
-To setting the `R` environment up we just need to apply the following 4 steps:
+To setting the `R` environment up we just need to apply the following 5 steps:
 
-1. Loading the packages to use.
+1.  Loading the packages to use.
 
 ```{r warning = FALSE, message = FALSE}
 library(project.nyc.taxi)
@@ -57,7 +62,7 @@ TrainingTrips <- fst::read_fst(here("raw-data/TrainingTrips.fst"),
                                as.data.table = TRUE)
 ```
 
-2. Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
+2.  Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
 
 ```{r}
 data_path <- here("raw-data/trip-data/year=2022")
@@ -69,7 +74,7 @@ dim(NycTrips2022) |> comma()
 NycTrips2022
 ```
 
-3. Importing the zone code description with `lat` and `long`.
+3.  Importing the zone code description with `lat` and `long`.
 
 ```{r, eval=FALSE}
 ZoneCodesArcgis <- 
@@ -89,11 +94,6 @@ ZoneCodesArcgis <-
 
 setDT(ZoneCodesArcgis)
 
-# Correcting manually after checking address on Google Map
-ZoneCodesArcgis[LocationID == 1L,
-                c("lat", "long") := .(40.689499,
-                                      -74.174484)]
-
 glimpse(ZoneCodesArcgis)
 ```
 
@@ -101,7 +101,10 @@ glimpse(ZoneCodesArcgis)
 glimpse(ZoneCodesArcgis)
 ```
 
-Now we can confirm if the new coordinates makes sense.
+4. Validating the added latitude and longitude, by plotting all the points in an interactive map from we can highlight the following issues:
+
+  - The location suggested for the Newark Airport is not correct.
+  - More than one zone is represented by one location.
 
 ```{r}
 BoroughColors <- c(
@@ -119,17 +122,34 @@ plot_map(
   lat_var = "lat",
   color_var = "Borough",
   color_palette = BoroughColors,
+  radius = 3,
   label_var = "Zone"
 )
 ```
 
-4. Counting the number of trips for each code, collecting and translating the zone codes.
+Now we can see the new map after solving the prior problems.
+
+```{r}
+ZoneCodesArcgisClean <- clean_zone_manually(ZoneCodesArcgis)
+
+plot_map(
+  ZoneCodesArcgisClean,
+  lng_var = "long",
+  lat_var = "lat",
+  color_var = "Borough",
+  color_palette = BoroughColors,
+  radius = 3,
+  label_var = "Zone"
+)
+```
+
+5.  Counting the number of trips for each code, collecting and translating the zone codes.
 
 ```{r}
 TripsZoneDistribution <-
   NycTrips2022 |>
   count_pct(PULocationID, DOLocationID) |>
-  add_zone_description(zone_dt = ZoneCodesArcgis,
+  add_zone_description(zone_dt = ZoneCodesArcgisClean,
                        start_id_col = "PULocationID",
                        end_id_col = "DOLocationID",
                        zone_id_col = "LocationID")
@@ -220,58 +240,6 @@ NycTrips2022 |>
   count_pct(wav_match_flag)
 ```
 
-#### start_borough
-
-**87% of trips** start in *Manhattan*, *Brooklyn* or *Queens*.
-
-```{r}
-TripsZoneDistribution |>
-  count_pct(start_borough, wt =  n)
-```
-
-#### start_zone
-
-##### Manhattan
-
-```{r}
-StartZoneTripsManhattan <-
-  TripsZoneDistribution[start_borough == "Manhattan"] |>
-  count_pct(start_zone,
-            start_long,
-            start_lat,
-            wt =  n/1e6)
-
-head(StartZoneTripsManhattan)
-```
-
-```{r}
-plot_map(
-  StartZoneTripsManhattan,
-  lng_var = "start_long",
-  lat_var = "start_lat",
-  color = unname(BoroughColors["Manhattan"]),
-  radius = 20,
-  radius_var = "n",
-  label_var = "start_zone"
-) |> leaflet::setView(
-  lng = StartZoneTripsManhattan[start_zone == "Union Sq",
-                                start_long],
-  lat = StartZoneTripsManhattan[start_zone == "Manhattanville",
-                                start_lat],
-  zoom = 12
-)
-```
-
-
-#### end_borough
-
-**82% of trips** end in *Manhattan*, *Brooklyn* or *Queens*.
-
-```{r}
-TripsZoneDistribution |>
-  count_pct(end_borough, wt =  n)
-```
-
 #### start_service_zone
 
 **96% of trips** start in *Boro Zone* and *Yellow Zone*.
@@ -280,8 +248,6 @@ TripsZoneDistribution |>
 TripsZoneDistribution |>
   count_pct(start_service_zone, wt =  n)
 ```
-
-> We need to recode EWR are Airports to keep the classification consistent.
 
 #### end_service_zone
 
@@ -292,8 +258,92 @@ TripsZoneDistribution |>
   count_pct(end_service_zone, wt =  n)
 ```
 
-> We need to recode EWR are Airports to keep the classification consistent.
+#### start_borough
 
+**87% of trips** start in *Manhattan*, *Brooklyn* or *Queens*.
+
+```{r}
+TripsZoneDistribution |>
+  count_pct(start_borough, wt =  n)
+```
+
+To gain a deeper understanding of the starting trips at the zone level, we'll create a **wrapper function**. This function will display the top 5 most significant zones and generate an interactive map. This map will illustrate the location of each zone in relation to the remaining locations within each borough.
+
+> **Note**: *I've chosen not to add this function to the project package as it is quite specific and operates more effectively as a __non-pure function__.*
+
+```{r class.source='fold-hide'}
+print_zone_summary <- function(borough, prefix) {
+  
+  col_names <- paste0(prefix, c("zone", "long", "lat"))
+  
+  zone_dt <-
+    TripsZoneDistribution[borough_col == borough,
+                          .(count_M = sum(n/1e6)),
+                          by = col_names,
+                          env = list(borough_col = paste0(prefix, "borough"))]
+  
+  setorder(zone_dt, -count_M)
+  
+  zone_dt[, is_top_5 := "regular zone"]
+  
+  zone_dt[1:5, is_top_5 := "TOP 5"]
+  
+  print(zone_dt[is_top_5 == "TOP 5", !c("is_top_5")])
+  
+  zone_map <- plot_map(
+    zone_dt,
+    lng_var = col_names[2L],
+    lat_var = col_names[3L],
+    color_var = "is_top_5",
+    color_palette = c("TOP 5" = "purple",
+                      "regular zone" = BoroughColors[[borough]]),
+    radius = 10,
+    radius_var = "count_M",
+    label_var = col_names[1L]
+  )
+  
+  return(zone_map)
+  
+}
+```
+
+##### start_zone {.tabset}
+
+###### Manhattan
+
+In this borough, we can see that the most frequent locations to start a trip are concentrated **south of W 57th St**.
+
+```{r}
+print_zone_summary("Manhattan", "start_")
+```
+
+###### Brooklyn
+
+```{r}
+print_zone_summary("Brooklyn", "start_") |>
+  leaflet::addMarkers(
+    lat = 40.671207817400955, 
+    lng = -73.9636514777047,
+    label = "Brooklyn Museum"
+  )
+```
+
+###### Queens
+
+```{r}
+print_zone_summary("Queens", "start_")
+```
+
+####  {.unnumbered}
+
+#### end_borough
+
+**82% of trips** end in *Manhattan*, *Brooklyn* or *Queens*.
+
+```{r}
+TripsZoneDistribution |>
+  count_pct(end_borough, wt =  n)
+```
 
 ### Time variables
 
@@ -370,7 +420,6 @@ RequestTimeSummary[year(request_month) == 2022,
         legend.position = "top")
 ```
 
-
 #### request_datetime by month day
 
 If we explore the number of trips by month day we can not see any consistent pattern after plotting a line with total of trips for each month.
@@ -429,7 +478,7 @@ RequestTimeSummary[year(request_month) == 2022,
 
 #### request_datetime by week day and hour
 
-To understand better what is happening Fridays and Saturdays let's break each week day by hour. In the next chart, we can see how the higher number of trips start at  17:00 and end at 1:00 of next day for Fridays and Saturdays.
+To understand better what is happening Fridays and Saturdays let's break each week day by hour. In the next chart, we can see how the higher number of trips start at 17:00 and end at 1:00 of next day for Fridays and Saturdays.
 
 ```{r}
 RequestTimeSummary[year(request_month) == 2022, 
@@ -497,13 +546,12 @@ NycTrips2022 |>
             digits = 4L)
 ```
 
-
 #### base_passenger_fare
 
 Just by checking the summary statistics we can see to important problems:
 
-- A base fare can not be negative
-- A base of almost $5k is too much
+-   A base fare can not be negative
+-   A base of almost \$5k is too much
 
 ```{r}
 NycTrips2022 |>
@@ -563,11 +611,9 @@ NycTrips2022 |>
             digits = 8L)
 ```
 
-
-
 #### tips
 
-The column looks really good, it makes sense that for more than 75% of trips the tip is 0 as it is not mandatory, but having a trip with a $294 tip is not hard to believe.
+The column looks really good, it makes sense that for more than 75% of trips the tip is 0 as it is not mandatory, but having a trip with a \$294 tip is not hard to believe.
 
 ```{r}
 NycTrips2022 |>
@@ -625,7 +671,7 @@ TrainingTrips <-
       full.names = TRUE,
       recursive = TRUE) |>
   lapply(sample_parquet,
-         valid_zones = ZoneCodesArcgis[Borough %chin% BoroughToKeep, LocationID],
+         valid_zones = ZoneCodesArcgisClean[Borough %chin% BoroughToKeep, LocationID],
          prob = 0.01) |>
   rbindlist()
 ```
@@ -641,7 +687,7 @@ fst::write_fst(TrainingTrips,
 ```{r}
 TrainingTripsCleaned <-
   TrainingTrips |>
-  add_zone_description(zone_dt = ZoneCodesArcgis,
+  add_zone_description(zone_dt = ZoneCodesArcgisClean,
                        start_id_col = "PULocationID",
                        end_id_col = "DOLocationID",
                        zone_id_col = "LocationID") |>
@@ -653,15 +699,14 @@ TrainingTripsCleaned <-
 rm(TrainingTrips)
 ```
 
-
 ## Correlations between predictors and target variable
 
 Before exploring correlations we need to transforming the sampled data by:
 
-- Solving quality problems.
-- Transforming categorical variables into boolean ones.
-- Transforming zone code to factors.
-- Adding new features.
+-   Solving quality problems.
+-   Transforming categorical variables into boolean ones.
+-   Transforming zone code to factors.
+-   Adding new features.
 
 ## start_service vs end_service zones
 
@@ -686,12 +731,11 @@ EndingUniqueZones <-
   comma()
 ```
 
+-   `start_zone` and `end_zone`: As our data has `r ZoneUniqueComb` rows of relations between both columns, we opted to transform data in a way what each unique zone represent a row reducing the points to be plotted to only `r EndingUniqueZones` by following the next steps:
 
-- `start_zone` and `end_zone`: As our data has `r ZoneUniqueComb` rows of relations between both columns, we opted to transform data in a way what each unique zone represent a row reducing the points to be plotted to only `r EndingUniqueZones` by following the next steps: 
-
-  1. Summarizing the total number of trips for each **starting point** independently to its destination 
-  2. Summarizing the total number of trips for each **ending point** independently to its origin.
-  3. Joining both tables into one.
+    1.  Summarizing the total number of trips for each **starting point** independently to its destination
+    2.  Summarizing the total number of trips for each **ending point** independently to its origin.
+    3.  Joining both tables into one.
 
 ```{r}
 # 1. Summarizing Staring Zones
@@ -789,10 +833,6 @@ ggplot(ZonesCountToPlot,
 
 Based on the results, we can highlight the next points:
 
-1. The airports present in Queens, *LaGuardia Airport* and *JFK Airport*, have many more trips going to the airport than going out of airport. This might happen due that there are more transportation options like other taxis, shuttles, and public transportation.
+1.  The airports present in Queens, *LaGuardia Airport* and *JFK Airport*, have many more trips going to the airport than going out of airport. This might happen due that there are more transportation options like other taxis, shuttles, and public transportation.
 
-2. The remaining zones, *Jackson Heights*, *East Village* and *TriBeCa/Civic Center*, are residential zones with a variety of public transportation options.
-
-
-
-
+2.  The remaining zones, *Jackson Heights*, *East Village* and *TriBeCa/Civic Center*, are residential zones with a variety of public transportation options.

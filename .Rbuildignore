@@ -9,3 +9,5 @@
 ^docs$
 ^pkgdown$
 ^raw-data$
+^doc$
+^Meta$

@@ -5,3 +5,5 @@
 .httr-oauth
 raw-data/
 inst/doc
+/doc/
+/Meta/
