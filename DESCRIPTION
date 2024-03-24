@@ -25,6 +25,7 @@ Imports:
     timeDate,
     withr
 Suggests: 
+    devtools,
     DiagrammeR,
     forcats,
     fs,
@@ -33,6 +34,7 @@ Suggests:
     here,
     infer,
     knitr,
+    pkgload,
     rmarkdown,
     rvest,
     scales,

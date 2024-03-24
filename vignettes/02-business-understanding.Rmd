@@ -12,6 +12,12 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+if('project.nyc.taxi' %in% rownames(installed.packages())) {
+  library('project.nyc.taxi')
+}else{
+  devtools::load_all()
+}
 ```
 
 ## Project Name
@@ -219,7 +225,6 @@ The simulation will be based on the following assumptions related to the taxi dr
 
 
 ```{r parsermd-chunk-2, warning = FALSE, message = FALSE}
-library(project.nyc.taxi)
 library(here)
 library(scales)
 library(ggplot2)

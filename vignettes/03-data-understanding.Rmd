@@ -19,6 +19,12 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
+if('project.nyc.taxi' %in% rownames(installed.packages())) {
+  library('project.nyc.taxi')
+}else{
+  pkgload::load_all()
+}
 ```
 
 After completing the [business understanding](https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
@@ -42,7 +48,6 @@ To setting the `R` environment up we just need to apply the following 5 steps:
 1.  Loading the packages to use.
 
 ```{r warning = FALSE, message = FALSE}
-library(project.nyc.taxi)
 library(here)
 library(data.table)
 library(ggplot2)
@@ -267,71 +272,82 @@ TripsZoneDistribution |>
   count_pct(start_borough, wt =  n)
 ```
 
-To gain a deeper understanding of the starting trips at the zone level, we'll create a **wrapper function**. This function will display the top 5 most significant zones and generate an interactive map. This map will illustrate the location of each zone in relation to the remaining locations within each borough.
-
-> **Note**: *I've chosen not to add this function to the project package as it is quite specific and operates more effectively as a __non-pure function__.*
-
-```{r class.source='fold-hide'}
-print_zone_summary <- function(borough, prefix) {
-  
-  col_names <- paste0(prefix, c("zone", "long", "lat"))
-  
-  zone_dt <-
-    TripsZoneDistribution[borough_col == borough,
-                          .(count_M = sum(n/1e6)),
-                          by = col_names,
-                          env = list(borough_col = paste0(prefix, "borough"))]
-  
-  setorder(zone_dt, -count_M)
-  
-  zone_dt[, is_top_5 := "regular zone"]
-  
-  zone_dt[1:5, is_top_5 := "TOP 5"]
-  
-  print(zone_dt[is_top_5 == "TOP 5", !c("is_top_5")])
-  
-  zone_map <- plot_map(
-    zone_dt,
-    lng_var = col_names[2L],
-    lat_var = col_names[3L],
-    color_var = "is_top_5",
-    color_palette = c("TOP 5" = "purple",
-                      "regular zone" = BoroughColors[[borough]]),
-    radius = 10,
-    radius_var = "count_M",
-    label_var = col_names[1L]
-  )
-  
-  return(zone_map)
-  
-}
-```
+To gain a deeper understanding of the starting trips at the zone level, we'll create a **wrapper function**. This function will display the top 5 most significant zones and generate an interactive map. This map will illustrate the location of each zone in relation to the remaining locations within each borough.s
 
 ##### start_zone {.tabset}
 
 ###### Manhattan
 
-In this borough, we can see that the most frequent locations to start a trip are concentrated **south of W 57th St**.
+The highlighted zones are significant for tourists in Manhattan.
+
+- **Meatpacking West Village**: This area is known for its hip vibe with many old buildings transformed into *fancy bars*, popular *nightclubs*, stylish *shops*, and trendy *restaurants*. Key attractions include:
+
+  - The High Line Park
+  - Whitney Museum of American Art
+  - Chelsea Market.
+
+- **Clinton (East|West)**: This area is home to several attractions such as:
+
+  - The Castle Clinton National Monument
+  - Clinton Cove at Hudson River Park
+  - De Witt Clinton Park
+  - National September 11 Memorial & Museum
+  - Eden Gallery      
+
+- **Upper East Side (North|South)**: This area is renowned for its cultural institutions along:
+
+  - Museum Mile
+  - Metropolitan Museum of Art
+  - Solomon R. Guggenheim Museum
+  - Central Park 
+  - Conservatory Garden
+
+- **Central Harlem (North)**: This area is home to several attractions such as:
+
+  - Studio Museum in Harlem
+  - Thomas Jefferson Park
+  - Riverside Park
+
+- **East Village**: Known for its vibrant *nightlife* and great *restaurants*. Attractions include:
+
+  - Lower East Side Tenement Museum, 
+  - Museum of Contemporary Art
+
 
 ```{r}
-print_zone_summary("Manhattan", "start_")
+highlight_top_zones(TripsZoneDistribution,
+                    borough = "Manhattan",
+                    borough_color = BoroughColors[["Manhattan"]],
+                    top_color = "purple",
+                    col_prefix  = "start_")
 ```
 
 ###### Brooklyn
 
+Thank you for providing more information. Here are the shortened descriptions for the Brooklyn zones:
+
+- **Bushwick (North|South)**: Known for its vibrant nightlife, art scene, dining, and secondhand shopping.
+- **Crown Heights (North|South)**: A historic neighborhood with tree-lined streets, beautiful townhomes, and brownstones.
+- **East New York**: A neighborhood in Brooklyn with a rich history and diverse community. It's undergoing significant changes and development¹.
+- **Williamsburg (North Side)**: Information about tourism in Williamsburg North Side is limited. Please consider researching more about this area.
+- **Park Slope**: A family-friendly neighborhood known for its beautiful brownstone-lined streets and proximity to Prospect Park.
+
 ```{r}
-print_zone_summary("Brooklyn", "start_") |>
-  leaflet::addMarkers(
-    lat = 40.671207817400955, 
-    lng = -73.9636514777047,
-    label = "Brooklyn Museum"
-  )
+highlight_top_zones(TripsZoneDistribution,
+                    borough = "Brooklyn",
+                    borough_color = BoroughColors[["Brooklyn"]],
+                    top_color = "purple",
+                    col_prefix  = "start_")
 ```
 
 ###### Queens
 
 ```{r}
-print_zone_summary("Queens", "start_")
+highlight_top_zones(TripsZoneDistribution,
+                    borough = "Queens",
+                    borough_color = BoroughColors[["Queens"]],
+                    top_color = "purple",
+                    col_prefix  = "start_")
 ```
 
 ####  {.unnumbered}

@@ -5,6 +5,10 @@ test_that("Several zones represed as a single location", {
   
   clean_dt <- clean_zone_manually(ZoneCodesArcgis)
   
+  # the zones cannot be empty
+  expect_false(any(is.na(clean_dt$Zone)))
+  
+  
   expect_equal(
     clean_dt[, .(zone_count = data.table::uniqueN(Zone)),
              c("long", 'lat')

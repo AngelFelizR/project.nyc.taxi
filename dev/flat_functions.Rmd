@@ -937,6 +937,81 @@ test_that("The map shows informative errors",{
 
 ```
 
+## highlight_top_zones
+
+```{r function-highlight_top_zones}
+#' Highlight the most repeated zones in a Borough
+#'
+#' @param dt A `data.table` with the data to use from.
+#' @param borough Defines the borough to focus the attention.
+#' @param borough_color Defines the base color for the points to show.
+#' @param top_color Defines the color to use for the top points.
+#' @param top_length Defines the number points to highlight.
+#' @param col_prefix Update the following column's names with this prefix.
+#' @param borough_col Name of Borough column to filter.
+#' @param zone_col Name of column with each zone name.
+#' @param long_col Name of column with each zone long.
+#' @param lat_col Name of column with each zone lat.
+#'
+#' @return A leaflet map
+#' @export
+#'
+#' @examples
+highlight_top_zones <- function(dt,
+                                borough,
+                                borough_color = "blue",
+                                top_color = "red",
+                                top_length = 5L,
+                                borough_col = "borough",
+                                col_prefix = NULL,
+                                zone_col = "zone",
+                                long_col = "long",
+                                lat_col = "lat") {
+  
+  legend_name <- paste0("TOP ", top_length)
+  
+  colors_to_use <- c(top_color, borough_color)
+  
+  data.table::setattr(colors_to_use, "names", c(legend_name, borough))
+  
+  if(!is.null(col_prefix)){
+    borough_col <- paste0(col_prefix, borough_col)
+    zone_col <- paste0(col_prefix, zone_col)
+    long_col <- paste0(col_prefix, long_col)
+    lat_col <- paste0(col_prefix, lat_col)
+  }
+  
+  zone_dt <-
+    dt[borough_exp == borough,
+       .(million_trips = sum(n/1e6)),
+       by = c(zone_col, long_col, lat_col),
+       env = list(borough_exp = borough_col)
+    ][!is.na(zone_exp), env = list(zone_exp = zone_col)]
+  
+  data.table::setorder(zone_dt, -million_trips)
+  
+  zone_dt[, is_top := borough]
+  
+  zone_dt[1:top_length, is_top := legend_name]
+  
+  print(zone_dt[is_top == legend_name, !c("is_top")])
+  
+  zone_map <- plot_map(
+    zone_dt,
+    lng_var = long_col,
+    lat_var = lat_col,
+    color_var = "is_top",
+    color_palette = colors_to_use,
+    radius = 10,
+    radius_var = "million_trips",
+    label_var = zone_col
+  )
+  
+  return(zone_map)
+  
+}
+```
+
 ## clean_zone_manually
 
 ```{r function-clean_zone_manually}
@@ -987,7 +1062,7 @@ clean_zone_manually <- function(dt) {
                            -74.04541235583368)]
   
   
-  # Conslidating Zone names with same locations
+  # Consolidating Zone names with same locations
   dt[, Zone := data.table::fcase(
     LocationID %in% c(7L, 179L),
     "(Old) Astoria",
@@ -1050,7 +1125,10 @@ clean_zone_manually <- function(dt) {
     "Yorkville (East|West)",
     
     LocationID %in% c(264L, 265L),
-    "NA"
+    "NA",
+    
+    rep(TRUE, times = .N), 
+    Zone
   )]
   
   return(dt)
@@ -1063,6 +1141,10 @@ clean_zone_manually <- function(dt) {
 test_that("Several zones represed as a single location", {
   
   clean_dt <- clean_zone_manually(ZoneCodesArcgis)
+  
+  # the zones cannot be empty
+  expect_false(any(is.na(clean_dt$Zone)))
+  
   
   expect_equal(
     clean_dt[, .(zone_count = data.table::uniqueN(Zone)),
@@ -1544,7 +1626,7 @@ c("R", "man", "tests/testthat") |>
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
                vignette_name = NA,
                vignettes = FALSE,
-               check = TRUE)
+               check = FALSE)
 ```
 
 

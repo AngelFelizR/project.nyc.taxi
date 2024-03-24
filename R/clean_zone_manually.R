@@ -46,7 +46,7 @@ clean_zone_manually <- function(dt) {
                            -74.04541235583368)]
   
   
-  # Conslidating Zone names with same locations
+  # Consolidating Zone names with same locations
   dt[, Zone := data.table::fcase(
     LocationID %in% c(7L, 179L),
     "(Old) Astoria",
@@ -109,7 +109,10 @@ clean_zone_manually <- function(dt) {
     "Yorkville (East|West)",
     
     LocationID %in% c(264L, 265L),
-    "NA"
+    "NA",
+    
+    rep(TRUE, times = .N), 
+    Zone
   )]
   
   return(dt)
