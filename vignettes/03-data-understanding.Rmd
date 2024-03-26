@@ -8,11 +8,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-<style>
-h5.tabset {
-  display: none;
-}
-</style>
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -272,11 +267,13 @@ TripsZoneDistribution |>
   count_pct(start_borough, wt =  n)
 ```
 
-To gain a deeper understanding of the starting trips at the zone level, we'll create a **wrapper function**. This function will display the top 5 most significant zones and generate an interactive map. This map will illustrate the location of each zone in relation to the remaining locations within each borough.s
+#### start_zone {.tabset}
 
-##### start_zone {.tabset}
+To gain a deeper understanding of the starting trips at the zone level, we'll create a **wrapper function** to display the top 5 most significant zones and generate an interactive map.
 
-###### Manhattan
+The map will illustrate the location of each zone in relation to the remaining locations within each borough.
+
+##### Manhattan
 
 Here we can see how the _East Village_ zone is surrounded by _(Meatpacking) West Village_ and _Clinton (East|West)_, so most of the activity happens in those places. The remaining top zones ( _Upper East Side (North|South)_ and _Central Harlem (North)_ ) are surrounding the **Central Park**.
 
@@ -290,7 +287,7 @@ highlight_top_zones(TripsZoneDistribution,
                     col_prefix  = "start_")
 ```
 
-###### Brooklyn
+##### Brooklyn
 
 In this Borough, the most important starting zones are concentrated in the north part. _Bushwick (North|South)_, _Crown Heights (North|South)_, _Williamsburg (North Side)_ and _Park Slope_ form an **"U"** shape, the farthest zone is the _East New York_.
 
@@ -302,7 +299,7 @@ highlight_top_zones(TripsZoneDistribution,
                     col_prefix  = "start_")
 ```
 
-###### Queens
+##### Queens
 
 Most of the most important starting zones are concentrated in north part of this Borough and the only exception is the _JFK Airport_ in the south.
 
@@ -314,9 +311,6 @@ highlight_top_zones(TripsZoneDistribution,
                     col_prefix  = "start_")
 ```
 
-
-####  {.unnumbered}
-
 #### end_borough
 
 **82% of trips** end in *Manhattan*, *Brooklyn* or *Queens*.
@@ -326,9 +320,9 @@ TripsZoneDistribution |>
   count_pct(end_borough, wt =  n)
 ```
 
-##### end_zone {.tabset}
+#### end_zone {.tabset}
 
-###### Manhattan
+##### Manhattan
 
 If we focus our attention to the places where the trips end we see the new zone _East Harlem (North|South)_ which get the top 5 moving the _East Village_ to the sixth position.
 
@@ -341,7 +335,7 @@ highlight_top_zones(TripsZoneDistribution,
                     col_prefix  = "end_")
 ```
 
-###### Brooklyn
+##### Brooklyn
 
 We also can see the same pattern from the ending zone perspective.
 
@@ -353,7 +347,7 @@ highlight_top_zones(TripsZoneDistribution,
                     col_prefix  = "end_")
 ```
 
-###### Queens
+##### Queens
 
 For the ending perspective, now the _JFK Airport_ present more trips than the _LaGuardia Airport_.
 
@@ -711,13 +705,27 @@ TrainingTripsCleaned <-
                        start_id_col = "PULocationID",
                        end_id_col = "DOLocationID",
                        zone_id_col = "LocationID") |>
-  apply_base_cleaning() |>
-  add_datetime_features(date_col = "request_datetime")
+  apply_base_cleaning()
+
+setDT(TrainingTripsCleaned)
+
+glimpse(TrainingTripsCleaned)
 ```
 
 ```{r include=FALSE}
 rm(TrainingTrips)
 ```
+
+```{r}
+TrainingTripsCleaned[is.na(profit_rate),
+                     .(driver_pay,
+                       tips,
+                       request_datetime,
+                       dropoff_datetime,
+                       trip_minutes,
+                       profit_rate)]
+```
+
 
 ## Correlations between predictors and target variable
 

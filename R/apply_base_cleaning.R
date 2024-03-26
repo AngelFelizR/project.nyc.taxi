@@ -34,104 +34,106 @@
 #'   apply_base_cleaning()
 #'
 apply_base_cleaning <- function(dt) {
+  
+  # Transforming columns into factors
+  
+  dt[, company := 
+       data.table::fcase(hvfhs_license_num == "HV0002", "Juno",
+                         hvfhs_license_num == "HV0003", "Uber",
+                         hvfhs_license_num == "HV0004", "Via",
+                         hvfhs_license_num == "HV0005", "Lyft") |>
+       factor(levels = c("Juno", "Uber", "Via", "Lyft"))]
+  
+  dt[, dispatching_base_num :=
+       data.table::fifelse(dispatching_base_num %chin% c("B03404", "B03406"),
+                           dispatching_base_num,
+                           "Other") |>
+       factor(levels = c("B03404", "B03406", "Other"))]
+  
+  dt[, originating_base_num := 
+       data.table::fcase(is.na(dispatching_base_num), "Missing", 
+                         dispatching_base_num == "B03404", "B03404",
+                         default = "Other") |>
+       factor(levels = c("B03404", "Other", "Missing"))]
+  
+  
+  # Selecting column groups
+  
+  col_names <- names(dt)
+  flag_cols <- grep("flag$", col_names, value = TRUE)
+  borough_cols <- grep("borough$", col_names, value = TRUE)
+  service_zone_cols <- grep("service_zone$", col_names, value = TRUE)
+  
+  
+  # Formating columns by group
+  
+  dt[, (flag_cols) := lapply(
+    .SD,
+    FUN = \(x) data.table::fifelse(x %chin% c("Y", "N"), x, "Missing") |>
+      factor(levels = c("Y", "N", "Missing"))
+  ),
+  .SDcols = flag_cols]
+  
 
-  dt_cleaned <-
-    dt[,.(company = 
-            data.table::fcase(hvfhs_license_num == "HV0002", "Juno",
-                              hvfhs_license_num == "HV0003", "Uber",
-                              hvfhs_license_num == "HV0004", "Via",
-                              hvfhs_license_num == "HV0005", "Lyft") |>
-            factor(levels = c("Juno", "Uber", "Via", "Lyft")),
-          
-          dispatching_base_num =
-            data.table::fifelse(dispatching_base_num %chin% c("B03404", "B03406"),
-                                dispatching_base_num,
-                                "Other") |>
-            factor(levels = c("B03404", "B03406", "Other")),
-          
-          originating_base_num = 
-            data.table::fcase(is.na(dispatching_base_num), "Missing", 
-                              dispatching_base_num == "B03404", "B03404",
-                              default = "Other") |>
-            factor(levels = c("B03404", "Other","Missing")),
-          
-          
-          access_a_ride_flag = 
-            data.table::fifelse(!access_a_ride_flag %like% "//w", 
-                                "Missing", 
-                                access_a_ride_flag) |>
-            factor(levels = c("Y", "N", "Missing")),
-          
-          shared_request_flag = 
-            factor(shared_request_flag,
-                   levels = c("Y", "N")),
-          shared_match_flag = 
-            factor(shared_match_flag,
-                   levels = c("Y", "N")),
-          wav_request_flag = 
-            factor(wav_request_flag,
-                   levels = c("Y", "N")),
-          wav_match_flag = 
-            factor(wav_match_flag,
-                   levels = c("Y", "N")),
-          
-          start_borough = 
-            factor(start_borough,
-                   levels = c("Manhattan", "Brooklyn", "Queens")),
-          end_borough = 
-            factor(end_borough,
-                   levels = c("Manhattan", "Brooklyn", "Queens")),
-          same_borough = start_borough == end_borough, 
-          
-          start_service_zone = 
-            factor(start_service_zone,
-                   levels = c("Boro Zone", "Yellow Zone", "Airports")),
-          end_service_zone = 
-            factor(end_service_zone,
-                   levels = c("Boro Zone", "Yellow Zone", "Airports")),
-          same_service_zone = start_service_zone == end_service_zone,
-          
-          start_zone = factor(start_zone),
-          end_zone = factor(end_zone),
-          same_zone = start_zone == end_zone,
-          
-          request_datetime,
-          
-          # Paying more that 750 dollars or 
-          # less than 0 don't make sense
-          base_passenger_fare = 
-            data.table::fifelse(base_passenger_fare %between% c(0, 750),
-                                base_passenger_fare,
-                                NA_real_),
-          
-          # Having trips longer that 200 miles doesn't make sense
-          trip_miles =
-            data.table::fifelse(trip_miles %between% c(0, 200),
-                                trip_miles,
-                                NA_real_),
-          
-          trip_minutes = 
-            difftime(dropoff_datetime,
-                     request_datetime,
-                     units = "mins") |>
-            as.integer() |>
-            # More that 3 hours is too much time
-            # and we can not use negative times
-            (\(x) data.table::fifelse(x %between% c(0, 60*3), x, NA_integer_))(),
-          
-          tips,
-          
-          # Paying more that 750 dollars or 
-          # less than 0 don't make sense
-          driver_pay = 
-            data.table::fifelse(driver_pay %between% c(0, 750),
-                                driver_pay,
-                                NA_real_))]
+  dt[, (borough_cols) := lapply(
+    .SD,
+    FUN = \(x) factor(x, levels = c("Manhattan", "Brooklyn", "Queens"))
+  ),
+  .SDcols = borough_cols]
+
+
+  dt[, (service_zone_cols) := lapply(
+    .SD,
+    FUN = \(x) factor(x, levels = c("Boro Zone", "Yellow Zone", "Airports"))
+  ),
+  .SDcols = service_zone_cols]
+
   
-    dt_cleaned[, profit_rate := 
-               (driver_pay + tips) / (trip_minutes / 60)]
+  # Defining same place
+  
+  dt[, same_borough := start_borough == end_borough]
+  dt[, same_service_zone := start_service_zone == end_service_zone]
+  dt[, same_zone := start_zone == end_zone]
   
   
-  return(dt_cleaned[])
+  # Adding numeric columns
+  
+  dt[, trip_minutes := 
+       difftime(dropoff_datetime,
+                request_datetime,
+                units = "mins") |>
+       as.integer()]
+    
+    dt[, profit_rate := 
+         (driver_pay + tips) / (trip_minutes / 60L)]
+
+    
+  # Defining columns to keep
+  
+    cols_to_keep <- c(
+      "company",
+      "dispatching_base_num",
+      "originating_base_num",
+      flag_cols,
+      borough_cols,
+      service_zone_cols,
+      "start_lat",
+      "start_long",
+      "end_lat",
+      "end_long",
+      "same_borough",
+      "same_service_zone",
+      "same_zone",
+      "base_passenger_fare",
+      "trip_miles",
+      "request_datetime",
+      "dropoff_datetime",
+      "trip_minutes",
+      "tips",
+      "driver_pay",
+      "profit_rate"
+    )
+    
+  return(dt[, ..cols_to_keep])
   
 }
