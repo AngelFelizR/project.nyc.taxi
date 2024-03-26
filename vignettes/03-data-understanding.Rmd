@@ -292,15 +292,7 @@ highlight_top_zones(TripsZoneDistribution,
 
 ###### Brooklyn
 
-- *Bushwick (North|South)* is popular for its vibrant nightlife, art scene, dining, and secondhand shopping.
-
-- *Crown Heights (North|South)* is a historic neighborhood with tree-lined streets, beautiful townhomes, and brownstones.
-
-- **East New York**: A neighborhood in Brooklyn with a rich history and diverse community. It's undergoing significant changes and development¹.
-
-- **Williamsburg (North Side)**: Information about tourism in Williamsburg North Side is limited. Please consider researching more about this area.
-
-- **Park Slope**: A family-friendly neighborhood known for its beautiful brownstone-lined streets and proximity to Prospect Park.
+In this Borough, the most important starting zones are concentrated in the north part. _Bushwick (North|South)_, _Crown Heights (North|South)_, _Williamsburg (North Side)_ and _Park Slope_ form an **"U"** shape, the farthest zone is the _East New York_.
 
 ```{r}
 highlight_top_zones(TripsZoneDistribution,
@@ -312,6 +304,8 @@ highlight_top_zones(TripsZoneDistribution,
 
 ###### Queens
 
+Most of the most important starting zones are concentrated in north part of this Borough and the only exception is the _JFK Airport_ in the south.
+
 ```{r}
 highlight_top_zones(TripsZoneDistribution,
                     borough = "Queens",
@@ -319,6 +313,7 @@ highlight_top_zones(TripsZoneDistribution,
                     top_color = "purple",
                     col_prefix  = "start_")
 ```
+
 
 ####  {.unnumbered}
 
@@ -329,6 +324,45 @@ highlight_top_zones(TripsZoneDistribution,
 ```{r}
 TripsZoneDistribution |>
   count_pct(end_borough, wt =  n)
+```
+
+##### end_zone {.tabset}
+
+###### Manhattan
+
+If we focus our attention to the places where the trips end we see the new zone _East Harlem (North|South)_ which get the top 5 moving the _East Village_ to the sixth position.
+
+```{r}
+highlight_top_zones(TripsZoneDistribution,
+                    borough = "Manhattan",
+                    borough_color = BoroughColors[["Manhattan"]],
+                    top_length = 6,
+                    top_color = "purple",
+                    col_prefix  = "end_")
+```
+
+###### Brooklyn
+
+We also can see the same pattern from the ending zone perspective.
+
+```{r}
+highlight_top_zones(TripsZoneDistribution,
+                    borough = "Brooklyn",
+                    borough_color = BoroughColors[["Brooklyn"]],
+                    top_color = "purple",
+                    col_prefix  = "end_")
+```
+
+###### Queens
+
+For the ending perspective, now the _JFK Airport_ present more trips than the _LaGuardia Airport_.
+
+```{r}
+highlight_top_zones(TripsZoneDistribution,
+                    borough = "Queens",
+                    borough_color = BoroughColors[["Queens"]],
+                    top_color = "purple",
+                    col_prefix  = "end_")
 ```
 
 ### Time variables
