@@ -1476,6 +1476,12 @@ apply_base_cleaning <- function(dt) {
   dt[, same_zone := start_zone == end_zone]
   
   
+  # Some times the request time is higher than
+  # the drop off time it seems it was an exchange 
+  # between both columns
+  dt[, `:=`(dropoff_datetime = pmax(dropoff_datetime, request_datetime),
+            request_datetime = pmin(dropoff_datetime, request_datetime))]
+  
   # Adding numeric columns
   
   dt[, trip_minutes := 
@@ -1513,8 +1519,9 @@ apply_base_cleaning <- function(dt) {
       "driver_pay",
       "profit_rate"
     )
-    
-  return(dt[, ..cols_to_keep])
+  
+  # We don't canceled trips and we want this new col order
+  return(dt[trip_minutes != 0L, ..cols_to_keep])
   
 }
 ```

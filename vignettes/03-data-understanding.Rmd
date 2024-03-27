@@ -707,8 +707,6 @@ TrainingTripsCleaned <-
                        zone_id_col = "LocationID") |>
   apply_base_cleaning()
 
-setDT(TrainingTripsCleaned)
-
 glimpse(TrainingTripsCleaned)
 ```
 
@@ -717,14 +715,26 @@ rm(TrainingTrips)
 ```
 
 ```{r}
-TrainingTripsCleaned[is.na(profit_rate),
-                     .(driver_pay,
-                       tips,
-                       request_datetime,
-                       dropoff_datetime,
-                       trip_minutes,
-                       profit_rate)]
+TrainingTripsCleaned[, .N,
+                     by = c("trip_minutes",
+                            "profit_rate")] |>
+  ggplot(aes(trip_minutes, profit_rate))+
+  geom_point(aes(alpha = N))+
+  scale_y_continuous(labels = dollar_format(),
+                     trans = "log2")+
+  theme_light()
 ```
+
+
+```{r}
+TrainingTripsCleaned[, .SD, .SDcols = patterns("profit_rate|company|_num|_flag")] |>
+  melt(id.vars = "profit_rate",
+       value.factor = TRUE) |>
+  ggplot(aes(value, profit_rate))+
+  geom_boxplot()+
+  facet_wrap(~variable)
+```
+
 
 
 ## Correlations between predictors and target variable
