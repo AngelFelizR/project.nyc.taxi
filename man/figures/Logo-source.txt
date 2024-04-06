@@ -1,0 +1,6 @@
+Source images
+https://emojiterra.com/es/taxi/
+https://emojiterra.com/es/estatua-de-la-libertad/
+
+Shiny app
+https://connect.thinkr.fr/hexmake/

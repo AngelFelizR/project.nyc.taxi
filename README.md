@@ -1,5 +1,5 @@
 
-# Increasing NYC Taxi Drivers Earnings
+# Increasing NYC Taxi Drivers Earnings <a href="https://angelfelizr.github.io/project.nyc.taxi/"><img src="man/figures/logo.png" align="right" height="139" alt="project.nyc.taxi website" /></a>
 
 <!-- badges: start -->
 <!-- badges: end -->
