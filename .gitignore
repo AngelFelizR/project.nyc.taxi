@@ -7,3 +7,6 @@ raw-data/
 inst/doc
 /doc/
 /Meta/
+.cache/
+.config/
+.local/
