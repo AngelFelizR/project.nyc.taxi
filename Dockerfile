@@ -1,20 +1,63 @@
-FROM rocker/tidyverse:4.3.3
+FROM rocker/rstudio:4.3.3
 
 RUN apt-get update && apt-get install -y \
-    libglpk-dev \
+# devtools & leaflet & DiagrammeR & fs
+    make \
+
+# devtools & leaflet & DiagrammeR & knitr
+    pandoc \
+
+# devtools & recipes & DiagrammeR & infer
+    libicu-dev \
+
+# devtools & leaflet & fusen
+    libcurl4-openssl-dev \
+    libpng-dev \
+
+# devtools & arrow
+    libssl-dev \
+
+# devtools & DiagrammeR
     libxml2-dev \
+
+# arrow
+    cmake \
+
+# leaflet
     libgdal-dev \
     gdal-bin \
     libgeos-dev \
     libproj-dev \
-    libsqlite3-dev
+    libsqlite3-dev \
 
-RUN R -e "install.packages('pak')"
+# devtools & fusen
+    zlib1g-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libfribidi-dev \
+    libharfbuzz-dev \
+    libjpeg-dev \
+    libtiff-dev \
+    git \
+    libgit2-dev \
 
-RUN R -e "pak::pkg_install('rstudio/renv@v1.0.5')"
+# DiagrammeR
+    libglpk-dev
 
-RUN mkdir /home/proyect.nyc.taxi
 
-COPY renv.lock /home/proyect.nyc.taxi/renv.lock
+# Set the working directory
+WORKDIR /project
 
-RUN R -e "setwd('/home/proyect.nyc.taxi');renv::init();renv::restore()"
+# Install renv from CRAN
+RUN R -e "install.packages('renv')"
+
+# Set the environment variable for the renv cache path
+ENV RENV_PATHS_CACHE /renv/cache
+
+# Mount the host's renv cache to the container
+VOLUME /renv/cache
+
+# Restore R packages using renv
+RUN R -e "renv::init()"
+
+

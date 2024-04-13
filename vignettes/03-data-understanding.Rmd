@@ -4,8 +4,10 @@ output:
   rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{03-data-understanding}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 
