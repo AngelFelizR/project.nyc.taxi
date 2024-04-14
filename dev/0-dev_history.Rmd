@@ -7,6 +7,13 @@ editor_options:
 
 All commands that you use to use when developing packages...
 
+# Running container
+
+```
+docker run --rm -ti -d --name project -p 8787:8787 -e "RENV_PATHS_CACHE=/renv/cache" -v C:/Users/angel/R-folder/renv_cache_project.nyc.taxi:/home/rstudio/renv/cache -v C:/Users/angel/R-folder/project.nyc.taxi:/home/rstudio/project angelfelizr/project.nyc.taxi:0.0.99
+```
+
+
 # First time just after creating the project
 
 - Fill the following chunk to create the DESCRIPTION of your package
