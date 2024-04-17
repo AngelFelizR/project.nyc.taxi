@@ -9,8 +9,20 @@ All commands that you use to use when developing packages...
 
 # Running container
 
-```
-docker run --rm -ti -d --name project -p 8787:8787 -e "RENV_PATHS_CACHE=/renv/cache" -v C:/Users/angel/R-folder/renv_cache_project.nyc.taxi:/home/rstudio/renv/cache -v C:/Users/angel/R-folder/project.nyc.taxi:/home/rstudio/project angelfelizr/project.nyc.taxi:0.0.99
+```bash
+# run the container with the host cache mounted in the container
+docker run -d --rm -ti \
+    --name project \
+    -p 8787:8787 \
+    -v  /home/angel/R-Folder/cache_4.3:/home/rstudio/.cache/R/renv/cache/v5/R-4.3/x86_64-pc-linux-gnu \
+    -v /home/angel/R-Folder:/home/rstudio \
+    angelfelizr/project.nyc.taxi:0.0.99
+
+# We need to wait 1 second
+sleep 1
+
+# We need to open the page
+firefox localhost:8787
 ```
 
 

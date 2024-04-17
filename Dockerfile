@@ -49,26 +49,3 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # DiagrammeR
     libglpk-dev
-
-
-# Creating directory
-RUN mkdir /home/rstudio/project
-RUN mkdir /home/rstudio/renv
-RUN mkdir /home/rstudio/renv/cache
-
-# Set the working directory
-WORKDIR /home/rstudio/project
-
-# Install renv from CRAN
-RUN R -e "install.packages('renv')"
-
-# Set the environment variable for the renv cache path
-ENV RENV_PATHS_CACHE /home/rstudio/renv/cache
-
-# Mount the host's renv cache to the container
-VOLUME /home/rstudio/renv/cache
-
-# Restore R packages using renv
-RUN R -e "renv::init()"
-
-EXPOSE 8787
