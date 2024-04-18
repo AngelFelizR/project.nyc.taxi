@@ -1,0 +1,43 @@
+---
+title: "Defining Environment"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Defining Environment}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+In order to reproduce the results of this project we need to follow the following steps to run the code using the same environment:
+
+1. Install docker by installing [Docker Desktop](https://www.docker.com/products/docker-desktop/) or just [Docker Engine](https://docs.docker.com/engine/install/) if your is linux is your operating system. In Manjaro, you can install it using the next command to install the Docker Engine:
+
+```bash
+sudo pacman -S docker
+```
+
+2. Start the docker by opening the Docker Desktop or running the systemctl start command for docker.service based on the systemd packeage.
+
+```bash
+sudo systemctl start docker.service
+```
+
+3. To avoid using sudo with each docker command, you can add yourself to the docker group.
+
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+4. Dowload the latest image related with this problem.
+
+```bas
+docker pull angelfelizr/proyect.nyc.taxi:0.0.99                                  
+```
+

@@ -1,8 +1,8 @@
 ---
-title: "01 - Data Collection Process"
+title: "Data Collection Process"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{01-data-collection-process}
+  %\VignetteIndexEntry{Data Collection Process}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -1,8 +1,8 @@
 ---
-title: "02 - Business Understanding"
+title: "Business Understanding"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{02-business-understanding}
+  %\VignetteIndexEntry{Business Understanding}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

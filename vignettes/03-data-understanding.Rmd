@@ -1,9 +1,9 @@
 ---
-title: "03 - Data Understanding"
+title: "Data Understanding"
 output: 
   rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{03-data-understanding}
+  %\VignetteIndexEntry{Data Understanding}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
