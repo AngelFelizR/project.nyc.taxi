@@ -66,9 +66,6 @@ is_arrow_con <- function(x){
 #' | dropoff_datetime | POSIXct POSIXt|
 #' | driver_pay | numeric|
 #' | tips | numeric|
-#'
-#' @importFrom lubridate minutes as_datetime make_datetime hours year month
-#' @importFrom dplyr select filter compute collect slice_sample bind_rows
 #' 
 #' @return A data.frame
 #' @export
@@ -376,10 +373,6 @@ testthat::test_that("Missing column stop is working",{
 #' @param wt  If a variable, computes sum(wt) for each group.
 #' @param sort If TRUE, will show the largest groups at the top.
 #' @param digits Integer indicating the number of decimal places
-#' 
-#' @importFrom dplyr count collect
-#' @importFrom rlang quos enquo
-#' @importFrom data.table setDT `:=`
 #'
 #' @return A data.frame
 #' @export
@@ -475,8 +468,6 @@ testthat::test_that("wt is working",{
 #' @param keep_dt_id_cols If `FALSE`, the columns indicated the `start_id_col` and `end_id_col` will be removed.
 #' @param zone_id_col A string indicating the id related to each location in the `zone_dt` table.
 #' 
-#' @importFrom data.table is.data.table `%chin%` uniqueN as.data.table copy setnames
-#'
 #' @return A data.table
 #' @export
 add_zone_description <- function(dt, 
@@ -695,9 +686,6 @@ test_that("The add_zone_description is working",{
 #' @param radius_var A character vector indicating a numeric column.
 #' @param cluster_points If `TRUE` if we have many points it will stop showing all points and showing the sum by sub-regions.
 #' 
-#' @importFrom data.table %chin% is.data.table
-#' @importFrom leaflet colorFactor leaflet addTiles addProviderTiles addCircleMarkers addLegend markerClusterOptions
-#'
 #' @return An interactive map
 #' @export
 #'
@@ -1028,8 +1016,6 @@ highlight_top_zones <- function(dt,
 #'  It update the zone name to have a name for each location to avoid point overlapping.
 #'
 #' @param dt A `data.table` with columns `lat`, `long`, `LocationID` and `Zone`.
-#' 
-#' @importFrom data.table is.data.table fcase %chin%
 #'
 #' @return A data.table
 #' @export
@@ -1215,9 +1201,6 @@ test_that("x must have values from 1 to 7",{
 #'
 #' @param x A data.frame or an arrow connection
 #' @param value A column vector to summarize
-#' 
-#' @importFrom dplyr filter summarize mutate select collect
-#' @importFrom stats median quantile sd
 #'
 #' @return A data.frame with summary values
 #' @export
@@ -1298,10 +1281,6 @@ data.frame(x = rnorm(200, mean = 5)) |>
 #' @param prob The proportion of rows to keep in the sample.
 #' @param seed Number to keep the sample reprodicible.
 #' 
-#' @importFrom arrow read_parquet
-#' @importFrom data.table setDT setkeyv
-#' @importFrom withr local_seed
-#'
 #' @return A data.table
 #' @export
 #'
@@ -1410,8 +1389,6 @@ test_that("The zone is working",{
 #' @return A data.table
 #' @export
 #' 
-#' @importFrom data.table fcase fifelse %like% %between%
-#'
 #' @examples
 apply_base_cleaning <- function(dt) {
   
@@ -1563,12 +1540,6 @@ data.table::data.table(hvfhs_license_num = "HV0004",
 #' 
 #' @return A data.frame with the new features.
 #' @export
-#' 
-#' @importFrom rlang sym
-#' @importFrom lubridate cyclic_encoding
-#' @importFrom recipes recipe step_date step_time step_holiday prep bake
-#' @importFrom timeDate listHolidays
-#' @importFrom data.table setattr
 #'
 #' @examples
 add_datetime_features <- function(df, date_col) {
@@ -1630,6 +1601,7 @@ c("R", "man", "tests/testthat") |>
          pattern = "\\.Rd?", 
          full.names = TRUE) |>
   unlist() |>
+  setdiff(y = "R/project.nyc.taxi-package.R") |>
   file.remove()
 
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
@@ -1637,6 +1609,21 @@ fusen::inflate(flat_file = "dev/flat_functions.Rmd",
                vignettes = FALSE,
                check = FALSE)
 ```
+
+```{r development-creating-package-file, eval=TRUE}
+readLines("dev/flat_functions.Rmd") |>
+  stringr::str_subset(pattern = "@importFrom") |>
+  stringr::str_remove(pattern = "#' @importFrom ") |>
+  stringr::str_match(pattern = "^(.+?) (.+?)$") |>
+  (\(x) data.table::data.table(id = 1:nrow(x),
+                               package = x[,2],
+                               functions = strsplit(x[,3]," ", TRUE)))() |>
+  (\(dt) dt[, .(functions = functions[[1L]] |> stringr::str_remove_all("`")),
+            by = c("id", "package")])() |>
+  (\(dt) dt[, usethis::use_import_from(package = package, unique(functions)),
+            by = "package"])()
+```
+
 
 
 ```{r development-building-website, eval=FALSE}
