@@ -46,10 +46,10 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/00-defining-environment.html">Defining Environment</a>
     <a class="dropdown-item" href="../articles/01-data-collection-process.html">Data Collection Process</a>
     <a class="dropdown-item" href="../articles/02-business-understanding.html">Business Understanding</a>
     <a class="dropdown-item" href="../articles/03-data-understanding.html">Data Understanding</a>
-    <a class="dropdown-item" href="../articles/project.nyc.taxi.html">Defining Environment</a>
   </div>
 </li>
 <li class="nav-item">
@@ -863,7 +863,7 @@ that the higher whisker is 13.2 miles.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
 <span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  5.87         0         -<span style="color: #BB0000;">5.34</span>  1.62  3.03  5.03  6.26           13.2      634.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  5.87         0         -<span style="color: #BB0000;">5.33</span>  1.61  3.03  5.03  6.24           13.2      634.</span></span></code></pre></div>
 <p>We can also check that only 24.4K trips are over 100 miles.</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
@@ -917,7 +917,7 @@ problems:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
 <span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  19.7     -<span style="color: #BB0000;">520.</span>         -<span style="color: #BB0000;">15.1</span>  11.4  18.2  23.7  29.1           55.6     <span style="text-decoration: underline;">4</span>996.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  19.7     -<span style="color: #BB0000;">520.</span>         -<span style="color: #BB0000;">15.0</span>  11.4  18.3  23.7  29.1           55.5     <span style="text-decoration: underline;">4</span>996.</span></span></code></pre></div>
 <p>By checking the closer to the distribution we can confirm that 99% of
 trips present a base fare from 5 to 50 dollars, but any fare higher that
 750 dollars seems weird won’t be used to train the model.</p>
@@ -968,7 +968,7 @@ trips present a base fare from 5 to 50 dollars, but any fare higher that
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
 <span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  15.4     -<span style="color: #BB0000;">407.</span>         -<span style="color: #BB0000;">12.9</span>  8.86  14.3  18.7  23.3           45.1     <span style="text-decoration: underline;">4</span>643.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  15.4     -<span style="color: #BB0000;">407.</span>         -<span style="color: #BB0000;">13.0</span>  8.85  14.4  18.7  23.4           45.3     <span style="text-decoration: underline;">4</span>643.</span></span></code></pre></div>
 <p>And after checking the distribution we can confirm that paying more
 than 750 must be a mistake that we don’t want to use for training the
 model.</p>
@@ -1016,9 +1016,9 @@ $294 tip is not hard to believe.</p>
 <code class="sourceCode R"><span><span class="va">NycTrips2022</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/compute_num_summary.html">compute_num_summary</a></span><span class="op">(</span><span class="va">tips</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
-<span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean         q3 higher_whisker</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  3.04         0   -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">008</span><span style="color: #BB0000;">92</span>     0     0  1.08 0.000<span style="text-decoration: underline;">005</span>95      0.000<span style="text-decoration: underline;">014</span>9</span></span>
+<span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean       q3 higher_whisker</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  3.04         0     -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">309</span>     0     0  1.08 0.000<span style="text-decoration: underline;">206</span>       0.000<span style="text-decoration: underline;">515</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 1 more variable: max_value &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>After braking the <code>tips</code> we can see that <code>80%</code>
 of trips don’t present any tip and must of the tips are lower than
@@ -1057,7 +1057,7 @@ much longer than an hour.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
 <span><span class="co">#&gt;      sd min_value lower_whisker    q1    q2  mean    q3 higher_whisker max_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  14.7      -<span style="color: #BB0000;">314</span>         -<span style="color: #BB0000;">8.99</span>  14.7  20.9  24.6  30.5           54.3      <span style="text-decoration: underline;">2</span>469</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>  14.7      -<span style="color: #BB0000;">314</span>         -<span style="color: #BB0000;">9.01</span>  14.7  21.1  24.6  30.6           54.3      <span style="text-decoration: underline;">2</span>469</span></span></code></pre></div>
 <p>Now we can see that 99% of trips takes less than 2 hours and only
 152,049 trips have more than 2 hour trip.</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
