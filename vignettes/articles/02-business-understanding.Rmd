@@ -5,6 +5,8 @@ vignette: >
   %\VignetteIndexEntry{Business Understanding}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+params:
+  UpdateSimulation: FALSE
 ---
 
 ```{r, include = FALSE}
@@ -13,11 +15,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-if('project.nyc.taxi' %in% rownames(installed.packages())) {
-  library('project.nyc.taxi')
-}else{
-  devtools::load_all()
-}
+library('project.nyc.taxi')
 ```
 
 ## Project Name
@@ -349,7 +347,7 @@ head(RandomStartPoint)
 
 8. Based on each start point simulate a day of work.
 
-```{r parsermd-chunk-9, eval = FALSE}
+```{r parsermd-chunk-9, eval = params$UpdateSimulation}
 BaseLineSimulation <-
   RandomStartPoint[
     , simulate_trips(NycTrips,
@@ -363,6 +361,14 @@ BaseLineSimulation <-
     by = "simulation_day"
   ][RandomStartPoint, on = "simulation_day"]
 ```
+
+```{r, include=FALSE, eval= params$UpdateSimulation}
+usethis::use_data(BaseLineSimulation,
+                  overwrite = TRUE,
+                  compress = "xz",
+                  version = 3)
+```
+
 
 ### Infering Daily Hourly Wage
 

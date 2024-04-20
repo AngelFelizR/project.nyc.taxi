@@ -38,7 +38,7 @@ newgrp docker
 4. Download the image related with this problem.
 
 ```bas
-docker pull angelfelizr/proyect.nyc.taxi:0.0.99                                  
+docker pull angelfelizr/project.nyc.taxi:0.0.99                                  
 ```
 
 5. Change to a directory where you want to save the project. You can see the path by running the next command.
