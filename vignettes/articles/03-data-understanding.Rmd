@@ -8,20 +8,20 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   chunk_output_type: console
+params:
+  UpdateSample: FALSE
 ---
 
 
 ```{r, include = FALSE}
+TrainingPath <- here::here("raw-data/TrainingTrips.fst")
+ExistTrainingData <- file.exists(TrainingPath)
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-if('project.nyc.taxi' %in% rownames(installed.packages())) {
-  library('project.nyc.taxi')
-}else{
-  pkgload::load_all()
-}
+library('project.nyc.taxi')
 ```
 
 After completing the [business understanding](https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
@@ -57,11 +57,6 @@ library(recipes)
 
 options(datatable.print.nrows = 15,
         digits = 4)
-```
-
-```{r include=FALSE, eval=TRUE}
-TrainingTrips <- fst::read_fst(here("raw-data/TrainingTrips.fst"),
-                               as.data.table = TRUE)
 ```
 
 2.  Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
@@ -679,7 +674,11 @@ Due our limited compute power capacity we will need to sample the data to be abl
 
 As most of the trips take place between Manhattan, Brooklyn and Queens, we are going to focus first in those zones.
 
-```{r, eval=FALSE}
+```{r include=FALSE, eval=ExistTrainingData}
+TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
+```
+
+```{r, eval=!ExistTrainingData}
 BoroughToKeep <- c("Manhattan", "Brooklyn", "Queens")
 
 TrainingTrips <-
@@ -692,7 +691,7 @@ TrainingTrips <-
   rbindlist()
 ```
 
-```{r, include=FALSE, eval=FALSE}
+```{r, include=FALSE, eval=!ExistTrainingData}
 fst::write_fst(TrainingTrips,
                "raw-data/TrainingTrips.fst",
                100)
@@ -736,8 +735,6 @@ TrainingTripsCleaned[, .SD, .SDcols = patterns("profit_rate|company|_num|_flag")
   geom_boxplot()+
   facet_wrap(~variable)
 ```
-
-
 
 ## Correlations between predictors and target variable
 

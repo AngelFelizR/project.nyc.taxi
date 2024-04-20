@@ -80,11 +80,20 @@ docker run -d --rm -ti \
 renv::restore()
 ```
 
-13. To reproduce the analysis presented you can use the function [devtools::build_rmd()]. For example, if you want to run the data collection process:
+13. To reproduce the analysis presented we have to alternatives:
+
+  - Using the function `devtools::build_rmd()` to render each article without install the library.
 
 ```r
 devtools::build_rmd("vignettes/01-data-collection-process.Rmd")
 ```
+
+  - Installing the library local library to be able to run the code in an interactive session.
+  
+```r
+devtools::install_local()
+```
+  
 
 14. If you want to keep running the container you can kill it.
 
