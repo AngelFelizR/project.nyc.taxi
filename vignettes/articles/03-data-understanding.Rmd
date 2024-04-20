@@ -10,12 +10,14 @@ editor_options:
   chunk_output_type: console
 params:
   UpdateSample: FALSE
+  UpdateGeoPoints: FALSE
 ---
 
 
 ```{r, include = FALSE}
 TrainingPath <- here::here("raw-data/TrainingTrips.fst")
 ExistTrainingData <- file.exists(TrainingPath)
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -73,7 +75,7 @@ NycTrips2022
 
 3.  Importing the zone code description with `lat` and `long`.
 
-```{r, eval=FALSE}
+```{r, eval=params$UpdateGeoPoints}
 ZoneCodesArcgis <- 
   fread(here("raw-data/taxi_zone_lookup.csv"),
         colClasses = c("integer",
@@ -95,7 +97,20 @@ glimpse(ZoneCodesArcgis)
 ```
 
 ```{r, echo=FALSE}
-glimpse(ZoneCodesArcgis)
+
+if(params$UpdateGeoPoints){
+  
+  usethis::use_data(ZoneCodesArcgis,
+                    overwrite = TRUE,
+                    compress = "xz",
+                    version = 3)
+  
+}else{
+  
+  glimpse(ZoneCodesArcgis)
+
+}
+
 ```
 
 4. Validating the added latitude and longitude, by plotting all the points in an interactive map from we can highlight the following issues:
@@ -540,7 +555,7 @@ NycTrips2022 |>
             digits = 4L)
 ```
 
-But even just taking the long trips we can see that 90% of those trips were shorter than **200 miles**, those trips doesn't look like good examples to train the model.
+But even just taking the long trips we can see that 98% of those trips were shorter than **300 miles**, those trips doesn't look like good examples to train the model.
 
 ```{r}
 NycTrips2022 |>
@@ -668,17 +683,20 @@ NycTrips2022 |>
             digits = 6L)
 ```
 
+
+
+
 ## Sampling data
 
 Due our limited compute power capacity we will need to sample the data to be able to unlock all R capacities.
 
 As most of the trips take place between Manhattan, Brooklyn and Queens, we are going to focus first in those zones.
 
-```{r include=FALSE, eval=ExistTrainingData}
+```{r include=FALSE, eval=!params$UpdateSample}
 TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
 ```
 
-```{r, eval=!ExistTrainingData}
+```{r, eval=params$UpdateSample}
 BoroughToKeep <- c("Manhattan", "Brooklyn", "Queens")
 
 TrainingTrips <-
@@ -691,7 +709,7 @@ TrainingTrips <-
   rbindlist()
 ```
 
-```{r, include=FALSE, eval=!ExistTrainingData}
+```{r, include=FALSE, eval=params$UpdateSample}
 fst::write_fst(TrainingTrips,
                "raw-data/TrainingTrips.fst",
                100)

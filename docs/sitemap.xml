@@ -4,6 +4,9 @@
     <loc>https://angelfelizr.github.io/project.nyc.taxi/404.html</loc>
   </url>
   <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/LICENSE.html</loc>
+  </url>
+  <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/articles/01-data-collection-process.html</loc>
   </url>
   <url>
@@ -16,13 +19,22 @@
     <loc>https://angelfelizr.github.io/project.nyc.taxi/articles/index.html</loc>
   </url>
   <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/articles/project.nyc.taxi.html</loc>
+  </url>
+  <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/authors.html</loc>
   </url>
   <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/index.html</loc>
   </url>
   <url>
-    <loc>https://angelfelizr.github.io/project.nyc.taxi/LICENSE.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/BaseLineSimulation.html</loc>
+  </url>
+  <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/TrainingTrips.html</loc>
+  </url>
+  <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/ZoneCodesArcgis.html</loc>
   </url>
   <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/add_datetime_features.html</loc>
@@ -34,7 +46,7 @@
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/apply_base_cleaning.html</loc>
   </url>
   <url>
-    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/BaseLineSimulation.html</loc>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/clean_zone_manually.html</loc>
   </url>
   <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/compute_boxplot.html</loc>
@@ -52,6 +64,9 @@
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/fast_glimpse.html</loc>
   </url>
   <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/highlight_top_zones.html</loc>
+  </url>
+  <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/index.html</loc>
   </url>
   <url>
@@ -59,6 +74,9 @@
   </url>
   <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/plot_map.html</loc>
+  </url>
+  <url>
+    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/project.nyc.taxi-package.html</loc>
   </url>
   <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/sample_parquet.html</loc>
@@ -71,11 +89,5 @@
   </url>
   <url>
     <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/summary_to_boxplot.html</loc>
-  </url>
-  <url>
-    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/TrainingTrips.html</loc>
-  </url>
-  <url>
-    <loc>https://angelfelizr.github.io/project.nyc.taxi/reference/ZoneCodesArcgis.html</loc>
   </url>
 </urlset>
