@@ -49,3 +49,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # DiagrammeR
     libglpk-dev
+
+RUN R -e "install.packages('pak');pak::pkg_install(rstudio/renv@v1.0.7)"
+

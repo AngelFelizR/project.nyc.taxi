@@ -80,7 +80,13 @@ docker run -d --rm -ti \
 renv::restore()
 ```
 
-If you want to keep running the container you can kill it.
+13. To reproduce the analysis presented you can use the function [devtools::build_rmd()]. For example, if you want to run the data collection process:
+
+```r
+devtools::build_rmd("vignettes/01-data-collection-process.Rmd")
+```
+
+14. If you want to keep running the container you can kill it.
 
 ```bash
 docker container kill project
