@@ -7,10 +7,6 @@
 #' @param prob The proportion of rows to keep in the sample.
 #' @param seed Number to keep the sample reprodicible.
 #' 
-#' @importFrom arrow read_parquet
-#' @importFrom data.table setDT setkeyv
-#' @importFrom withr local_seed
-#'
 #' @return A data.table
 #' @export
 #'

@@ -51,7 +51,7 @@ flat_functions.Rmd:
     flat_file: dev/flat_functions.Rmd
     vignette_name: .na
     open_vignette: true
-    check: false
+    check: true
     document: true
     overwrite: ask
     vignettes: false

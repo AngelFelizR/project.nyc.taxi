@@ -7,12 +7,6 @@
 #' 
 #' @return A data.frame with the new features.
 #' @export
-#' 
-#' @importFrom rlang sym
-#' @importFrom lubridate cyclic_encoding
-#' @importFrom recipes recipe step_date step_time step_holiday prep bake
-#' @importFrom timeDate listHolidays
-#' @importFrom data.table setattr
 #'
 #' @examples
 #' data.frame(profit_rate = 15,

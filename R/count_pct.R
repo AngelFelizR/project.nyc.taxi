@@ -11,10 +11,6 @@
 #' @param wt  If a variable, computes sum(wt) for each group.
 #' @param sort If TRUE, will show the largest groups at the top.
 #' @param digits Integer indicating the number of decimal places
-#' 
-#' @importFrom dplyr count collect
-#' @importFrom rlang quos enquo
-#' @importFrom data.table setDT `:=`
 #'
 #' @return A data.frame
 #' @export

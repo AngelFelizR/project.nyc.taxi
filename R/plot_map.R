@@ -14,9 +14,6 @@
 #' @param radius_var A character vector indicating a numeric column.
 #' @param cluster_points If `TRUE` if we have many points it will stop showing all points and showing the sum by sub-regions.
 #' 
-#' @importFrom data.table %chin% is.data.table
-#' @importFrom leaflet colorFactor leaflet addTiles addProviderTiles addCircleMarkers addLegend markerClusterOptions
-#'
 #' @return An interactive map
 #' @export
 #'

@@ -6,9 +6,6 @@
 #'
 #' @param x A data.frame or an arrow connection
 #' @param value A column vector to summarize
-#' 
-#' @importFrom dplyr filter summarize mutate select collect
-#' @importFrom stats median quantile sd
 #'
 #' @return A data.frame with summary values
 #' @export

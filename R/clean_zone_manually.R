@@ -13,8 +13,6 @@
 #'  It update the zone name to have a name for each location to avoid point overlapping.
 #'
 #' @param dt A `data.table` with columns `lat`, `long`, `LocationID` and `Zone`.
-#' 
-#' @importFrom data.table is.data.table fcase %chin%
 #'
 #' @return A data.table
 #' @export

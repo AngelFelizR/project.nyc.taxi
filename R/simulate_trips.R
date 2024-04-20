@@ -28,9 +28,6 @@
 #' | dropoff_datetime | POSIXct POSIXt|
 #' | driver_pay | numeric|
 #' | tips | numeric|
-#'
-#' @importFrom lubridate minutes as_datetime make_datetime hours year month
-#' @importFrom dplyr select filter compute collect slice_sample bind_rows
 #' 
 #' @return A data.frame
 #' @export

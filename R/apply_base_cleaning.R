@@ -7,8 +7,6 @@
 #' @return A data.table
 #' @export
 #' 
-#' @importFrom data.table fcase fifelse %like% %between%
-#'
 #' @examples
 #'
 #' data.table::data.table(hvfhs_license_num = "HV0004",
@@ -123,10 +121,6 @@ apply_base_cleaning <- function(dt) {
       flag_cols,
       borough_cols,
       service_zone_cols,
-      "start_lat",
-      "start_long",
-      "end_lat",
-      "end_long",
       "same_borough",
       "same_service_zone",
       "same_zone",

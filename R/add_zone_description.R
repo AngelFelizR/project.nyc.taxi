@@ -11,8 +11,6 @@
 #' @param keep_dt_id_cols If `FALSE`, the columns indicated the `start_id_col` and `end_id_col` will be removed.
 #' @param zone_id_col A string indicating the id related to each location in the `zone_dt` table.
 #' 
-#' @importFrom data.table is.data.table `%chin%` uniqueN as.data.table copy setnames
-#'
 #' @return A data.table
 #' @export
 #' @examples

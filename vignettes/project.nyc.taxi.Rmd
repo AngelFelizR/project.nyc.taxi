@@ -35,9 +35,53 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-4. Dowload the latest image related with this problem.
+4. Download the image related with this problem.
 
 ```bas
 docker pull angelfelizr/proyect.nyc.taxi:0.0.99                                  
 ```
 
+5. Change to a directory where you want to save the project. You can see the path by running the next command.
+
+```bash
+pwd
+```
+
+6. Create a directory to save the package cache related to the project.
+
+```bash
+mkdir cache_4.3
+```
+
+7. Download the repo by running `git clone` or downloading as a zip.
+
+```bash
+git clone https://github.com/AngelFelizR/project.nyc.taxi.git
+```
+
+8. After creating both folders we can run the our container by running the next command based on your working directory.
+
+```
+docker run -d --rm -ti \
+    --name project \
+    -p 8787:8787 \
+    -v  [your_working_dir]/cache_4.3:/home/rstudio/.cache/R/renv/cache/v5/R-4.3/x86_64-pc-linux-gnu \
+    -v [your_working_dir]:/home/rstudio \
+    angelfelizr/project.nyc.taxi:0.0.99
+```
+
+9. Then you can go to your favorite browser and go to [localhost:8787](http://localhost:8787/).
+
+11. Click over `~/project.nyc.taxi/project.nyc.taxi.Rproj` to open the project.
+
+12. Install the package used:
+
+```r
+renv::restore()
+```
+
+If you want to keep running the container you can kill it.
+
+```bash
+docker container kill project
+```

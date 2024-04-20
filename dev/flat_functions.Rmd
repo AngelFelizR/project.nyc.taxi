@@ -1480,10 +1480,6 @@ apply_base_cleaning <- function(dt) {
       flag_cols,
       borough_cols,
       service_zone_cols,
-      "start_lat",
-      "start_long",
-      "end_lat",
-      "end_long",
       "same_borough",
       "same_service_zone",
       "same_zone",
@@ -1607,7 +1603,7 @@ c("R", "man", "tests/testthat") |>
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
                vignette_name = NA,
                vignettes = FALSE,
-               check = FALSE)
+               check = TRUE)
 ```
 
 ```{r development-creating-package-file, eval=TRUE}
