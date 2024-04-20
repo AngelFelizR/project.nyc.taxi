@@ -1,10 +1,5 @@
 FROM rocker/rstudio:4.3.3
 
-# Disabling the authentication step
-ENV USER="rstudio"
-CMD ["/usr/lib/rstudio-server/bin/rserver", "--server-daemonize", "0", "--auth-none", "1"]
-
-
 # Install jq to parse json files
 RUN apt-get update && apt-get install -y --no-install-recommends \
 # devtools & leaflet & DiagrammeR & fs
@@ -16,11 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # devtools & recipes & DiagrammeR & infer
     libicu-dev \
 
-# devtools & leaflet & fusen
+# devtools, leaflet, fusen & magick
     libcurl4-openssl-dev \
     libpng-dev \
 
-# devtools & arrow
+# devtools, arrow & magick
     libssl-dev \
 
 # devtools & DiagrammeR
@@ -48,7 +43,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgit2-dev \
 
 # DiagrammeR
-    libglpk-dev
+    libglpk-dev \
 
-RUN R -e "install.packages('pak');pak::pkg_install(rstudio/renv@v1.0.7)"
+# magick
+    imagemagick \
+    libmagick++-dev \
+    gsfonts
 
+RUN R -e "install.packages('pak');pak::pkg_install('rstudio/renv@v1.0.7')"
+
+# Disabling the authentication step
+ENV USER="rstudio"
+CMD ["/usr/lib/rstudio-server/bin/rserver", "--server-daemonize", "0", "--auth-none", "1"]
