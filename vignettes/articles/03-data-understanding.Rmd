@@ -11,6 +11,8 @@ editor_options:
 params:
   UpdateSample: FALSE
   UpdateGeoPoints: FALSE
+  MaxLimitTripMiles: 300
+  MaxDriverPay: 750
 ---
 
 
@@ -186,8 +188,6 @@ NycTrips2022 |>
                                 hvfhs_license_num == "HV0004" ~ "Via",
                                 hvfhs_license_num == "HV0005" ~ "Lyft"))
 ```
-
-> To improve interpretavility we need to make the same translation after sampling the data.
 
 #### dispatching_base_num
 
@@ -555,7 +555,7 @@ NycTrips2022 |>
             digits = 4L)
 ```
 
-But even just taking the long trips we can see that 98% of those trips were shorter than **300 miles**, those trips doesn't look like good examples to train the model.
+But even just taking the long trips we can see that 98% of those trips were shorter than **`r scales::comma(params$MaxLimitTripMiles)` miles**, those trips doesn't look like good examples to train the model.
 
 ```{r}
 NycTrips2022 |>
@@ -572,7 +572,34 @@ NycTrips2022 |>
             digits = 4L)
 ```
 
-#### base_passenger_fare
+
+### Target variables
+
+#### trip_minutes
+
+I doesn't make sense to have negative time or a 41 hour trip in New York
+
+```{r}
+NycTrips2022 |>
+  mutate(trip_minutes = arrow_minutes_between(request_datetime, dropoff_datetime)) |>
+  compute_num_summary(trip_minutes)
+```
+
+Now we can see that 99% of trips takes less than 2 hours and only 152,049 trips have more than 2 hour trip.
+
+```{r}
+NycTrips2022 |>
+  mutate(trip_minutes = arrow_minutes_between(request_datetime, dropoff_datetime)) |>
+  count_pct(trip_minutes_status = case_when(trip_minutes < 0 ~ "Negative",
+                                            trip_minutes <= 60   ~ "1 hour or less",
+                                            trip_minutes <= (60*2) ~ "(1:00, 2:00]",
+                                            trip_minutes <= (60*3) ~ "(2:00, 3:00]",
+                                            trip_minutes > (60*3) ~ ">3 hours"),
+            digits = 6L)
+```
+
+
+#### driver_pay
 
 Just by checking the summary statistics we can see to important problems:
 
@@ -581,45 +608,14 @@ Just by checking the summary statistics we can see to important problems:
 
 ```{r}
 NycTrips2022 |>
-  compute_num_summary(base_passenger_fare)
+  compute_num_summary(driver_pay)
 ```
 
-By checking the closer to the distribution we can confirm that 99% of trips present a base fare from 5 to 50 dollars, but any fare higher that 750 dollars seems weird won't be used to train the model.
+By checking the closer to the distribution we can confirm that 95% of trips present values from 5 to 50 dollars, but any fare higher that `r scales::comma(params$MaxDriverPay)` dollars seems weird won't be used to train the model.
 
 ```{r}
 NycTrips2022 |>
   count_pct(base_passenger_fare_interval = 
-              case_when(base_passenger_fare >= 4000 ~ ">=4000",
-                        base_passenger_fare >= 3000 ~ "[3000, 4000)",
-                        base_passenger_fare >= 2000 ~ "[2000, 3000)",
-                        base_passenger_fare >= 1000 ~ "[1000, 2000)",
-                        base_passenger_fare >= 750 ~ "[750, 1000)",
-                        base_passenger_fare >= 500 ~ "[500, 750)",
-                        base_passenger_fare >= 400 ~ "[400, 500)",
-                        base_passenger_fare >= 300 ~ "[300, 400)",
-                        base_passenger_fare >= 200 ~ "[200, 300)",
-                        base_passenger_fare >= 100 ~ "[100, 200)",
-                        base_passenger_fare >= 50 ~ "[50, 10)",
-                        base_passenger_fare >= 5 ~ "[5, 50)",
-                        base_passenger_fare >= 0 ~ "[0, 5)",
-                        TRUE ~ "<0"),
-            digits = 8L)
-```
-
-#### driver_pay
-
-Just by checking the summary statistics we can confirm that also `driver_pay` is sharing the same problems that `base_passenger_fare`.
-
-```{r}
-NycTrips2022 |>
-  compute_num_summary(driver_pay)
-```
-
-And after checking the distribution we can confirm that paying more than 750 must be a mistake that we don't want to use for training the model.
-
-```{r}
-NycTrips2022 |>
-  count_pct(driver_pay_interval = 
               case_when(driver_pay >= 4000 ~ ">=4000",
                         driver_pay >= 3000 ~ "[3000, 4000)",
                         driver_pay >= 2000 ~ "[2000, 3000)",
@@ -660,30 +656,18 @@ NycTrips2022 |>
             digits = 8L)
 ```
 
-#### trip_minutes
-
-After taking the difference in minutes between the request time and the drop off time in minutes, we can see negative trips and some other much longer than an hour.
-
-```{r}
-NycTrips2022 |>
-  mutate(trip_minutes = arrow_minutes_between(request_datetime, dropoff_datetime)) |>
-  compute_num_summary(trip_minutes)
-```
-
-Now we can see that 99% of trips takes less than 2 hours and only 152,049 trips have more than 2 hour trip.
-
-```{r}
-NycTrips2022 |>
-  mutate(trip_minutes = arrow_minutes_between(request_datetime, dropoff_datetime)) |>
-  count_pct(trip_minutes_status = case_when(trip_minutes < 0 ~ "Negative",
-                                            trip_minutes <= 60   ~ "1 hour or less",
-                                            trip_minutes <= (60*2) ~ "(1:00, 2:00]",
-                                            trip_minutes <= (60*3) ~ "(2:00, 3:00]",
-                                            trip_minutes > (60*3) ~ ">3 hours"),
-            digits = 6L)
-```
+### Transformation acctions to apply
 
 
+#### For categorical variables
+
+1. Creating the `company` column based on the `hvfhs_license_num` to ensure data understanding.
+2. Keeping the B03404 and B03406 as valid `dispatching_base_num` and transforming the remaining categories using the label other.
+3. Keeping the B03404 and missing as valid `originating_base_num` and transforming the remaining categories using the label other.
+4. Making the empty category as missing to make explicit the value provided for the `access_a_ride_flag` column.
+5. As more of the trips start and end in Manhattan, Brooklyn or Queens, we are going to limit the model to predict on those zones.
+6. Based on the distribution of `trip_miles` it doesn't make sense to train the models with trips longer than `r scales::comma(params$MaxLimitTripMiles)` miles so we will need to impute does values.
+7. We need to omit any `base_passenger_fare` with negative values or value higher than  `r scales::comma(params$MaxBaseFare)` dollars.
 
 
 ## Sampling data

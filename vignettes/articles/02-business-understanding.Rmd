@@ -147,7 +147,6 @@ They will be used as the predictors to train the model.
 - *dispatching_base_num*
 - *originating_base_num*
 - *trip_miles*
-- *base_passenger_fare*
 - *shared_request_flag*
 - *access_a_ride_flag*
 - *wav_request_flag*
@@ -162,6 +161,7 @@ They will be used to create the outcome variable needs to be predicted by the mo
 - ***dropoff_datetime***
 - ***driver_pay***
 - ***tips***
+- *base_passenger_fare*
 - *on_scene_datetime*
 - *pickup_datetime*
 - *trip_time*
