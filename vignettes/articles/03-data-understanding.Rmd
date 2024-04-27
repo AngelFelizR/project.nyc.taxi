@@ -11,8 +11,9 @@ editor_options:
 params:
   UpdateSample: FALSE
   UpdateGeoPoints: FALSE
+  MaxTripHours: 3
+  MaxDriverPay: 300
   MaxLimitTripMiles: 300
-  MaxDriverPay: 750
 ---
 
 ```{r, include = FALSE}
@@ -45,8 +46,6 @@ This can include
 - investigations of correlation structures in the variables,
 - patterns of missing data,
 - anomalous motifs in the data that might challenge the initial expectations of the modeler.
-
-
 
 ## Setting the environment up
 
@@ -545,7 +544,7 @@ NycTrips2022 |>
   compute_num_summary(trip_hours)
 ```
 
-Trips that takes longer than 3 hours doesn't look right and we should investigate more before adding that data to the model.
+Trips that takes longer than **`r params$MaxTripHours` hours** doesn't look right, so we are going to investigate more before adding that data to the model.
 
 ```{r}
 NycTrips2022 |>
@@ -563,6 +562,40 @@ NycTrips2022 |>
                                           trip_hours <= 10 ~ "(9:00, 10:00]",
                                           trip_hours > 10 ~ ">10 hours"),
             digits = 6L)
+```
+
+### driver_pay
+
+Just by checking the summary statistics we can see to important problems:
+
+-   A base fare can not be negative
+-   A base of almost $4.6k is too much
+
+```{r}
+NycTrips2022 |>
+  compute_num_summary(driver_pay)
+```
+
+By checking the closer to the distribution we can confirm that 95% of trips present values from 5 to 50 dollars, but any fare higher than **`r scales::comma(params$MaxDriverPay)` dollars** seems weird won't be used to train the model.
+
+```{r}
+NycTrips2022 |>
+  count_pct(base_passenger_fare_interval = 
+              case_when(driver_pay >= 4000 ~ ">=4000",
+                        driver_pay >= 3000 ~ "[3000, 4000)",
+                        driver_pay >= 2000 ~ "[2000, 3000)",
+                        driver_pay >= 1000 ~ "[1000, 2000)",
+                        driver_pay >= 750 ~ "[750, 1000)",
+                        driver_pay >= 500 ~ "[500, 750)",
+                        driver_pay >= 400 ~ "[400, 500)",
+                        driver_pay >= 300 ~ "[300, 400)",
+                        driver_pay >= 200 ~ "[200, 300)",
+                        driver_pay >= 100 ~ "[100, 200)",
+                        driver_pay >= 50 ~ "[50, 10)",
+                        driver_pay >= 5 ~ "[5, 50)",
+                        driver_pay >= 0 ~ "[0, 5)",
+                        TRUE ~ "<0"),
+            digits = 8L)
 ```
 
 
@@ -601,40 +634,6 @@ NycTrips2022 |>
             digits = 4L)
 ```
 
-### driver_pay
-
-Just by checking the summary statistics we can see to important problems:
-
--   A base fare can not be negative
--   A base of almost \$5k is too much
-
-```{r}
-NycTrips2022 |>
-  compute_num_summary(driver_pay)
-```
-
-By checking the closer to the distribution we can confirm that 95% of trips present values from 5 to 50 dollars, but any fare higher that `r scales::comma(params$MaxDriverPay)` dollars seems weird won't be used to train the model.
-
-```{r}
-NycTrips2022 |>
-  count_pct(base_passenger_fare_interval = 
-              case_when(driver_pay >= 4000 ~ ">=4000",
-                        driver_pay >= 3000 ~ "[3000, 4000)",
-                        driver_pay >= 2000 ~ "[2000, 3000)",
-                        driver_pay >= 1000 ~ "[1000, 2000)",
-                        driver_pay >= 750 ~ "[750, 1000)",
-                        driver_pay >= 500 ~ "[500, 750)",
-                        driver_pay >= 400 ~ "[400, 500)",
-                        driver_pay >= 300 ~ "[300, 400)",
-                        driver_pay >= 200 ~ "[200, 300)",
-                        driver_pay >= 100 ~ "[100, 200)",
-                        driver_pay >= 50 ~ "[50, 10)",
-                        driver_pay >= 5 ~ "[5, 50)",
-                        driver_pay >= 0 ~ "[0, 5)",
-                        TRUE ~ "<0"),
-            digits = 8L)
-```
-
 ### tips
 
 The column looks really good, it makes sense that for more than 75% of trips the tip is 0 as it is not mandatory, but having a trip with a \$294 tip is not hard to believe.
@@ -658,17 +657,20 @@ NycTrips2022 |>
             digits = 8L)
 ```
 
-## Transformation acctions to apply
+
+## Modifications to apply before continue
+
+After making that initial exploration we need apply the following changes before exploring correlations:
 
 1. Creating the `company` column based on the `hvfhs_license_num` to ensure data understanding.
-2. Keeping the B03404 and B03406 as valid `dispatching_base_num` and transforming the remaining categories using the label other.
-3. Keeping the B03404 and missing as valid `originating_base_num` and transforming the remaining categories using the label other.
-4. Making the empty category as missing to make explicit the value provided for the `access_a_ride_flag` column.
-5. As more of the trips start and end in Manhattan, Brooklyn or Queens, we are going to limit the model to predict on those zones.
-6. Based on the distribution of `trip_miles` it doesn't make sense to train the models with trips longer than `r scales::comma(params$MaxLimitTripMiles)` miles so we will need to impute does values.
-7. We need to omit any `driver_pay` with negative values or value higher than  `r scales::comma(params$MaxDriverPay)` dollars.
-
-As we cannot investigate why this some observation present negative hours, we will assume that it was due to writing manually the date and we just need to exchange the `request_datetime` and `dropoff_datetime`.
+2. Keeping the **B03404** and **B03406** as valid `dispatching_base_num` and transforming the remaining categories using the label **other**.
+3. Keeping the **B03404** and **missing** as valid `originating_base_num` and transforming the remaining categories using the label **other**.
+4. Making the empty category as **missing** to make explicit the value provided for the `access_a_ride_flag` column.
+5. Filtering the data to keep working with trips with `start_borough` and `end_borough` in **Manhattan**, **Brooklyn** or **Queens** which *limit the scope of this first phase*.
+6. Exchanging the `request_date` and `dropoff_datetime` when the resulted `trip_hours` ends in a negative number.
+7. Replace any negative `driver_pay` with `NA`.
+8. We need to confirm the correlations between `trip_hours` with `driver_pay` and `trip_miles` that present more than **`r params$MaxTripHours` hours**, **`r scales::comma(params$MaxDriverPay)` dollars** or **`r scales::comma(params$MaxLimitTripMiles)` miles**. If we can see clear relation, we can keep that data in the model, but if not we will need to exchange each value with `NA`.
+9. Confirming if missing value are MCAR to remove the rows with missing values or MAR to impute the values.
 
 
 ## Sampling data

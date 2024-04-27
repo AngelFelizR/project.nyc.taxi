@@ -13,3 +13,5 @@
 ^Meta$
 ^Dockerfile$
 ^vignettes/articles$
+^run-docker\.sh$
+^stop-docker\.sh$
