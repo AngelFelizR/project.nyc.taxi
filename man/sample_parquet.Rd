@@ -4,16 +4,16 @@
 \alias{sample_parquet}
 \title{Take a sample from a parquet file}
 \usage{
-sample_parquet(file_path, valid_zones = NULL, prob = 0.05, seed = 1)
+sample_parquet(file_path, valid_combinations = NULL, prob = 0.05, seed = 1)
 }
 \arguments{
 \item{file_path}{A character file name or URI.}
 
-\item{valid_zones}{A vector of zones of the trips you want to sample from.}
+\item{valid_combinations}{A data.table listing all possible combinations of values to be kept on each column.}
 
 \item{prob}{The proportion of rows to keep in the sample.}
 
-\item{seed}{Number to keep the sample reprodicible.}
+\item{seed}{Number to keep the sample reproducible.}
 }
 \value{
 A data.table
@@ -28,4 +28,6 @@ file_path <- tempfile(fileext = ".parquet")
 arrow::write_parquet(df, file_path)
 
 sample_parquet(file_path)
+
+file.remove(file_path)
 }

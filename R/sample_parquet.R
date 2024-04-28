@@ -3,9 +3,9 @@
 #' Take a sample from a parquet file
 #'
 #' @param file_path A character file name or URI.
-#' @param valid_zones A vector of zones of the trips you want to sample from.
+#' @param valid_combinations A data.table listing all possible combinations of values to be kept on each column.
 #' @param prob The proportion of rows to keep in the sample.
-#' @param seed Number to keep the sample reprodicible.
+#' @param seed Number to keep the sample reproducible.
 #' 
 #' @return A data.table
 #' @export
@@ -17,8 +17,10 @@
 #' arrow::write_parquet(df, file_path)
 #'
 #' sample_parquet(file_path)
+#'
+#' file.remove(file_path)
 sample_parquet <- function(file_path,
-                           valid_zones = NULL,
+                           valid_combinations = NULL,
                            prob = 0.05,
                            seed = 1){
   
@@ -29,7 +31,7 @@ data.table::setDT(raw_data)
 
 withr::local_seed(seed)
 
-if(is.null(valid_zones)) {
+if(is.null(valid_combinations)) {
   
   sampled_data <-
     raw_data[, .SD[sample.int(.N, size = as.integer(.N * prob))]]
@@ -38,13 +40,16 @@ if(is.null(valid_zones)) {
   
 }
 
+cols_to_filter <- names(valid_combinations)
+
+stopifnot("valid_combinations must have names" = !is.null(valid_combinations))
+stopifnot("valid_combinations names must be part of imported data names" = all(cols_to_filter %chin% names(raw_data)))
+
+data.table::setkeyv(raw_data, cols_to_filter)
+
 sampled_data <-
-  raw_data[.(valid_zones),
-           on = "PULocationID",
-           nomatch = 0
-  ][.(valid_zones),
-    on = "DOLocationID",
-    nomatch = 0
+  raw_data[valid_combinations,
+           nomatch = NULL
   ][, .SD[sample.int(.N, size = as.integer(.N * prob))]]
 
 return(sampled_data)

@@ -31,9 +31,9 @@ library('project.nyc.taxi')
 After completing the [business understanding](https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
 
 1.  Exploring the individual distribution of variables.
-2.  Taking a subset of the data to fit in RAM.
-3.  Exploring correlations between predictors and target variable.
-4.  Exploring correlations between predictors.
+2.  Exploring correlations between predictors and target variable.
+3.  Exploring correlations between predictors.
+
 
 In order to:
 
@@ -657,52 +657,71 @@ NycTrips2022 |>
             digits = 8L)
 ```
 
-
-## Modifications to apply before continue
-
-After making that initial exploration we need apply the following changes before exploring correlations:
-
-1. Creating the `company` column based on the `hvfhs_license_num` to ensure data understanding.
-2. Keeping the **B03404** and **B03406** as valid `dispatching_base_num` and transforming the remaining categories using the label **other**.
-3. Keeping the **B03404** and **missing** as valid `originating_base_num` and transforming the remaining categories using the label **other**.
-4. Making the empty category as **missing** to make explicit the value provided for the `access_a_ride_flag` column.
-5. Filtering the data to keep working with trips with `start_borough` and `end_borough` in **Manhattan**, **Brooklyn** or **Queens** which *limit the scope of this first phase*.
-6. Exchanging the `request_date` and `dropoff_datetime` when the resulted `trip_hours` ends in a negative number.
-7. Replace any negative `driver_pay` with `NA`.
-8. We need to confirm the correlations between `trip_hours` with `driver_pay` and `trip_miles` that present more than **`r params$MaxTripHours` hours**, **`r scales::comma(params$MaxDriverPay)` dollars** or **`r scales::comma(params$MaxLimitTripMiles)` miles**. If we can see clear relation, we can keep that data in the model, but if not we will need to exchange each value with `NA`.
-9. Confirming if missing value are MCAR to remove the rows with missing values or MAR to impute the values.
-
-
 ## Sampling data
 
-Due our limited compute power capacity we will need to sample the data to be able to unlock all R capacities.
+Despite the amazing the capacities of arrow to summarize larger than RAM data, to continue the analysis in the project we will need to take a sample in order to load the data in the memory.
 
-As most of the trips take place between Manhattan, Brooklyn and Queens, we are going to focus first in those zones.
+To sample the data in a reproducible way, we are going to apply the next steps using the `sample_parquet()` function on each parquet file previously downloaded:
+
+1. Importing the whole parquet file into memory.
+2. Selecting the number 1 as seed.
+3. Filtering out any zone out of **Manhattan**, **Brooklyn** and **Queens** to limit the scope of the project where 80% of the activity takes place.
+4. Filtering at random the a number that rows needed to represent 1% of the data.
+
 
 ```{r include=FALSE, eval=!params$UpdateSample}
 TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
 ```
 
 ```{r, eval=params$UpdateSample}
-BoroughToKeep <- c("Manhattan", "Brooklyn", "Queens")
+ValidZoneCombinations <- 
+  ZoneCodesArcgisClean[Borough %chin% c("Manhattan", "Brooklyn", "Queens"),
+                       unique(LocationID)] |>
+  (\(x) CJ(PULocationID = x,
+           DOLocationID = x) )()
 
 TrainingTrips <-
   dir(data_path,
       full.names = TRUE,
       recursive = TRUE) |>
   lapply(sample_parquet,
-         valid_zones = ZoneCodesArcgisClean[Borough %chin% BoroughToKeep, LocationID],
+         valid_combinations = ValidZoneCombinations,
          prob = 0.01) |>
   rbindlist()
+
+nrow(TrainingTrips) |> comma()
 ```
 
-```{r, include=FALSE, eval=params$UpdateSample}
-fst::write_fst(TrainingTrips,
-               "raw-data/TrainingTrips.fst",
-               100)
+```{r, include=FALSE}
+if(params$UpdateSample){
+  fst::write_fst(TrainingTrips,
+                 "raw-data/TrainingTrips.fst",
+                 100)
+}else{
+  nrow(TrainingTrips) |> comma()
+}
 ```
 
 ## Solving quality problems
+
+Thanks to the initial exploration, we know that we need to apply the following transformation before start exploring the correlations between predictors and target variable:
+
+1. Creating the `company` column based on the `hvfhs_license_num` to ensure data understanding.
+
+2. Keeping the **B03404** and **B03406** as valid `dispatching_base_num` and transforming the remaining categories using the label **other**.
+
+3. Keeping the **B03404** and **missing** as valid `originating_base_num` and transforming the remaining categories using the label **other**.
+
+4. Making the empty category as **missing** to make explicit the value provided for the `access_a_ride_flag` column.
+
+5. Exchanging the `request_date` and `dropoff_datetime` when the resulted `trip_hours` ends in a negative number.
+
+6. Replace any negative `driver_pay` with `NA`.
+
+7. We need to confirm the correlations between `trip_hours` with `driver_pay` and `trip_miles` that present more than **`r params$MaxTripHours` hours**, **`r scales::comma(params$MaxDriverPay)` dollars** or **`r scales::comma(params$MaxLimitTripMiles)` miles**. If we can see clear relation, we can keep that data in the model, but if not we will need to exchange each value with `NA`.
+
+8. Confirming if missing value are MCAR to remove the rows with missing values or MAR to impute the values.
+
 
 ```{r}
 TrainingTripsCleaned <-

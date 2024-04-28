@@ -25,10 +25,12 @@ test_that("The zone is working",{
   
   arrow::write_parquet(df, file_path)
   
-  valid_zones <-  c(2L, 3L)
+  valid_zones <- c(2L, 3L)
+  valid_combinations <-  data.table::CJ(PULocationID = valid_zones,
+                                        DOLocationID = valid_zones)
   
   taken_sample <- sample_parquet(file_path,
-                                 valid_zones = valid_zones,
+                                 valid_combinations = valid_combinations,
                                  prob = 0.10)
   
   # Start and End in valid zone
