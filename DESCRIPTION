@@ -39,7 +39,8 @@ Suggests:
     rmarkdown,
     rvest,
     scales,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tidygeocoder
 VignetteBuilder: 
     knitr
 Config/fusen/version: 0.5.2
