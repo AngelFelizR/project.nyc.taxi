@@ -26,7 +26,6 @@ flat_functions.Rmd:
   R:
   - R/add_datetime_features.R
   - R/add_zone_description.R
-  - R/apply_base_cleaning.R
   - R/clean_zone_manually.R
   - R/compute_num_summary.R
   - R/count_pct.R
@@ -35,6 +34,7 @@ flat_functions.Rmd:
   - R/is_arrow_con.R
   - R/plot_map.R
   - R/sample_parquet.R
+  - R/set_initial_cleaning.R
   - R/simulate_trips.R
   - R/bussiness-understanding-baselinesimulation.R
   - R/eda-functions-zonecodesarcgis.R
@@ -46,12 +46,13 @@ flat_functions.Rmd:
   - tests/testthat/test-clean_zone_manually.R
   - tests/testthat/test-factor_weekday.R
   - tests/testthat/test-sample_parquet.R
+  - tests/testthat/test-set_initial_cleaning.R
   vignettes: []
   inflate:
     flat_file: dev/flat_functions.Rmd
     vignette_name: .na
     open_vignette: true
-    check: true
+    check: false
     document: true
     overwrite: ask
     vignettes: false

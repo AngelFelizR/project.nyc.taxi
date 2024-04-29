@@ -1385,153 +1385,218 @@ test_that("The zone is working",{
 
 # Transformation
 
-## apply_base_cleaning
+## set_initial_cleaning
 
-
-```{r function-apply_base_cleaning}
+```{r function-initial_cleaning}
 #' Apply the transformations based on initial EDA
 #'
-#' @param dt A data.table with all columns of data and after translating the code zone with their meaning.
+#' @param dt A data.table with columns:
+#' - hvfhs_license_num
+#' - dispatching_base_num
+#' - originating_base_num
+#' - access_a_ride_flag
+#' - request_datetime
+#' - dropoff_datetime
+#' - driver_pay
 #'
-#' @return A data.table
 #' @export
 #' 
 #' @examples
-apply_base_cleaning <- function(dt) {
-  
-  # Transforming columns into factors
-  
-  dt[, company := 
-       data.table::fcase(hvfhs_license_num == "HV0002", "Juno",
-                         hvfhs_license_num == "HV0003", "Uber",
-                         hvfhs_license_num == "HV0004", "Via",
-                         hvfhs_license_num == "HV0005", "Lyft") |>
-       factor(levels = c("Juno", "Uber", "Via", "Lyft"))]
-  
-  dt[, dispatching_base_num :=
-       data.table::fifelse(dispatching_base_num %chin% c("B03404", "B03406"),
-                           dispatching_base_num,
-                           "Other") |>
-       factor(levels = c("B03404", "B03406", "Other"))]
-  
-  dt[, originating_base_num := 
-       data.table::fcase(is.na(dispatching_base_num), "Missing", 
-                         dispatching_base_num == "B03404", "B03404",
-                         default = "Other") |>
-       factor(levels = c("B03404", "Other", "Missing"))]
-  
-  
-  # Selecting column groups
+set_initial_cleaning <- function(dt) {
   
   col_names <- names(dt)
-  flag_cols <- grep("flag$", col_names, value = TRUE)
-  borough_cols <- grep("borough$", col_names, value = TRUE)
-  service_zone_cols <- grep("service_zone$", col_names, value = TRUE)
   
-  
-  # Formating columns by group
-  
-  dt[, (flag_cols) := lapply(
-    .SD,
-    FUN = \(x) data.table::fifelse(x %chin% c("Y", "N"), x, "Missing") |>
-      factor(levels = c("Y", "N", "Missing"))
-  ),
-  .SDcols = flag_cols]
-  
-
-  dt[, (borough_cols) := lapply(
-    .SD,
-    FUN = \(x) factor(x, levels = c("Manhattan", "Brooklyn", "Queens"))
-  ),
-  .SDcols = borough_cols]
-
-
-  dt[, (service_zone_cols) := lapply(
-    .SD,
-    FUN = \(x) factor(x, levels = c("Boro Zone", "Yellow Zone", "Airports"))
-  ),
-  .SDcols = service_zone_cols]
-
-  
-  # Defining same place
-  
-  dt[, same_borough := start_borough == end_borough]
-  dt[, same_service_zone := start_service_zone == end_service_zone]
-  dt[, same_zone := start_zone == end_zone]
-  
-  
-  # Some times the request time is higher than
-  # the drop off time it seems it was an exchange 
-  # between both columns
-  dt[, `:=`(dropoff_datetime = pmax(dropoff_datetime, request_datetime),
-            request_datetime = pmin(dropoff_datetime, request_datetime))]
-  
-  # Adding numeric columns
-  
-  dt[, trip_minutes := 
-       difftime(dropoff_datetime,
-                request_datetime,
-                units = "mins") |>
-       as.integer()]
+  if("hvfhs_license_num" %chin% col_names){
     
-    dt[, profit_rate := 
-         (driver_pay + tips) / (trip_minutes / 60L)]
-
+    dt[, company := data.table::fcase(hvfhs_license_num == "HV0002", "Juno",
+                                      hvfhs_license_num == "HV0003", "Uber",
+                                      hvfhs_license_num == "HV0004", "Via",
+                                      hvfhs_license_num == "HV0005", "Lyft",
+                                      default = "Other")]
     
-  # Defining columns to keep
+    dt[, hvfhs_license_num := NULL]
+    
+  }
   
-    cols_to_keep <- c(
-      "company",
-      "dispatching_base_num",
-      "originating_base_num",
-      flag_cols,
-      borough_cols,
-      service_zone_cols,
-      "same_borough",
-      "same_service_zone",
-      "same_zone",
-      "base_passenger_fare",
-      "trip_miles",
-      "request_datetime",
-      "dropoff_datetime",
-      "trip_minutes",
-      "tips",
-      "driver_pay",
-      "profit_rate"
-    )
   
-  # We don't canceled trips and we want this new col order
-  return(dt[trip_minutes != 0L, ..cols_to_keep])
+  if("dispatching_base_num" %chin% col_names){
+    
+    dt[c(NA_character_, " "), 
+       dispatching_base_num := "Missing",
+       on = "dispatching_base_num"]
+    
+    dt[!c("B03404", "B03406", "Missing"), 
+       dispatching_base_num := "Other",
+       on = "dispatching_base_num"]
+    
+  }
+  
+  
+  if("originating_base_num" %chin% col_names){
+    
+    dt[c(NA_character_, " "), 
+       originating_base_num := "Missing",
+       on = "originating_base_num"]
+    
+    dt[!c("B03404", "B03406", "Missing"), 
+       originating_base_num := "Other",
+       on = "originating_base_num"]
+    
+  }
+  
+  
+  if("access_a_ride_flag" %chin% col_names){
+    
+    dt[c(NA_character_, " "), 
+       access_a_ride_flag := "Missing",
+       on = "access_a_ride_flag"]
+    
+  }
+  
+  
+  n_time_columns <- sum(c("request_datetime", "dropoff_datetime") %chin% col_names)
+  stopifnot("You need to provide both datetime columns" = n_time_columns != 1L)
+  
+  if(n_time_columns == 2L){
+    
+   dt[, `:=`(request_datetime = pmin(request_datetime, dropoff_datetime),
+             dropoff_datetime = pmax(request_datetime, dropoff_datetime))]
+    
+    dt[, trip_hours := 
+         difftime(dropoff_datetime,
+                  request_datetime,
+                  units = "mins") |>
+         as.double() |>
+         (\(x) x/60)()]
+    
+  }
+  
+  
+  if("driver_pay" %chin% col_names){
+    
+    dt[driver_pay < 0, 
+       driver_pay := NA_real_]
+    
+  }
+  
+  return(dt)
   
 }
 ```
 
-```{r examples-apply_base_cleaning}
+```{r tests-initial_cleaning}
+test_that("country was created",{
+  
+  original_dt <- data.table::data.table(
+    hvfhs_license_num = c("HV0002",
+                          "HV0003",
+                          "HV0004",
+                          "HV0005",
+                          "No Found")
+  )
+  
+  ## Running the function
+  clean_dt <- set_initial_cleaning(data.table::copy(original_dt))
+  
+  ## The original column must be removed
+  expect_false(any(names(clean_dt) == "hvfhs_license_num"))
+  
+  ## The company column was translated with the correct values
+  expect_equal(
+    clean_dt$company,
+    c("Juno", "Uber", "Via", "Lyft", "Other")
+  )
+  
+})
 
-data.table::data.table(hvfhs_license_num = "HV0004",
-                       dispatching_base_num = "HOLA",
-                       originating_base_num = NA_character_,
-                       access_a_ride_flag = "",     
-                       shared_request_flag = "Y",
-                       shared_match_flag = "Y",
-                       wav_request_flag = "Y",
-                       wav_match_flag = "Y",
-                       start_borough = "Manhattan",
-                       end_borough = "Brooklyn",
-                       start_service_zone = "Boro Zone",
-                       end_service_zone = "Yellow Zone",
-                       start_zone = "1",
-                       end_zone = "2",
-                       base_passenger_fare = 800,
-                       trip_miles = 250,
-                       request_datetime = as.POSIXct("2022-05-18 7:25:00"), 
-                       dropoff_datetime = as.POSIXct("2022-05-18 8:15:00"),
-                       tips = 500,
-                       driver_pay = 800) |>
-  apply_base_cleaning()
+
+test_that("dispatching_base_num and originating_base_num only can keep some values",{
+  
+  ## Defining the relation to expect
+  start_values <- c("B03404", "B03406", NA_character_, " ", "B00000")
+  end_values <- c("B03404", "B03406", "Missing", "Missing", "Other")
+  
+  ## Saving the raw data example
+  original_dt <- data.table::data.table(
+    dispatching_base_num = start_values,
+    originating_base_num = start_values
+  )
+  
+  ## Running the function
+  clean_dt <- set_initial_cleaning(data.table::copy(original_dt))
+  
+  ## Validating the results on each column
+  expect_equal(clean_dt$dispatching_base_num, end_values)
+  expect_equal(clean_dt$originating_base_num, end_values)
+  
+})
+
+test_that("access_a_ride_flag shouldn't have any empty value",{
+  
+  ## Saving the raw data example
+  original_dt <- data.table::data.table(
+    access_a_ride_flag = c("N", " ")
+  )
+  
+  ## Running the function
+  clean_dt <- set_initial_cleaning(data.table::copy(original_dt))
+  
+  ## Validating the results
+  expect_equal(clean_dt$access_a_ride_flag, c("N", "Missing"))
+  
+})
+
+
+test_that("Cleaning request_datetime and dropoff_datetime",{
+  
+  ## Saving the raw data example
+  original_dt <- data.table::data.table(
+    request_datetime = c(lubridate::make_datetime(2024,05,18,8, 30),
+                         lubridate::make_datetime(2024,05,18,8, 30)),
+    dropoff_datetime = c(lubridate::make_datetime(2024,05,18,9, 0),
+                         #This happened before the start time
+                         lubridate::make_datetime(2024,05,18,5, 30))
+  )
+  
+  ## Creating a table with all problems solved
+  expected_dt <- data.table::data.table(
+    request_datetime = c(lubridate::make_datetime(2024,05,18,8, 30),
+                         lubridate::make_datetime(2024,05,18,5, 30)),
+    dropoff_datetime = c(lubridate::make_datetime(2024,05,18,9, 0),
+                         lubridate::make_datetime(2024,05,18,8, 30)),
+    trip_hours = c(0.5, 3)
+  )
+  
+  ## Running the function
+  clean_dt <- set_initial_cleaning(data.table::copy(original_dt))
+  
+  ## Any request time shouldn't be larger than the drop off time
+  expect_true(clean_dt[request_datetime > dropoff_datetime, .N] == 0L)
+  
+  ## We are moving the date around
+  expect_equal(clean_dt,expected_dt)
+  
+  ## All differences must be positive
+  expect_true(all(clean_dt$trip_hours >= 0))
+})
+
+
+test_that("Any driver_pay can keep as negative",{
+  
+  ## Saving the raw data example
+  original_dt <- data.table::data.table(
+    driver_pay = c(5, 8, 0, -4, -80)
+  )
+  
+  ## Running the function
+  clean_dt <- set_initial_cleaning(data.table::copy(original_dt))
+  
+  ## Validating the results
+  expect_equal(clean_dt$driver_pay, c(5, 8, 0, NA_real_, NA_real_))
+  
+})
 
 ```
-
 
 ## add_datetime_features
 
@@ -1610,7 +1675,7 @@ c("R", "man", "tests/testthat") |>
 fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
                vignette_name = NA,
                vignettes = FALSE,
-               check = TRUE)
+               check = FALSE)
 ```
 
 ```{r development-creating-package-file, eval=TRUE}

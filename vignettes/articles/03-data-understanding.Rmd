@@ -708,20 +708,17 @@ Thanks to the initial exploration, we know that we need to apply the following t
 
 1. Creating the `company` column based on the `hvfhs_license_num` to ensure data understanding.
 
-2. Keeping the **B03404** and **B03406** as valid `dispatching_base_num` and transforming the remaining categories using the label **other**.
+2. Keeping the **B03404** and **B03406** as valid `dispatching_base_num` and transforming the remaining categories using the label **Other**.
 
-3. Keeping the **B03404** and **missing** as valid `originating_base_num` and transforming the remaining categories using the label **other**.
+3. Keeping the **B03404** and **Missing** as valid `originating_base_num` and transforming the remaining categories using the label **Other**.
 
-4. Making the empty category as **missing** to make explicit the value provided for the `access_a_ride_flag` column.
+4. Making the empty category as **Missing** to make explicit the value provided for the `access_a_ride_flag` column.
 
-5. Exchanging the `request_date` and `dropoff_datetime` when the resulted `trip_hours` ends in a negative number.
+5. Exchanging the `request_datetime` and `dropoff_datetime` when the resulted `trip_hours` ends in a negative number.
 
-6. Replace any negative `driver_pay` with `NA`.
+6. Replacing any negative `driver_pay` with `NA`.
 
-7. We need to confirm the correlations between `trip_hours` with `driver_pay` and `trip_miles` that present more than **`r params$MaxTripHours` hours**, **`r scales::comma(params$MaxDriverPay)` dollars** or **`r scales::comma(params$MaxLimitTripMiles)` miles**. If we can see clear relation, we can keep that data in the model, but if not we will need to exchange each value with `NA`.
-
-8. Confirming if missing value are MCAR to remove the rows with missing values or MAR to impute the values.
-
+And we need to repeat that process for the training and test data apply all those changes using the `set_initial_cleaning()` to edit the data without making any copy in RAM.
 
 ```{r}
 TrainingTripsCleaned <-
@@ -729,15 +726,21 @@ TrainingTripsCleaned <-
   add_zone_description(zone_dt = ZoneCodesArcgisClean,
                        start_id_col = "PULocationID",
                        end_id_col = "DOLocationID",
-                       zone_id_col = "LocationID") |>
-  apply_base_cleaning()
+                       zone_id_col = "LocationID") 
+
+set_initial_cleaning(TrainingTripsCleaned)
 
 glimpse(TrainingTripsCleaned)
 ```
 
-```{r include=FALSE}
-rm(TrainingTrips)
-```
+## Do outlaier make sense?
+
+We need to confirm the correlations between `trip_hours` with `driver_pay` and `trip_miles` that present more than **`r params$MaxTripHours` hours**, **`r scales::comma(params$MaxDriverPay)` dollars** or **`r scales::comma(params$MaxLimitTripMiles)` miles**. If we can see clear relation, we can keep that data in the model, but if not we will need to exchange each value with `NA`.
+
+8. Confirming if missing value are MCAR to remove the rows with missing values or MAR to impute the values.
+
+
+
 
 ```{r}
 TrainingTripsCleaned[, .N,
