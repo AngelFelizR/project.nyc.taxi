@@ -28,12 +28,21 @@ knitr::opts_chunk$set(
 library('project.nyc.taxi')
 ```
 
+```{r include=FALSE, eval=!params$UpdateSample}
+TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
+```
+
+```{r eval=!exists("ZoneCodesArcgis")}
+load(here::here("data/ZoneCodesArcgis.rda"))
+
+ZoneCodesArcgisClean <- clean_zone_manually(ZoneCodesArcgis)
+```
+
 After completing the [business understanding](https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
 
 1.  Exploring the individual distribution of variables.
 2.  Exploring correlations between predictors and target variable.
 3.  Exploring correlations between predictors.
-
 
 In order to:
 
@@ -54,15 +63,21 @@ To setting the `R` environment up we just need to apply the following 5 steps:
 1.  Loading the packages to use.
 
 ```{r warning = FALSE, message = FALSE}
+## To manage relative paths
 library(here)
-library(data.table)
-library(ggplot2)
-library(scales)
-library(forcats)
-library(lubridate)
+
+## To transform data larger than RAM
 library(dplyr)
 library(arrow)
-library(recipes)
+
+## To transform data that fits in RAM
+library(data.table)
+library(lubridate)
+
+## To create plots
+library(ggplot2)
+library(scales)
+
 
 options(datatable.print.nrows = 15,
         digits = 4)
@@ -668,11 +683,6 @@ To sample the data in a reproducible way, we are going to apply the next steps u
 3. Filtering out any zone out of **Manhattan**, **Brooklyn** and **Queens** to limit the scope of the project where 80% of the activity takes place.
 4. Filtering at random the a number that rows needed to represent 1% of the data.
 
-
-```{r include=FALSE, eval=!params$UpdateSample}
-TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
-```
-
 ```{r, eval=params$UpdateSample}
 ValidZoneCombinations <- 
   ZoneCodesArcgisClean[Borough %chin% c("Manhattan", "Brooklyn", "Queens"),
@@ -721,47 +731,67 @@ Thanks to the initial exploration, we know that we need to apply the following t
 And we need to repeat that process for the training and test data apply all those changes using the `set_initial_cleaning()` to edit the data without making any copy in RAM.
 
 ```{r}
-TrainingTripsCleaned <-
-  TrainingTrips |>
-  add_zone_description(zone_dt = ZoneCodesArcgisClean,
-                       start_id_col = "PULocationID",
-                       end_id_col = "DOLocationID",
-                       zone_id_col = "LocationID") 
+TrainingTripsCleaned <- add_zone_description(
+  TrainingTrips,
+  zone_dt = ZoneCodesArcgisClean,
+  start_id_col = "PULocationID",
+  end_id_col = "DOLocationID",
+  zone_id_col = "LocationID"
+)
 
 set_initial_cleaning(TrainingTripsCleaned)
 
 glimpse(TrainingTripsCleaned)
 ```
 
-## Do outlaier make sense?
+## Do extreme values make sense?
 
-We need to confirm the correlations between `trip_hours` with `driver_pay` and `trip_miles` that present more than **`r params$MaxTripHours` hours**, **`r scales::comma(params$MaxDriverPay)` dollars** or **`r scales::comma(params$MaxLimitTripMiles)` miles**. If we can see clear relation, we can keep that data in the model, but if not we will need to exchange each value with `NA`.
+Before removing any extreme value is important to confirm if they make sense.
 
-8. Confirming if missing value are MCAR to remove the rows with missing values or MAR to impute the values.
+We expect that high values of `driver_pay` (over `r scales::comma(params$MaxDriverPay)` dollars) are also related with high values of `trip_hours` (over `r params$MaxTripHours` hours) or `trip_miles` (over `r scales::comma(params$MaxLimitTripMiles)` miles), so save a data.frame with those values.
 
+```{r}
+ExtremeValues <-
+  TrainingTripsCleaned[driver_pay >= params$MaxDriverPay |
+                         trip_hours >= params$MaxTripHours |
+                         trip_miles >= params$MaxLimitTripMiles,
+                       .(driver_pay, trip_hours, trip_miles)]
+```
 
+As we can see below the in the Adjusted R-squared,a this simple model can explain 67% of the variance.
+
+```{r}
+DriverPayLm <- lm(driver_pay ~ ., data = ExtremeValues)
+
+summary(DriverPayLm)
+```
+
+To see in which cases the model doesn't fit with data we can will plot the model predictions against the original values and as we can see below the main problem to gain a better fit the observations which present more than \$750 of `driver_pay` where the model was expecting almost \$500.
+
+```{r}
+ggplot(broom::augment(DriverPayLm),
+       aes(.fitted , driver_pay)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0, lty = 5) +
+  scale_y_continuous(breaks = breaks_width(100)) +
+  coord_fixed() +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank())
+```
+
+But even thought this model cannot explain that high value, I could be right as another variable might explain that increase later, it was really a long trip of 6 hours and more than 200 miles, so **we will keep all the extreme values as part of the model**.
+
+```{r}
+ExtremeValues[driver_pay > 900]
+```
+
+## Can we delete rows with missing values?
 
 
 ```{r}
-TrainingTripsCleaned[, .N,
-                     by = c("trip_minutes",
-                            "profit_rate")] |>
-  ggplot(aes(trip_minutes, profit_rate))+
-  geom_point(aes(alpha = N))+
-  scale_y_continuous(labels = dollar_format(),
-                     trans = "log2")+
-  theme_light()
+TrainingTripsCleaned[!complete.cases(TrainingTripsCleaned)]
 ```
 
-
-```{r}
-TrainingTripsCleaned[, .SD, .SDcols = patterns("profit_rate|company|_num|_flag")] |>
-  melt(id.vars = "profit_rate",
-       value.factor = TRUE) |>
-  ggplot(aes(value, profit_rate))+
-  geom_boxplot()+
-  facet_wrap(~variable)
-```
 
 ## Correlations between predictors and target variable
 
