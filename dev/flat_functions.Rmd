@@ -356,6 +356,62 @@ testthat::test_that("Missing column stop is working",{
 "BaseLineSimulation"
 ```
 
+## list_cols_to_use
+
+```{r function-list_cols_to_use}
+#' Returns a vectors with all the variables use to create the model
+#' 
+#' @description
+#' It's a character vector of 14 columns organized in 2 groups:
+#' 
+#' 1. The first 11 columns are related with data available before arriving at the pick-up location and will be use as predictors.
+#' 2. The last 3 columns are related with data available after ending the trip and will be used to estimate calculate the value to predict.
+#' 
+#' You can learnt more about this selection in the `vignette("articles/02-business-understanding")`
+#'
+#' @export
+#'
+#' @examples
+list_cols_to_use <- function() {
+  
+  c(
+    
+    # Available Before Arriving at the Pick-Up Location
+    "hvfhs_license_num",
+    "dispatching_base_num",
+    "originating_base_num",
+    "PULocationID",
+    "DOLocationID",
+    "trip_miles",
+    "shared_request_flag",
+    "access_a_ride_flag",
+    "wav_request_flag",
+    "wav_match_flag",
+    "request_datetime",
+    
+    # Available 
+    "dropoff_datetime",
+    "driver_pay",
+    "tips"
+    
+  )
+  
+}
+
+```
+
+```{r examples-list_cols_to_use}
+list_cols_to_use()
+```
+
+```{r tests-list_cols_to_use}
+test_that("The description needs to be updated",{
+  
+  expect_equal(length(list_cols_to_use()), 14L)
+})
+
+```
+
 
 # EDA functions
 

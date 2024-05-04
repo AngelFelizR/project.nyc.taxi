@@ -32,6 +32,7 @@ flat_functions.Rmd:
   - R/factor_weekday.R
   - R/highlight_top_zones.R
   - R/is_arrow_con.R
+  - R/list_cols_to_use.R
   - R/plot_map.R
   - R/sample_parquet.R
   - R/set_initial_cleaning.R
@@ -40,6 +41,7 @@ flat_functions.Rmd:
   - R/eda-functions-zonecodesarcgis.R
   tests:
   - tests/testthat/test-simulate_trips.R
+  - tests/testthat/test-list_cols_to_use.R
   - tests/testthat/test-count_pct.R
   - tests/testthat/test-add_zone_description.R
   - tests/testthat/test-plot_map.R
