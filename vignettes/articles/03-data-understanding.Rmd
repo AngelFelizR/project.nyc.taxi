@@ -24,18 +24,6 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-
-library('project.nyc.taxi')
-```
-
-```{r include=FALSE, eval=!params$UpdateSample}
-TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
-```
-
-```{r eval=!exists("ZoneCodesArcgis")}
-load(here::here("data/ZoneCodesArcgis.rda"))
-
-ZoneCodesArcgisClean <- clean_zone_manually(ZoneCodesArcgis)
 ```
 
 After completing the [business understanding](https://angelfelizr.github.io/project.nyc.taxi/articles/02-business-understanding.html) phase we are ready to perform the **data understanding** phase by performing an EDA with the following steps:
@@ -63,6 +51,9 @@ To setting the `R` environment up we just need to apply the following 5 steps:
 1.  Loading the packages to use.
 
 ```{r warning = FALSE, message = FALSE}
+## Custom functions
+library('project.nyc.taxi')
+
 ## To manage relative paths
 library(here)
 
@@ -78,9 +69,8 @@ library(lubridate)
 library(ggplot2)
 library(scales)
 
-
-options(datatable.print.nrows = 15,
-        digits = 4)
+## Defining the print params to use in the report
+options(datatable.print.nrows = 15, digits = 4)
 ```
 
 2.  Creating an Arrow connection object to perform some **manipulations in disk** before taking the data into the RAM memory.
@@ -94,6 +84,7 @@ dim(NycTrips2022) |> comma()
 
 NycTrips2022
 ```
+
 
 3.  Importing the zone code description with `lat` and `long`.
 
@@ -119,7 +110,6 @@ glimpse(ZoneCodesArcgis)
 ```
 
 ```{r, echo=FALSE}
-
 if(params$UpdateGeoPoints){
   
   usethis::use_data(ZoneCodesArcgis,
@@ -129,10 +119,10 @@ if(params$UpdateGeoPoints){
   
 }else{
   
+  load(here::here("data/ZoneCodesArcgis.rda"))
   glimpse(ZoneCodesArcgis)
 
 }
-
 ```
 
 4. Validating the added latitude and longitude, by plotting all the points in an interactive map from we can highlight the following issues:
@@ -674,7 +664,7 @@ NycTrips2022 |>
 
 ## Sampling data
 
-Despite the amazing the capacities of arrow to summarize larger than RAM data, to continue the analysis in the project we will need to take a sample in order to load the data in the memory.
+Despite the amazing the capacities of arrow to summarize larger than RAM data, to continue the analysis in the project we will need to take a sample in order to **load the data in the memory**.
 
 To sample the data in a reproducible way, we are going to apply the next steps using the `sample_parquet()` function on each parquet file previously downloaded:
 
@@ -682,6 +672,7 @@ To sample the data in a reproducible way, we are going to apply the next steps u
 2. Selecting the number 1 as seed.
 3. Filtering out any zone out of **Manhattan**, **Brooklyn** and **Queens** to limit the scope of the project where 80% of the activity takes place.
 4. Filtering at random the a number that rows needed to represent 1% of the data.
+
 
 ```{r, eval=params$UpdateSample}
 ValidZoneCombinations <- 
@@ -696,7 +687,7 @@ TrainingTrips <-
       recursive = TRUE) |>
   lapply(sample_parquet,
          valid_combinations = ValidZoneCombinations,
-         prob = 0.01) |>
+         prob = 0.001) |>
   rbindlist()
 
 nrow(TrainingTrips) |> comma()
@@ -708,11 +699,16 @@ if(params$UpdateSample){
                  "raw-data/TrainingTrips.fst",
                  100)
 }else{
+  
+  TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
+  
   nrow(TrainingTrips) |> comma()
 }
 ```
 
 ## Solving quality problems
+
+### Cleaning based on domain knowlege
 
 Thanks to the initial exploration, we know that we need to apply the following transformation before start exploring the correlations between predictors and target variable:
 
@@ -740,12 +736,23 @@ TrainingTripsCleaned <-
 
 set_initial_cleaning(TrainingTripsCleaned)
 
-rm(TrainingTrips)
-
 glimpse(TrainingTripsCleaned)
 ```
 
-## Do extreme values make sense?
+
+### Importing missing values
+
+As we are working with a small sample of the data, the sample don't have any of the weird cases that need to be removed from the report, as consequence we finished with a clean dataset **without missing values to impute**. 
+
+```{r}
+TrainingTripsCleaned[, lapply(.SD, \(x) sum(is.na(x)))
+                  ][, temp := 1L
+                  ][, melt(.SD, id.vars = "temp")
+                  ][value > 0L]
+```
+
+
+### Validating extreme values
 
 Before removing any extreme value is important to confirm if they make sense.
 
@@ -757,9 +764,11 @@ ExtremeValues <-
                          trip_hours >= params$MaxTripHours |
                          trip_miles >= params$MaxLimitTripMiles,
                        .(driver_pay, trip_hours, trip_miles)]
+
+ExtremeValues
 ```
 
-As we can see below the in the Adjusted R-squared,a this simple model can explain 67% of the variance.
+As we can see below the in the Adjusted R-squared, this simple model can explain 88.4% of the variance.
 
 ```{r}
 DriverPayLm <- lm(driver_pay ~ ., data = ExtremeValues)
@@ -767,7 +776,7 @@ DriverPayLm <- lm(driver_pay ~ ., data = ExtremeValues)
 summary(DriverPayLm)
 ```
 
-To see in which cases the model doesn't fit with data we can will plot the model predictions against the original values and as we can see below the main problem to gain a better fit the observations which present more than \$750 of `driver_pay` where the model was expecting almost \$500.
+To develop a visual image of how good the model is doing, we can compare the original values of `driver_pay` vs the predict by the model to confirm that the model is producing really good aproximations.
 
 ```{r}
 ggplot(broom::augment(DriverPayLm),
@@ -780,23 +789,32 @@ ggplot(broom::augment(DriverPayLm),
   theme(panel.grid.minor = element_blank())
 ```
 
-But even thought this model cannot explain that high value, I could be right as another variable might explain that increase later, it was really a long trip of 6 hours and more than 200 miles, so **we will keep all the extreme values as part of the model**.
+In conclusion, the extreme values makes sense in this sample and **they don't need to be removed or imputed**.
 
-```{r}
-ExtremeValues[driver_pay > 900]
+### Adding predictor
+
+```{r eval=FALSE}
+TrainingTripsCleaned[, ]
 ```
 
-## Can we delete rows with missing values?
 
+# TEMPORAL DURING DEVP
 
-```{r}
-model <- lm(driver_pay ~ ., data = TrainingTripsCleaned)
+```{r eval=!exists("ZoneCodesArcgis")}
+TrainingTrips <- fst::read_fst(TrainingPath, as.data.table = TRUE)
 
-vif_results <- car::vif(c)
+load(here::here("data/ZoneCodesArcgis.rda"))
 
-naniar::mcar_test(as.data.frame(TrainingTripsCleaned))
+ZoneCodesArcgisClean <- clean_zone_manually(ZoneCodesArcgis)
 
-mice::md.pattern(TrainingTripsCleaned, rotate.names = TRUE) |> invisible()
+TrainingTripsCleaned <- 
+  TrainingTrips[, .SD, .SDcols = list_cols_to_use()] |>
+  add_zone_description(zone_dt = ZoneCodesArcgisClean,
+                       start_id_col = "PULocationID",
+                       end_id_col = "DOLocationID",
+                       zone_id_col = "LocationID")
+
+set_initial_cleaning(TrainingTripsCleaned)
 ```
 
 
@@ -804,10 +822,13 @@ mice::md.pattern(TrainingTripsCleaned, rotate.names = TRUE) |> invisible()
 
 Before exploring correlations we need to transforming the sampled data by:
 
--   Solving quality problems.
 -   Transforming categorical variables into boolean ones.
 -   Transforming zone code to factors.
 -   Adding new features.
+
+
+
+
 
 ## start_service vs end_service zones
 
