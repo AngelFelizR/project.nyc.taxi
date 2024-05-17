@@ -1,7 +1,8 @@
-FROM rocker/rstudio:4.3.3
+FROM rocker/rstudio:4.4.0
 
 # Install jq to parse json files
 RUN apt-get update && apt-get install -y --no-install-recommends \
+
 # devtools & leaflet & DiagrammeR & fs
     make \
 
@@ -51,7 +52,3 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gsfonts
 
 RUN R -e "install.packages('pak');pak::pkg_install('rstudio/renv@v1.0.7')"
-
-# Disabling the authentication step
-ENV USER="rstudio"
-CMD ["/usr/lib/rstudio-server/bin/rserver", "--server-daemonize", "0", "--auth-none", "1"]
