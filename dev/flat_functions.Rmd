@@ -1530,8 +1530,7 @@ set_initial_cleaning <- function(dt) {
   
   if("driver_pay" %chin% col_names){
     
-    dt[driver_pay < 0, 
-       driver_pay := NA_real_]
+    dt <- dt[driver_pay < 0]
     
   }
   
