@@ -11,4 +11,3 @@ inst/doc
 .config/
 .local/
 run-docker.sh
-stop-docker.sh

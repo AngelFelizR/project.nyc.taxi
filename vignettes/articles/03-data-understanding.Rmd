@@ -731,15 +731,16 @@ Thanks to the initial exploration, we know that we need to apply the following t
 And we need to repeat that process for the training and test data apply all those changes using the `set_initial_cleaning()` to edit the data without making any copy in RAM.
 
 ```{r}
-TrainingTripsCleaned <- add_zone_description(
-  TrainingTrips,
-  zone_dt = ZoneCodesArcgisClean,
-  start_id_col = "PULocationID",
-  end_id_col = "DOLocationID",
-  zone_id_col = "LocationID"
-)
+TrainingTripsCleaned <- 
+  TrainingTrips[, .SD, .SDcols = list_cols_to_use()] |>
+  add_zone_description(zone_dt = ZoneCodesArcgisClean,
+                       start_id_col = "PULocationID",
+                       end_id_col = "DOLocationID",
+                       zone_id_col = "LocationID")
 
 set_initial_cleaning(TrainingTripsCleaned)
+
+rm(TrainingTrips)
 
 glimpse(TrainingTripsCleaned)
 ```
@@ -789,7 +790,13 @@ ExtremeValues[driver_pay > 900]
 
 
 ```{r}
-TrainingTripsCleaned[!complete.cases(TrainingTripsCleaned)]
+model <- lm(driver_pay ~ ., data = TrainingTripsCleaned)
+
+vif_results <- car::vif(c)
+
+naniar::mcar_test(as.data.frame(TrainingTripsCleaned))
+
+mice::md.pattern(TrainingTripsCleaned, rotate.names = TRUE) |> invisible()
 ```
 
 
