@@ -10,4 +10,3 @@ inst/doc
 .cache/
 .config/
 .local/
-run-docker.sh
