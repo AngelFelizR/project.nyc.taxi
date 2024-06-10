@@ -3,10 +3,12 @@ title: "Business Understanding"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Business Understanding}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 params:
   UpdateSimulation: FALSE
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -230,9 +232,10 @@ library(scales)
 library(ggplot2)
 library(data.table)
 library(lubridate)
-library(dplyr)
-library(arrow)
 library(infer)
+library(DBI)
+library(duckdb)
+library(glue)
 
 options(datatable.print.nrows = 15)
 ```
@@ -241,21 +244,61 @@ options(datatable.print.nrows = 15)
 
 
 ```{r parsermd-chunk-3}
-NycTrips <- open_dataset(here("raw-data/trip-data"))
 
-nrow(NycTrips) |> scales::comma() |> paste0(" rows")
+read_pq <- function(x) {
+  paste0("'", x ,"'") |> 
+    paste0(collapse = ", ") |>
+    paste0("read_parquet([", a = _ ,"])")
+}
+
+Trips2022 <-
+  here("raw-data/trip-data/year=2022") |> 
+  list.files(recursive = TRUE,
+             full.names = TRUE)
+
+Trips2023 <-
+  here("raw-data/trip-data/year=2023") |> 
+  list.files(recursive = TRUE,
+             full.names = TRUE)
+
+
+con <- dbConnect(duckdb(), dbdir = "my-db.duckdb")
+
+
+glue("SELECT COUNT(*) as nrow
+      FROM {read_pq(c(Trips2022, Trips2023))}") |> 
+  dbGetQuery(conn = con) |>
+  (\(df) df$nrow)() |>
+  comma()
+  
+
+glue("SELECT *
+      FROM {read_pq(c(Trips2022, Trips2023))}
+      LIMIT 10") |> 
+  dbGetQuery(conn = con) |>
+  pillar::glimpse()
 ```
 
 3. Use the locations ids of all the trips we can estimate the mean distance between each pear of locations.
 
 
 ```{r parsermd-chunk-4}
-LocationsMeanDistance <-
-  NycTrips |>
-  group_by(PULocationID, DOLocationID) |>
-  summarize(trip_miles_mean = mean(trip_miles)) |>
-  collect() |>
-  as.data.table()
+
+LocationsMeanDistance <- 
+  glue(
+    "SELECT 
+    PULocationID,
+    DOLocationID,
+    mean(trip_miles) AS trip_miles_mean
+  FROM 
+    {read_pq(c(Trips2022, Trips2023))}
+  GROUP BY 
+    PULocationID,
+    DOLocationID"
+  ) |> dbGetQuery(conn = con)
+  
+
+setDT(LocationsMeanDistance)
 
 LocationsMeanDistance
 ```

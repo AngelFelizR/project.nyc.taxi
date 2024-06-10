@@ -10,3 +10,5 @@ inst/doc
 .cache/
 .config/
 .local/
+
+my-db.duckdb
