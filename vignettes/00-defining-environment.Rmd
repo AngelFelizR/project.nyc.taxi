@@ -3,8 +3,10 @@ title: "Defining Environment"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Defining Environment}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -61,16 +63,11 @@ git clone https://github.com/AngelFelizR/project.nyc.taxi.git
 
 8. After creating both folders we can run the our container by running the next command based on your working directory.
 
-```
-docker run -d --rm -ti \
-    --name project \
-    -p 8787:8787 \
-    -v  [your_working_dir]/cache_4.3:/home/rstudio/.cache/R/renv/cache/v5/R-4.3/x86_64-pc-linux-gnu \
-    -v [your_working_dir]:/home/rstudio \
-    angelfelizr/project.nyc.taxi:0.0.99
+```{r engine='bash', comment='', echo=FALSE}
+cat ../run-docker.sh
 ```
 
-9. Then you can go to your favorite browser and go to [localhost:8787](http://localhost:8787/).
+9. Then you can go to your favorite browser and go to [localhost:5555](http://localhost:5555/).
 
 11. Click over `~/project.nyc.taxi/project.nyc.taxi.Rproj` to open the project.
 

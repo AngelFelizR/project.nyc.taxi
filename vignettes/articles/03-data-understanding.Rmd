@@ -794,7 +794,7 @@ In conclusion, the extreme values makes sense in this sample and **they don't ne
 ### Adding predictor
 
 ```{r eval=FALSE}
-TrainingTripsCleaned[, ]
+TrainingTripsCleaned
 ```
 
 

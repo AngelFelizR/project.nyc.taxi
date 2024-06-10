@@ -138,20 +138,22 @@ Based on the variables available, we can divide them in to 2 categories.
 
 ### Available Before Arriving at the Pick-Up Location
 
-They will be used as the predictors to train the model.
+They will be used as the predictors to train the model and can be divided into 2 groups:
 
+1. Fixed during the experiment as they can not be changed from trip to trip.
+  - *hvfhs_license_num*
+  - *wav_match_flag*
+
+2. Valid to be changed during the experiment.
 - ***request_datetime***
 - ***PULocationID***
 - ***DOLocationID***
-- *hvfhs_license_num*
-- *dispatching_base_num*
-- *originating_base_num*
 - *trip_miles*
 - *shared_request_flag*
 - *access_a_ride_flag*
 - *wav_request_flag*
-- *wav_match_flag*
-
+- *dispatching_base_num*
+- *originating_base_num*
 
 
 ### Available After Ending the Trip
