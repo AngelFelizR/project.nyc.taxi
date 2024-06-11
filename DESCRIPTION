@@ -16,7 +16,9 @@ Depends:
 Imports: 
     arrow,
     data.table,
+    DBI,
     dplyr,
+    duckdb,
     leaflet,
     lubridate,
     recipes,

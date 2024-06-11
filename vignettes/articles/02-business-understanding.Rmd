@@ -212,14 +212,16 @@ Defining the baseline based on this data is a challenge as the data doesn't have
 
 The simulation will be based on the following assumptions related to the taxi drivers:
 
-- They can start to work from any zone of Manhattan, Brooklyn or Queens (the more active ones).
+- They can start to work:
+
+    - From any zone of Manhattan, Brooklyn or Queens (the more active ones)
+    - From any month, weekday or hour.
+
 - They work from 8 to 12 hour every day.
-- They can start to work in any month, weekday or hour.
-- They just can take trips starting at the same zone they are after ending the their last trip
-- The maximum waiting time before receiving a new trip request is 6 minutes.
-- If a taxi driver cannot find a new trip in the first 6 minutes, he can to extend 6 minutes more and drive to the closest zone to find a new trip, but if that doesn't work in the next 6 minutes he can drive to any zone in the current Borough.
 
+- As we cannot estimate the waiting time due high offer of taxis, so we will assume that **they will be able to accept the first requested trip**.
 
+- The taxis will start picking trips from their current zone, but every 3 minutes waiting they will be able to pick trips from the next closest zone and keep expanding the zones every 3 minutes until finding a trip.
 
 ### Runing trips simulation
 
@@ -273,9 +275,9 @@ glue("SELECT * FROM {ParquetSource} LIMIT 5") |>
 ```{r parsermd-chunk-4}
 
 LocationsMeanDistance <- glue("
-    SELECT PULocationID,
-           DOLocationID,
-           mean(trip_miles) AS trip_miles_mean
+  SELECT PULocationID,
+         DOLocationID,
+         mean(trip_miles) AS trip_miles_mean
   FROM {ParquetSource}
   GROUP BY PULocationID, DOLocationID
   ") |> dbGetQuery(conn = con)
@@ -329,7 +331,12 @@ ValidZoneCodes <- fread(
                  "character",
                  "character",
                  "character")
-)[Borough %chin% c("Manhattan", "Brooklyn", "Queens")]
+)
+
+setkeyv(ValidZoneCodes, "Borough")
+
+ValidZoneCodes <-
+  ValidZoneCodes[c("Manhattan", "Brooklyn", "Queens"), on = "Borough"]
 ```
 
 7. Link all possible zones for each location id based on each Borough.
