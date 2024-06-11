@@ -223,8 +223,7 @@ The simulation will be based on the following assumptions related to the taxi dr
 
 ### Runing trips simulation
 
-1. Load the environment to use.
-
+1. Load the functions to use.
 
 ```{r parsermd-chunk-2, warning = FALSE, message = FALSE}
 library(here)
@@ -242,69 +241,51 @@ options(datatable.print.nrows = 15)
 
 2. Create a connection with the parquet files without loading them into RAM.
 
-
 ```{r parsermd-chunk-3}
-
-read_pq <- function(x) {
-  paste0("'", x ,"'") |> 
-    paste0(collapse = ", ") |>
-    paste0("read_parquet([", a = _ ,"])")
-}
-
-Trips2022 <-
-  here("raw-data/trip-data/year=2022") |> 
-  list.files(recursive = TRUE,
-             full.names = TRUE)
-
-Trips2023 <-
-  here("raw-data/trip-data/year=2023") |> 
-  list.files(recursive = TRUE,
-             full.names = TRUE)
-
-
 con <- dbConnect(duckdb(), dbdir = "my-db.duckdb")
 
+ParquetSource <-
+  here("raw-data/trip-data") |> 
+  list.files(recursive = TRUE,
+             full.names = TRUE) |>
+  paste0("'", a = _ ,"'") |> 
+  paste0(collapse = ", ") |>
+  paste0("read_parquet([", a = _ ,"])")
+```
 
+3. Check the number of rows available and the structure of the data.
+
+```{r}
 glue("SELECT COUNT(*) as nrow
-      FROM {read_pq(c(Trips2022, Trips2023))}") |> 
+      FROM {ParquetSource}") |> 
   dbGetQuery(conn = con) |>
   (\(df) df$nrow)() |>
   comma()
-  
 
-glue("SELECT *
-      FROM {read_pq(c(Trips2022, Trips2023))}
-      LIMIT 10") |> 
+glue("SELECT * FROM {ParquetSource} LIMIT 5") |> 
   dbGetQuery(conn = con) |>
-  pillar::glimpse()
+  str()
 ```
 
-3. Use the locations ids of all the trips we can estimate the mean distance between each pear of locations.
 
+4. Use the locations ids of all the trips we can estimate the mean distance between each pear of locations.
 
 ```{r parsermd-chunk-4}
 
-LocationsMeanDistance <- 
-  glue(
-    "SELECT 
-    PULocationID,
-    DOLocationID,
-    mean(trip_miles) AS trip_miles_mean
-  FROM 
-    {read_pq(c(Trips2022, Trips2023))}
-  GROUP BY 
-    PULocationID,
-    DOLocationID"
-  ) |> dbGetQuery(conn = con)
+LocationsMeanDistance <- glue("
+    SELECT PULocationID,
+           DOLocationID,
+           mean(trip_miles) AS trip_miles_mean
+  FROM {ParquetSource}
+  GROUP BY PULocationID, DOLocationID
+  ") |> dbGetQuery(conn = con)
   
-
 setDT(LocationsMeanDistance)
 
 LocationsMeanDistance
 ```
 
-4. Define a named vectors that can return the closest location id for all locations ids in the dataset. 
-
+5. Define a named vectors that can return the closest location id for all locations ids in the dataset. 
 
 ```{r parsermd-chunk-5}
 ClosestZone <-
@@ -336,11 +317,10 @@ ClosestZone <-
   ][, setattr(DOLocationID, "names", PULocationID)]
 
 
-head(ClosestZone)
+head(ClosestZone) |> str()
 ```
 
-5. Restrict the location ids to use to the ones related to those zones.
-
+6. Restrict the location ids to use to the ones related to those zones.
 
 ```{r parsermd-chunk-6}
 ValidZoneCodes <- fread(
@@ -352,8 +332,7 @@ ValidZoneCodes <- fread(
 )[Borough %chin% c("Manhattan", "Brooklyn", "Queens")]
 ```
 
-6. Link all possible zones for each location id based on each Borough.
-
+7. Link all possible zones for each location id based on each Borough.
 
 ```{r parsermd-chunk-7}
 BoroughZones <-
@@ -364,8 +343,7 @@ BoroughZones <-
 head(BoroughZones)
 ```
 
-7. Defining when and where each simulation will start.
-
+8. Defining when and where each simulation will start.
 
 ```{r parsermd-chunk-8}
 # Repeating the experiment to create confident intervals
@@ -390,7 +368,7 @@ RandomStartPoint <- data.table(
 head(RandomStartPoint)
 ```
 
-8. Based on each start point simulate a day of work.
+9. Based on each start point simulate a day of work.
 
 ```{r parsermd-chunk-9, eval = params$UpdateSimulation}
 BaseLineSimulation <-
