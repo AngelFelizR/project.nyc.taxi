@@ -1,4 +1,4 @@
-FROM rocker/rstudio:4.4.0
+FROM rocker/rstudio:4.4.1
 
 # Install jq to parse json files
 RUN apt-get update && apt-get install -y --no-install-recommends \
