@@ -12,3 +12,4 @@ inst/doc
 .local/
 
 my-db.duckdb
+my-db.duckdb.wal

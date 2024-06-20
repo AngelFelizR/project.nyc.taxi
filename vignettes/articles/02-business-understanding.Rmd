@@ -146,7 +146,7 @@ They will be used as the predictors to train the model and can be divided into 2
   - *hvfhs_license_num*
   - *wav_match_flag*
 
-2. Valid to be changed during the experiment.
+2. Valid to be changed from trip to trip.
 - ***request_datetime***
 - ***PULocationID***
 - ***DOLocationID***
@@ -192,8 +192,6 @@ $$
 $$
 
 
-
-
 ## Defining Outcome to Predict
 
 Once we have a clear business problem to solve, it's important to also make the translation into a *data science* problem that we can solve using the available data.
@@ -212,18 +210,23 @@ Defining the baseline based on this data is a challenge as the data doesn't have
 
 The simulation will be based on the following assumptions related to the taxi drivers:
 
+- Only wheelchair-accessible vehicles can accept trips with that request.
+
+- The TLC license number needs to keep constant for all trips in work day.
+
 - They can start to work:
 
     - From any zone of Manhattan, Brooklyn or Queens (the more active ones)
     - From any month, weekday or hour.
 
-- They work from 8 to 12 hour every day.
+- They work from 8 to 12 hour every day with 30 minutes breaks every 4 hours.
+
+- The taxis will start taking any trip around 3 miles from their current position, after 2 minutes they can start looking for trips around 5 miles and they cannot find any trip after 2 minutes they can expand the search **until 7 miles**.
 
 - As we cannot estimate the waiting time due high offer of taxis, so we will assume that **they will be able to accept the first requested trip**.
 
-- The taxis will start picking trips from their current zone, but every 3 minutes waiting they will be able to pick trips from the next closest zone and keep expanding the zones every 3 minutes until finding a trip.
 
-### Runing trips simulation
+### Running trips simulation
 
 1. Load the functions to use.
 
@@ -244,7 +247,7 @@ options(datatable.print.nrows = 15)
 2. Create a connection with the parquet files without loading them into RAM.
 
 ```{r parsermd-chunk-3}
-con <- dbConnect(duckdb(), dbdir = "my-db.duckdb")
+con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
 
 ParquetSource <-
   here("raw-data/trip-data") |> 
@@ -273,15 +276,19 @@ glue("SELECT * FROM {ParquetSource} LIMIT 5") |>
 4. Use the locations ids of all the trips we can estimate the mean distance between each pear of locations.
 
 ```{r parsermd-chunk-4}
-
+# Define the SQL query
 LocationsMeanDistance <- glue("
-  SELECT PULocationID,
-         DOLocationID,
-         mean(trip_miles) AS trip_miles_mean
+  SELECT 
+    PULocationID,
+    DOLocationID,
+    AVG(trip_miles) AS trip_miles_mean
   FROM {ParquetSource}
+  WHERE PULocationID <> DOLocationID
   GROUP BY PULocationID, DOLocationID
-  ") |> dbGetQuery(conn = con)
-  
+  ORDER BY PULocationID, trip_miles_mean
+") |> 
+  dbGetQuery(conn = con)
+
 setDT(LocationsMeanDistance)
 
 LocationsMeanDistance
@@ -298,25 +305,19 @@ ClosestZone <-
   rbind(LocationsMeanDistance,
         LocationsMeanDistance[, .(PULocationID = DOLocationID,
                                   DOLocationID = PULocationID,
+                                  total_pu_count,
+                                  trips_count,
                                   trip_miles_mean)]
   
+  # We want to keep the original order of possible to avoid duplication
+  )[, unique(.SD, by = c("PULocationID", "DOLocationID"))
   # We need to make sure to place the lower distances at the top  
-  )[order(
-    # This expression help me to place distances between the same location
-    # at the bottom of the list with needing to open another []
-    (PULocationID == DOLocationID), 
-    # Then we just need to pass the distance column
-    trip_miles_mean
-    ), 
+  ][order(trip_miles_mean), 
     
-    # This expression will select the first row of the data.table
+    # This expression will select the first 15 rows of the data.table
     # for each PULocationID to avoid duplication
-    .SD[1L],
-    by = "PULocationID"
-    
-  # To end the process we just need to create named vector
-  # that we will use to return the closest location for any  id
-  ][, setattr(DOLocationID, "names", PULocationID)]
+    .SD[1:15],
+    keyby = "PULocationID"]
 
 
 head(ClosestZone) |> str()
