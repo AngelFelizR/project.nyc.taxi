@@ -221,7 +221,11 @@ The simulation will be based on the following assumptions related to the taxi dr
 
 - They work from 8 to 12 hour every day with 30 minutes breaks every 4 hours.
 
-- The taxis will start taking any trip around 3 miles from their current position, after 2 minutes they can start looking for trips around 5 miles and they cannot find any trip after 2 minutes they can expand the search **until 7 miles**.
+- The taxis will find trips based on their time waiting and will take the first trip their valid radius:
+    - 0-1 Minute: Search within a 1-mile radius.
+    - 1-3 Minutes: Expand search to a 3-mile radius if no trip is found.
+    - 3-5 Minutes: Expand search to a 5-mile radius if still no trip is found.
+    - 5-7 Minutes: Expand search to a 7-mile radius if no trip is found yet.
 
 - As we cannot estimate the waiting time due high offer of taxis, so we will assume that **they will be able to accept the first requested trip**.
 
@@ -230,7 +234,7 @@ The simulation will be based on the following assumptions related to the taxi dr
 
 1. Load the functions to use.
 
-```{r parsermd-chunk-2, warning = FALSE, message = FALSE}
+```{r warning = FALSE, message = FALSE}
 library(here)
 library(scales)
 library(ggplot2)
@@ -273,11 +277,12 @@ glue("SELECT * FROM {ParquetSource} LIMIT 5") |>
 ```
 
 
-4. Use the locations ids of all the trips we can estimate the mean distance between each pear of locations.
+4. Listing all locations at 7 or less miles of each other, regardless or their original direction by placing the original direction over the opposite one.
 
-```{r parsermd-chunk-4}
-# Define the SQL query
-LocationsMeanDistance <- glue("
+```{r}
+# Making the heavy work in SQL
+MeanDistance7MilesQuery <- glue("
+WITH MeanDistance AS(
   SELECT 
     PULocationID,
     DOLocationID,
@@ -285,45 +290,43 @@ LocationsMeanDistance <- glue("
   FROM {ParquetSource}
   WHERE PULocationID <> DOLocationID
   GROUP BY PULocationID, DOLocationID
+  HAVING AVG(trip_miles) <= 7
   ORDER BY PULocationID, trip_miles_mean
-") |> 
-  dbGetQuery(conn = con)
+) 
 
-setDT(LocationsMeanDistance)
+SELECT
+    PULocationID,
+    DOLocationID,
+    trip_miles_mean
+FROM MeanDistance
+UNION ALL
+SELECT
+    DOLocationID AS PULocationID,
+    PULocationID AS DOLocationID,
+    trip_miles_mean
+FROM MeanDistance
+")
 
-LocationsMeanDistance
+# Transforming the data to data.table
+MeanDistance7Miles <- dbGetQuery(conn = con, MeanDistance7MilesQuery)
+setDT(MeanDistance7Miles)
+MeanDistance7Miles
 ```
 
-5. Define a named vectors that can return the closest location id for all locations ids in the dataset. 
+5. Removing duplicated distances by selecting the origin if we have it.
 
-```{r parsermd-chunk-5}
-ClosestZone <-
+```{r}
+ClosestLocations <- MeanDistance7Miles[
+  # Arranging start point and ascending distance
+  order(PULocationID, trip_miles_mean),
   
-  # We are bind the same table after exchanging the id columns
-  # to make sure that all ids are present in both column for any
-  # pair of ids
-  rbind(LocationsMeanDistance,
-        LocationsMeanDistance[, .(PULocationID = DOLocationID,
-                                  DOLocationID = PULocationID,
-                                  total_pu_count,
-                                  trips_count,
-                                  trip_miles_mean)]
-  
-  # We want to keep the original order of possible to avoid duplication
-  )[, unique(.SD, by = c("PULocationID", "DOLocationID"))
-  # We need to make sure to place the lower distances at the top  
-  ][order(trip_miles_mean), 
-    
-    # This expression will select the first 15 rows of the data.table
-    # for each PULocationID to avoid duplication
-    .SD[1:15],
-    keyby = "PULocationID"]
-
-
-head(ClosestZone) |> str()
+  # Selecting trips in original direction if we have it
+  unique(.SD, by = c("PULocationID", "DOLocationID"))
+]
 ```
 
-6. Restrict the location ids to use to the ones related to those zones.
+
+. Restrict the location ids to use to the ones related to those zones.
 
 ```{r parsermd-chunk-6}
 ValidZoneCodes <- fread(
