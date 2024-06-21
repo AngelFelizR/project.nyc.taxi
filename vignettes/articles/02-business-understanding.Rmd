@@ -267,28 +267,11 @@ ParquetSource <-
   paste0("read_parquet([", a = _ ,"])")
 ```
 
-3. Check the number of rows available and the structure of the data.
-
-```{r}
-glue_safe("SELECT * FROM {ParquetSource} LIMIT 5") |> 
-  dbGetQuery(conn = con) |>
-  str()
-
-glue_safe("SELECT COUNT(*) as nrow
-          FROM {ParquetSource}
-          WHERE PULocationID IN ({ValidZoneCodes}) AND
-                DOLocationID IN ({ValidZoneCodes})") |> 
-  dbGetQuery(conn = con) |>
-  (\(df) df$nrow)() |>
-  comma()
-```
-
-
-4. Calculate the mean distance present from one location to other if it has less than 7 miles.
+5. Calculate the mean distance present from one location to other if it has less than 7 miles.
 
 ```{r}
 MeanDistanceQuery <- glue_safe("
-CREATE TEMP TABLE mean_distance AS
+CREATE TEMP TABLE MeanDistance AS
   WITH MeanDistance AS (
     SELECT 
       PULocationID,
@@ -340,10 +323,35 @@ ORDER BY PULocationID, trip_miles_mean
 dbExecute(conn = con, statement = MeanDistanceQuery)
 
 dbGetQuery(conn = con,
-           "SELECT * FROM mean_distance LIMIT 6")
+           "SELECT * FROM MeanDistance LIMIT 6")
 ```
 
-6. 
+6. Sampling the data.
+
+```{r}
+StartPointQuary <- glue_safe("
+SELECT *
+FROM (
+   SELECT 
+      *,
+      row_number() OVER () AS n_row
+   FROM {ParquetSource}
+   WHERE
+      PULocationID IN ({ValidZoneCodes}) AND
+      DOLocationID IN ({ValidZoneCodes})
+)
+USING SAMPLE reservoir(60 ROWS) REPEATABLE (3518);
+")
+
+StartPoint <- dbGetQuery(conn = con, StartPointQuary)
+
+setDT(StartPoint)
+
+StartPoint
+```
+
+
+
 
 ```{r, include=FALSE, eval= params$UpdateSimulation}
 usethis::use_data(BaseLineSimulation,
