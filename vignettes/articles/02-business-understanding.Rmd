@@ -177,7 +177,6 @@ They will be used to create the outcome variable needs to be predicted by the mo
 - *shared_match_flag*
 
 
-
 ## Project Objective
 
 The objective of this project is to develop a strategy to select the best paid trips possible to get an consistent increase in NYC taxi drivers' income. 
@@ -191,19 +190,6 @@ $$
 \text{Daily Hourly Wage} = \frac{\text{Total Earnings}}{\text{Total Hours Worked}}
 $$
 
-
-## Defining Outcome to Predict
-
-Once we have a clear business problem to solve, it's important to also make the translation into a *data science* problem that we can solve using the available data.
-
-As we want to increase earning and reduce time, we can use calculate and predict the `profit_rate` of each trip, to understand **what is behind the best pay trips**.
-
-$$
-\text{profit rate} = \frac{\text{driver pay} + \text{tips}}{\text{dropoff datetime}-\text{request datetime}}
-$$
-
-
-
 ## Defining Metric's Base Line 
 
 Defining the baseline based on this data is a challenge as the data doesn't have any *unique id* to make the estimation, but we can **run a simulation** to estimate its value with a confident interval.
@@ -212,20 +198,20 @@ The simulation will be based on the following assumptions related to the taxi dr
 
 - Only wheelchair-accessible vehicles can accept trips with that request.
 
-- The TLC license number needs to keep constant for all trips in work day.
+- The TLC license number (taxi company) needs to keep constant for all trips in work day.
 
 - They can start to work:
 
     - From any zone of Manhattan, Brooklyn or Queens (the more active ones)
     - From any month, weekday or hour.
 
-- They work from 8 to 12 hour every day with 30 minutes breaks every 4 hours.
+- They work from 8 to 12 hours every day with 30 minutes breaks every 4 hours, after ending the current trip.
 
-- The taxis will find trips based on their time waiting and will take the first trip their valid radius:
+- The taxis will find trips based on their time waiting and will take the first trip in their valid radius:
     - 0-1 Minute: Search within a 1-mile radius.
     - 1-3 Minutes: Expand search to a 3-mile radius if no trip is found.
     - 3-5 Minutes: Expand search to a 5-mile radius if still no trip is found.
-    - 5-7 Minutes: Expand search to a 7-mile radius if no trip is found yet.
+    - >5 Minutes: Expand search to a 7-mile radius if no trip is found yet.
 
 - As we cannot estimate the waiting time due high offer of taxis, so we will assume that **they will be able to accept the first requested trip**.
 
@@ -248,6 +234,25 @@ library(glue)
 options(datatable.print.nrows = 15)
 ```
 
+2. Restrict the location ids to use to the ones related to those zones.
+
+```{r}
+ZoneCodes <- fread(
+  here("raw-data/taxi_zone_lookup.csv"),
+  colClasses = c("integer",
+                 "character",
+                 "character",
+                 "character")
+)
+
+setkeyv(ZoneCodes, "Borough")
+
+ValidZoneCodes <-
+  ZoneCodes[c("Manhattan", "Brooklyn", "Queens"), 
+            on = "Borough",
+            paste0(LocationID, collapse = ", ")]
+```
+
 2. Create a connection with the parquet files without loading them into RAM.
 
 ```{r parsermd-chunk-3}
@@ -265,136 +270,80 @@ ParquetSource <-
 3. Check the number of rows available and the structure of the data.
 
 ```{r}
-glue("SELECT COUNT(*) as nrow
-      FROM {ParquetSource}") |> 
+glue_safe("SELECT * FROM {ParquetSource} LIMIT 5") |> 
+  dbGetQuery(conn = con) |>
+  str()
+
+glue_safe("SELECT COUNT(*) as nrow
+          FROM {ParquetSource}
+          WHERE PULocationID IN ({ValidZoneCodes}) AND
+                DOLocationID IN ({ValidZoneCodes})") |> 
   dbGetQuery(conn = con) |>
   (\(df) df$nrow)() |>
   comma()
-
-glue("SELECT * FROM {ParquetSource} LIMIT 5") |> 
-  dbGetQuery(conn = con) |>
-  str()
 ```
 
 
-4. Listing all locations at 7 or less miles of each other, regardless or their original direction by placing the original direction over the opposite one.
+4. Calculate the mean distance present from one location to other if it has less than 7 miles.
 
 ```{r}
-# Making the heavy work in SQL
-MeanDistance7MilesQuery <- glue("
-WITH MeanDistance AS(
-  SELECT 
-    PULocationID,
-    DOLocationID,
-    AVG(trip_miles) AS trip_miles_mean
-  FROM {ParquetSource}
-  WHERE PULocationID <> DOLocationID
-  GROUP BY PULocationID, DOLocationID
-  HAVING AVG(trip_miles) <= 7
-  ORDER BY PULocationID, trip_miles_mean
-) 
-
-SELECT
-    PULocationID,
-    DOLocationID,
-    trip_miles_mean
-FROM MeanDistance
-UNION ALL
-SELECT
-    DOLocationID AS PULocationID,
-    PULocationID AS DOLocationID,
-    trip_miles_mean
-FROM MeanDistance
+MeanDistanceQuery <- glue_safe("
+CREATE TEMP TABLE mean_distance AS
+  WITH MeanDistance AS (
+    SELECT 
+      PULocationID,
+      DOLocationID,
+      AVG(trip_miles) AS trip_miles_mean
+    FROM 
+      {ParquetSource}
+    WHERE
+      PULocationID <> DOLocationID AND
+      PULocationID IN ({ValidZoneCodes}) AND
+      DOLocationID IN ({ValidZoneCodes})
+    GROUP BY 
+      PULocationID, 
+      DOLocationID
+    HAVING 
+      AVG(trip_miles) <= 7
+  ),
+  MeanDistanceComplete AS (
+    SELECT
+      PULocationID,
+      DOLocationID,
+      trip_miles_mean
+    FROM MeanDistance
+    UNION ALL
+    SELECT
+      DOLocationID AS PULocationID,
+      PULocationID AS DOLocationID,
+      trip_miles_mean
+    FROM MeanDistance
+  ),
+  NumeredRows AS (
+    SELECT
+      PULocationID,
+      DOLocationID,
+      trip_miles_mean,
+      row_number() OVER (PARTITION BY PULocationID, DOLocationID) AS n_row
+    FROM MeanDistanceComplete
+  )
+  
+SELECT 
+  PULocationID,
+  DOLocationID,
+  trip_miles_mean
+FROM NumeredRows
+WHERE n_row = 1
+ORDER BY PULocationID, trip_miles_mean
 ")
 
-# Transforming the data to data.table
-MeanDistance7Miles <- dbGetQuery(conn = con, MeanDistance7MilesQuery)
-setDT(MeanDistance7Miles)
-MeanDistance7Miles
+dbExecute(conn = con, statement = MeanDistanceQuery)
+
+dbGetQuery(conn = con,
+           "SELECT * FROM mean_distance LIMIT 6")
 ```
 
-5. Removing duplicated distances by selecting the origin if we have it.
-
-```{r}
-ClosestLocations <- MeanDistance7Miles[
-  # Arranging start point and ascending distance
-  order(PULocationID, trip_miles_mean),
-  
-  # Selecting trips in original direction if we have it
-  unique(.SD, by = c("PULocationID", "DOLocationID"))
-]
-```
-
-
-. Restrict the location ids to use to the ones related to those zones.
-
-```{r parsermd-chunk-6}
-ValidZoneCodes <- fread(
-  here("raw-data/taxi_zone_lookup.csv"),
-  colClasses = c("integer",
-                 "character",
-                 "character",
-                 "character")
-)
-
-setkeyv(ValidZoneCodes, "Borough")
-
-ValidZoneCodes <-
-  ValidZoneCodes[c("Manhattan", "Brooklyn", "Queens"), on = "Borough"]
-```
-
-7. Link all possible zones for each location id based on each Borough.
-
-```{r parsermd-chunk-7}
-BoroughZones <-
-  ValidZoneCodes[, .(LocationID,
-                     id_list = list(LocationID)),
-                 by = "Borough"]
-
-head(BoroughZones)
-```
-
-8. Defining when and where each simulation will start.
-
-```{r parsermd-chunk-8}
-# Repeating the experiment to create confident intervals
-NumRepetitions <- 30L
-
-# Defining the seed
-set.seed(1558)
-
-# Defining the starting point of each repetition
-RandomStartPoint <- data.table(
-  simulation_day = 1:NumRepetitions,
-  PULocationID = sample(ValidZoneCodes$LocationID, NumRepetitions, replace = TRUE),
-  hours_to_work = sample(8:12, NumRepetitions, replace = TRUE),
-  start_time = make_datetime(
-    year = sample(c(2022L, 2023L), NumRepetitions, replace = TRUE),
-    month = sample(1:12, NumRepetitions, replace = TRUE),
-    day = sample(1:31, NumRepetitions, replace = TRUE),
-    hour = sample(0:23, NumRepetitions, replace = TRUE)
-  )
-)
-
-head(RandomStartPoint)
-```
-
-9. Based on each start point simulate a day of work.
-
-```{r parsermd-chunk-9, eval = params$UpdateSimulation}
-BaseLineSimulation <-
-  RandomStartPoint[
-    , simulate_trips(NycTrips,
-                     start_datetime = start_time,
-                     start_zone = PULocationID,
-                     minutes_next_trip = 6L,
-                     end_datetime = start_time + hours(hours_to_work),
-                     valid_end_zones = ValidZoneCodes$LocationID,
-                     closest_zone = ClosestZone,
-                     borough_zones = BoroughZones),
-    by = "simulation_day"
-  ][RandomStartPoint, on = "simulation_day"]
-```
+6. 
 
 ```{r, include=FALSE, eval= params$UpdateSimulation}
 usethis::use_data(BaseLineSimulation,
@@ -520,6 +469,18 @@ It's also important to consider that Taxi companies and customers can both benef
     - **Better Service**: Drivers who earn more tips are often those who provide better service. This could mean cleaner vehicles, more courteous behavior, and a more enjoyable ride overall.
     - **Driver Availability**: If the tip earnings are high, it could attract more drivers to work, potentially reducing wait times for customers.
     - **Safety**: Drivers who are not worried about their earnings might be less likely to engage in risky behaviors (like speeding or working overly long shifts) to earn more.
+    
+    
+## Defining Outcome to Predict
+
+Once we have a clear business problem to solve, it's important to also make the translation into a *data science* problem that we can solve using the available data.
+
+As we want to increase earning and reduce time, we can use calculate and predict the `profit_rate` of each trip, to understand **what is behind the best pay trips**.
+
+$$
+\text{profit rate} = \frac{\text{driver pay} + \text{tips}}{\text{dropoff datetime}-\text{request datetime}}
+$$
+
 
 
 ## Deliverables
@@ -527,3 +488,37 @@ It's also important to consider that Taxi companies and customers can both benef
 A **Shiny app** which assists the drivers in focusing their attention on the better trips.
 
 
+```
+-- Crear una tabla temporal final para almacenar los resultados
+CREATE TEMP TABLE better_trip_validation AS
+WITH trip_performance AS (
+    SELECT 
+        ROW_NUMBER() OVER () AS trip_id,
+        *,
+        (driver_pay + tips) / (EXTRACT(EPOCH FROM (dropoff_datetime - request_datetime)) / 3600) AS performance_per_hour
+    FROM 
+        trips
+),
+better_trips AS (
+    SELECT 
+        t1.trip_id AS trip_id,
+        CASE WHEN EXISTS (
+            SELECT 1
+            FROM trip_performance t2
+            WHERE t2.trip_id <> t1.trip_id
+              AND t2.request_datetime > t1.request_datetime
+              AND t2.request_datetime <= t1.request_datetime + INTERVAL '20 minutes'
+              AND (t2.driver_pay + t2.tips) / (EXTRACT(EPOCH FROM (t2.dropoff_datetime - t1.request_datetime)) / 3600) > t1.performance_per_hour
+        ) THEN 1 ELSE 0 END AS better_trip_20_m
+    FROM 
+        trip_performance t1
+)
+-- Unir los resultados con los detalles de cada viaje
+SELECT *
+FROM 
+    trip_performance t1
+JOIN 
+    better_trips t2
+ON 
+    t1.trip_id = t2.trip_id;
+```
