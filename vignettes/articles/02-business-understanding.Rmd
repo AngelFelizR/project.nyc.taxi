@@ -253,13 +253,13 @@ ValidZoneCodes <-
             paste0(LocationID, collapse = ", ")]
 ```
 
-2. Create a connection with the parquet files without loading them into RAM.
+3. Create a connection with the parquet files without loading them into RAM.
 
 ```{r parsermd-chunk-3}
 con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
 
 ParquetSource <-
-  here("raw-data/trip-data") |> 
+  here("raw-data/trip-data/year=2023") |> 
   list.files(recursive = TRUE,
              full.names = TRUE) |>
   paste0("'", a = _ ,"'") |> 
@@ -267,49 +267,49 @@ ParquetSource <-
   paste0("read_parquet([", a = _ ,"])")
 ```
 
-5. Calculate the mean distance present from one location to other if it has less than 7 miles.
+
+4. Calculate the mean distance present from one location to other if it has less than 7 miles.
 
 ```{r}
 MeanDistanceQuery <- glue_safe("
-CREATE TEMP TABLE MeanDistance AS
-  WITH MeanDistance AS (
-    SELECT 
-      PULocationID,
-      DOLocationID,
-      AVG(trip_miles) AS trip_miles_mean
-    FROM 
-      {ParquetSource}
-    WHERE
-      PULocationID <> DOLocationID AND
-      PULocationID IN ({ValidZoneCodes}) AND
-      DOLocationID IN ({ValidZoneCodes})
-    GROUP BY 
-      PULocationID, 
-      DOLocationID
-    HAVING 
-      AVG(trip_miles) <= 7
-  ),
-  MeanDistanceComplete AS (
-    SELECT
-      PULocationID,
-      DOLocationID,
-      trip_miles_mean
-    FROM MeanDistance
-    UNION ALL
-    SELECT
-      DOLocationID AS PULocationID,
-      PULocationID AS DOLocationID,
-      trip_miles_mean
-    FROM MeanDistance
-  ),
-  NumeredRows AS (
-    SELECT
-      PULocationID,
-      DOLocationID,
-      trip_miles_mean,
-      row_number() OVER (PARTITION BY PULocationID, DOLocationID) AS n_row
-    FROM MeanDistanceComplete
-  )
+WITH MeanDistance AS (
+  SELECT 
+    PULocationID,
+    DOLocationID,
+    AVG(trip_miles) AS trip_miles_mean
+  FROM 
+    {ParquetSource}
+  WHERE
+    PULocationID <> DOLocationID AND
+    PULocationID IN ({ValidZoneCodes}) AND
+    DOLocationID IN ({ValidZoneCodes})
+  GROUP BY 
+    PULocationID, 
+    DOLocationID
+  HAVING 
+    AVG(trip_miles) <= 7
+),
+MeanDistanceComplete AS (
+  SELECT
+    PULocationID,
+    DOLocationID,
+    trip_miles_mean
+  FROM MeanDistance
+  UNION ALL
+  SELECT
+    DOLocationID AS PULocationID,
+    PULocationID AS DOLocationID,
+    trip_miles_mean
+  FROM MeanDistance
+),
+NumeredRows AS (
+  SELECT
+    PULocationID,
+    DOLocationID,
+    trip_miles_mean,
+    row_number() OVER (PARTITION BY PULocationID, DOLocationID) AS n_row
+  FROM MeanDistanceComplete
+)
   
 SELECT 
   PULocationID,
@@ -320,38 +320,42 @@ WHERE n_row = 1
 ORDER BY PULocationID, trip_miles_mean
 ")
 
-dbExecute(conn = con, statement = MeanDistanceQuery)
+MeanDistance <- dbGetQuery(con, MeanDistanceQuery)
 
-dbGetQuery(conn = con,
-           "SELECT * FROM MeanDistance LIMIT 6")
+setDT(MeanDistance)
+
+MeanDistance
 ```
 
-6. Sampling the data.
+5. Getting the starting trips to run the simulation.
 
 ```{r}
-StartPointQuary <- glue_safe("
-SELECT *
-FROM (
-   SELECT 
-      *,
-      row_number() OVER () AS n_row
-   FROM {ParquetSource}
-   WHERE
-      PULocationID IN ({ValidZoneCodes}) AND
-      DOLocationID IN ({ValidZoneCodes})
-)
+AllTripsQuery <- glue_safe("
+SELECT 
+  ROW_NUMBER() OVER () AS trip_id,
+  *,
+  (driver_pay + tips) / (EXTRACT(EPOCH FROM (dropoff_datetime - request_datetime)) / 3600) AS performance_per_hour
+FROM {ParquetSource}
+WHERE
+  PULocationID IN ({ValidZoneCodes}) AND
+  DOLocationID IN ({ValidZoneCodes})
+")
+
+
+StartDayQuery <- glue_safe("
+SELECT * 
+FROM ({AllTripsQuery}) 
 USING SAMPLE reservoir(60 ROWS) REPEATABLE (3518);
 ")
 
-StartPoint <- dbGetQuery(conn = con, StartPointQuary)
+StartDay <- dbGetQuery(con, StartDayQuery)
 
-setDT(StartPoint)
+setDT(StartDay)
 
-StartPoint
+StartDay
 ```
 
-
-
+6. 
 
 ```{r, include=FALSE, eval= params$UpdateSimulation}
 usethis::use_data(BaseLineSimulation,
