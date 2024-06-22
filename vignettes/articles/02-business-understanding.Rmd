@@ -196,16 +196,18 @@ Defining the baseline based on this data is a challenge as the data doesn't have
 
 The simulation will be based on the following assumptions related to the taxi drivers:
 
-- Only wheelchair-accessible vehicles can accept trips with that request.
-
-- The TLC license number (taxi company) needs to keep constant for all trips in work day.
-
 - They can start to work:
 
     - From any zone of Manhattan, Brooklyn or Queens (the more active ones)
     - From any month, weekday or hour.
+    
+- The TLC license number (taxi company) needs to keep constant for all trips in work day.
 
-- They work from 8 to 12 hours every day with 30 minutes breaks every 4 hours, after ending the current trip.
+- Only wheelchair-accessible vehicles can accept trips with that request.
+
+- They will take their last trip after working 8 hours.
+
+- They have a 30 minutes break after 4 hours working once ending the current trip.
 
 - The taxis will find trips based on their time waiting and will take the first trip in their valid radius:
     - 0-1 Minute: Search within a 1-mile radius.
@@ -234,7 +236,26 @@ library(glue)
 options(datatable.print.nrows = 15)
 ```
 
-2. Restrict the location ids to use to the ones related to those zones.
+2. Creating a connection with duckDB.
+
+```{r parsermd-chunk-3}
+con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
+```
+
+3. Creating a object listing all parquet to query from.
+
+```{r}
+ParquetSource <-
+  here("raw-data/trip-data/year=2023") |> 
+  list.files(recursive = TRUE,
+             full.names = TRUE) |>
+  paste0("'", a = _ ,"'") |> 
+  paste0(collapse = ", ") |>
+  paste0("read_parquet([", a = _ ,"])")
+```
+
+4. Create a table listing all possible combinations of locations in Manhattan, Brooklyn and Queens, as they have more trips that other borough in NYC.
+
 
 ```{r}
 ZoneCodes <- fread(
@@ -250,44 +271,35 @@ setkeyv(ZoneCodes, "Borough")
 ValidZoneCodes <-
   ZoneCodes[c("Manhattan", "Brooklyn", "Queens"), 
             on = "Borough",
-            paste0(LocationID, collapse = ", ")]
+            CJ(PULocationID = LocationID,
+               DOLocationID = LocationID)]
+
+dbWriteTable(con, "ValidZoneCodes", ValidZoneCodes, temporary = TRUE)
 ```
-
-3. Create a connection with the parquet files without loading them into RAM.
-
-```{r parsermd-chunk-3}
-con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
-
-ParquetSource <-
-  here("raw-data/trip-data/year=2023") |> 
-  list.files(recursive = TRUE,
-             full.names = TRUE) |>
-  paste0("'", a = _ ,"'") |> 
-  paste0(collapse = ", ") |>
-  paste0("read_parquet([", a = _ ,"])")
-```
-
 
 4. Calculate the mean distance present from one location to other if it has less than 7 miles.
 
 ```{r}
 MeanDistanceQuery <- glue_safe("
+CREATE TEMP TABLE MeanDistance AS
 WITH MeanDistance AS (
   SELECT 
-    PULocationID,
-    DOLocationID,
-    AVG(trip_miles) AS trip_miles_mean
+    t1.PULocationID,
+    t1.DOLocationID,
+    AVG(t1.trip_miles) AS trip_miles_mean
   FROM 
-    {ParquetSource}
+    {ParquetSource} t1
+  INNER JOIN
+    ValidZoneCodes t2
+    ON t1.PULocationID = t2.PULocationID AND
+       t1.DOLocationID = t2.DOLocationID
   WHERE
-    PULocationID <> DOLocationID AND
-    PULocationID IN ({ValidZoneCodes}) AND
-    DOLocationID IN ({ValidZoneCodes})
+    t1.PULocationID <> t1.DOLocationID
   GROUP BY 
-    PULocationID, 
-    DOLocationID
+    t1.PULocationID, 
+    t1.DOLocationID
   HAVING 
-    AVG(trip_miles) <= 7
+    AVG(t1.trip_miles) <= 7
 ),
 MeanDistanceComplete AS (
   SELECT
@@ -320,48 +332,40 @@ WHERE n_row = 1
 ORDER BY PULocationID, trip_miles_mean
 ")
 
-MeanDistance <- dbGetQuery(con, MeanDistanceQuery)
+dbExecute(con, MeanDistanceQuery) |> comma()
 
-setDT(MeanDistance)
-
-MeanDistance
+dbListTables(con)
 ```
 
-5. Getting the starting trips to run the simulation.
+5. Getting the starting trips to run the simulation based on random sample from valid zones in Manhattan, Brooklyn and Queens.
 
-```{r}
-AllTripsQuery <- glue_safe("
-SELECT 
-  ROW_NUMBER() OVER () AS trip_id,
-  *,
-  (driver_pay + tips) / (EXTRACT(EPOCH FROM (dropoff_datetime - request_datetime)) / 3600) AS performance_per_hour
-FROM {ParquetSource}
-WHERE
-  PULocationID IN ({ValidZoneCodes}) AND
-  DOLocationID IN ({ValidZoneCodes})
-")
-
-
-StartDayQuery <- glue_safe("
+```{r eval= params$UpdateSimulation}
+SimulationStartDayQuery <- glue_safe("
 SELECT * 
-FROM ({AllTripsQuery}) 
+FROM (
+  SELECT t1.*
+  FROM {ParquetSource} t1
+  INNER JOIN ValidZoneCodes t2
+    ON t1.PULocationID = t2.PULocationID AND
+       t1.DOLocationID = t2.DOLocationID
+) 
 USING SAMPLE reservoir(60 ROWS) REPEATABLE (3518);
 ")
 
-StartDay <- dbGetQuery(con, StartDayQuery)
+SimulationStartDay <- dbGetQuery(con, SimulationStartDayQuery)
 
-setDT(StartDay)
-
-StartDay
+setDT(SimulationStartDay) |> dim()
 ```
 
-6. 
-
-```{r, include=FALSE, eval= params$UpdateSimulation}
-usethis::use_data(BaseLineSimulation,
-                  overwrite = TRUE,
-                  compress = "xz",
-                  version = 3)
+```{r include=FALSE}
+if(params$UpdateSimulation){
+  usethis::use_data(SimulationStartDay,
+                    overwrite = TRUE,
+                    compress = "xz",
+                    version = 3)
+}else{
+  dim(SimulationStartDay)
+}
 ```
 
 
