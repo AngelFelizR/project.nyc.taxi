@@ -27,7 +27,6 @@ Imports:
     timeDate,
     withr
 Suggests:
-    devtools,
     DiagrammeR,
     forcats,
     fs,
@@ -45,7 +44,6 @@ Suggests:
     tidygeocoder
 VignetteBuilder: 
     knitr
-Config/fusen/version: 0.5.2
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true

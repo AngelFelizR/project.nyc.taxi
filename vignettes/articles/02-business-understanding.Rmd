@@ -238,21 +238,11 @@ options(datatable.print.nrows = 15)
 
 2. Creating a connection with duckDB.
 
-```{r parsermd-chunk-3}
-con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
-```
+
 
 3. Creating a object listing all parquet to query from.
 
-```{r}
-ParquetSource <-
-  here("raw-data/trip-data/year=2023") |> 
-  list.files(recursive = TRUE,
-             full.names = TRUE) |>
-  paste0("'", a = _ ,"'") |> 
-  paste0(collapse = ", ") |>
-  paste0("read_parquet([", a = _ ,"])")
-```
+
 
 4. Create a table listing all possible combinations of locations in Manhattan, Brooklyn and Queens, as they have more trips that other borough in NYC.
 

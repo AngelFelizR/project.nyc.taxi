@@ -1,0 +1,97 @@
+---
+title: "flat_minimal_package.Rmd empty"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r development, include=FALSE}
+library(testthat)
+```
+
+<!--
+ You need to run the 'description' chunk in the '0-dev_history.Rmd' file before continuing your code there.
+-->
+
+```{r development-load}
+# Load already included functions if relevant
+pkgload::load_all(export_all = FALSE)
+```
+
+# General functions
+
+## read_dir_parquet
+
+```{r function-read_dir_parquet}
+
+read_dir_parquet = function(dir_path) {
+  
+  list.files(dir_path,
+             recursive = TRUE,
+             full.names = TRUE) |>
+    grep(pattern = "\\.parquet$", value = TRUE) |>
+    paste0("'", a = _ ,"'") |> 
+    paste0(collapse = ", ") |>
+    paste0("read_parquet([", a = _ ,"])")
+  
+}
+
+```
+
+### tests
+
+```{r tests-read_dir_parquet}
+
+describe("read_dir_parquet()",{
+  
+  # Defining a temp folder
+  temp_dir <- tempdir()
+  
+  # Removing the folder after testing
+  on.exit(unlink(temp_dir,
+                 recursive = TRUE,
+                 force = TRUE),
+          add = TRUE)
+  
+  # New files
+  split(iris, iris$Species) |>
+    lapply(\(x) arrow::write_parquet(x,
+                                     tempfile(fileext = ".parquet",
+                                              tmpdir =  temp_dir)))
+
+  
+  it("has length of 1",{
+    expect_length(read_dir_parquet(temp_dir), 1L)
+  })
+  
+  it("start and end pattern",{
+    expect_true(grepl("read_parquet",
+                      read_dir_parquet(temp_dir)))
+  })  
+  
+})
+
+```
+
+
+
+
+# Inflate the functions
+
+```{r development-inflate, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+
+c("R", "man", "tests/testthat") |>
+  sapply(FUN = list.files,
+         pattern = "\\.Rd?", 
+         full.names = TRUE) |>
+  unlist() |>
+  setdiff(y = "R/project.nyc.taxi-package.R") |>
+  file.remove()
+
+fusen::inflate(flat_file = "dev/flat_functions.Rmd", 
+               vignette_name = NA,
+               vignettes = FALSE,
+               check = FALSE)
+```

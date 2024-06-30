@@ -135,6 +135,28 @@ download.file(TaxiZoneLink,
               mode = "wb")
 ```
 
+## Saving results in a database
+
+Despite that parquet files are great for sharing big data files keeping save the format for each format, it presents problems if we need to apply sampling operations.
+
+To work with data large than RAM, we will need to create a simple data base with `duckdb` by following the next simple stops.
+
+```{r}
+ParquetSource2023 <-
+  file.path(ParquetFolderPath, "year=2023") |>
+  list.files(recursive = TRUE,
+             full.names = TRUE) |>
+  paste0("'", a = _ ,"'") |> 
+  paste0(collapse = ", ") |>
+  paste0("read_parquet([", a = _ ,"])")
+```
+
+
+
+```{r}
+con <- DBI::dbConnect(duckdb::duckdb(), dbdir = here("my-db.duckdb"))
+```
+
 ## Final result
 
 After getting all the files you should end with the next structure for the `data` folder.
