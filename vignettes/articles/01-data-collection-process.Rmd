@@ -151,11 +151,13 @@ ParquetSource <-
   paste0("'", a = _ ,"'") |> 
   paste0(collapse = ", ") |>
   paste0("read_parquet([", a = _ ,"])")
+
+ParquetSource
 ```
 
 2. Creating a connection.
 
-```{r}
+```r
 con <- DBI::dbConnect(duckdb::duckdb(), 
                       dbdir = here::here("my-db.duckdb"))
 ```
@@ -172,14 +174,12 @@ CREATE TABLE NycTrips AS
 DBI::dbExecute(conn = con, NycTripsCreateTable)
 ```
 
-
-## Final result
-
 After saving the data in the data base we can confirm its final size.
 
-```{r parsermd-chunk-8}
-file.size("my-db.duckdb") |>
-  structure(class="object_size") |>
+```{r}
+here::here("my-db.duckdb") |>
+  file.size() |>
+  structure(class = "object_size") |>
   format(units = "auto")
 ```
 
