@@ -3,8 +3,10 @@ title: "Data Collection Process"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Data Collection Process}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -137,7 +139,7 @@ download.file(TaxiZoneLink,
 
 ## Saving results in a database
 
-Despite that parquet files are great for sharing big data files keeping save the format for each format, it presents problems if we need to apply sampling operations.
+Despite that parquet files are great for sharing big data files keeping save the format for each format, it presents problems if we need to apply **sampling operations**.
 
 To work with data large than RAM, we will need to create a simple data base with `duckdb` by following the next simple steps.
 
@@ -157,24 +159,36 @@ ParquetSource
 
 2. Creating a connection.
 
-```r
+```{r eval=FALSE}
 con <- DBI::dbConnect(duckdb::duckdb(), 
                       dbdir = here::here("my-db.duckdb"))
 ```
 
-3. Saving all files in the database.
+3. Saving all files in the database after adding an id to differentiate between trips and adding the performance per our each trips.
 
-```r
+```{r eval=FALSE}
 NycTripsCreateTable <- glue::glue_safe("
 CREATE TABLE NycTrips AS
-    SELECT *
-    FROM {ParquetSource};
+    SELECT 
+        ROW_NUMBER() OVER () AS trip_id,
+        *,
+        (driver_pay + tips) / (EXTRACT(EPOCH FROM (dropoff_datetime - request_datetime)) / 3600) AS performance_per_hour
+    FROM {ParquetSource}
 ")
 
-DBI::dbExecute(conn = con, NycTripsCreateTable)
+DBI::dbExecute(con, NycTripsCreateTable)
 ```
 
-After saving the data in the data base we can confirm its final size.
+4. Disconnecting the data base.
+
+```{r eval=FALSEs}
+DBI::dbDisconnect(con, shutdown = TRUE)
+
+rm(con)
+```
+
+
+5. After saving the data in the data base we can confirm its final size.
 
 ```{r}
 here::here("my-db.duckdb") |>

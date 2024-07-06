@@ -13,3 +13,4 @@ inst/doc
 
 my-db.duckdb
 my-db.duckdb.wal
+my-db.duckdb.tmp/
