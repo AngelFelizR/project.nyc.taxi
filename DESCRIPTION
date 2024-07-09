@@ -31,7 +31,6 @@ Suggests:
     forcats,
     fs,
     fst,
-    fusen,
     ggplot2,
     here,
     infer,

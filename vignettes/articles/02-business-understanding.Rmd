@@ -194,33 +194,33 @@ $$
 
 Defining the baseline based on this data is a challenge as the data doesn't have any *unique id* to make the estimation, but we can **run a simulation** to estimate its value with a confident interval.
 
-The simulation will be based on the following assumptions related to the taxi drivers:
+The simulation will be based on the following **assumptions** related to the taxi drivers:
 
-- They can start to work:
+1. They can start to work:
 
-    - From any zone of Manhattan, Brooklyn or Queens (the more active ones)
-    - From any month, weekday or hour.
+- From any zone of Manhattan, Brooklyn or Queens (the more active ones)
+- From any month, weekday or hour.
     
-- The TLC license number (taxi company) needs to keep constant for all trips in work day.
+2. The TLC license number (taxi company) needs to keep constant for all trips in work day.
 
-- Only wheelchair-accessible vehicles can accept trips with that request.
+3. Only wheelchair-accessible vehicles can accept trips with that request.
 
-- They will take their last trip after working 8 hours.
+4. As we cannot estimate the waiting time due high offer of taxis, so we will assume that **they will be able to accept the first requested trip**.
 
-- They have a 30 minutes break after 4 hours working once ending the current trip.
+5. The taxis will find trips based on their time waiting and will take the first trip in their valid radius:
 
-- The taxis will find trips based on their time waiting and will take the first trip in their valid radius:
-    - 0-1 Minute: Search within a 1-mile radius.
-    - 1-3 Minutes: Expand search to a 3-mile radius if no trip is found.
-    - 3-5 Minutes: Expand search to a 5-mile radius if still no trip is found.
-    - >5 Minutes: Expand search to a 7-mile radius if no trip is found yet.
+- 0-1 Minute: Search within a 1-mile radius.
+- 1-3 Minutes: Expand search to a 3-mile radius if no trip is found.
+- 3-5 Minutes: Expand search to a 5-mile radius if still no trip is found.
+- >5 Minutes: Expand search to a 7-mile radius if no trip is found yet.
 
-- As we cannot estimate the waiting time due high offer of taxis, so we will assume that **they will be able to accept the first requested trip**.
+6. They have a 30 minutes break after 4 hours working once ending the current trip.
 
+7. They will take their last trip after working 8 hours.
 
 ### Running trips simulation
 
-1. Load the functions to use.
+1. Loading the functions to use.
 
 ```{r warning = FALSE, message = FALSE}
 library(here)
@@ -236,73 +236,151 @@ library(glue)
 options(datatable.print.nrows = 15)
 ```
 
-2. Creating a connection with duckDB.
-
-
-
-3. Creating a object listing all parquet to query from.
-
-
-
-4. Create a table listing all possible combinations of locations in Manhattan, Brooklyn and Queens, as they have more trips that other borough in NYC.
-
+2. Importing the definition of each code zone.
 
 ```{r}
-ZoneCodes <- fread(
+ZoneCodesRef <- fread(
   here("raw-data/taxi_zone_lookup.csv"),
   colClasses = c("integer",
                  "character",
                  "character",
-                 "character")
-)
+                 "character"),
+  data.table = TRUE,
+  key = "Borough"
+)[, Address := paste(Zone,
+                     Borough,
+                     "New York",
+                     "United States",
+                     sep = ", ")
+][, tidygeocoder::geocode(.SD,
+                          address = Address,
+                          method = 'arcgis')]
 
-setkeyv(ZoneCodes, "Borough")
+dbWriteTable(con, "ZoneCodesRef", ZoneCodesRef)
 
+setDT(ZoneCodesArcgis)
+
+glimpse(ZoneCodesArcgis)
+```
+
+3. Creating and saving a temporal table listing all possible combinations of locations in **Manhattan**, **Brooklyn** and **Queens** (they have more trips that other borough in NYC) to be used as filter.
+
+```{r}
 ValidZoneCodes <-
   ZoneCodes[c("Manhattan", "Brooklyn", "Queens"), 
             on = "Borough",
             CJ(PULocationID = LocationID,
                DOLocationID = LocationID)]
 
-dbWriteTable(con, "ValidZoneCodes", ValidZoneCodes, temporary = TRUE)
+dbWriteTable(con, "ValidZoneCodes", ValidZoneCodes)
 ```
 
-4. Calculate the mean distance present from one location to other if it has less than 7 miles.
+4. Creating a connection with DuckDB.
 
 ```{r}
-MeanDistanceQuery <- glue_safe("
-CREATE TEMP TABLE MeanDistance AS
-WITH MeanDistance AS (
+con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
+```
+
+5. Selecting at random the first trip of each simulation. It's important to know that even after setting the seed 3518 **the sample is not reproducible**, so I saved the data as part of the package of this project, so you have a easy access by running `proyect.nyc.taxi::SimulationStartDay`, why creating the `trip_id` column was so important.
+
+```{r eval=FALSE}
+SimulationStartDayQuery <- "
+SELECT t1.*
+FROM NycTrips t1
+INNER JOIN ValidZoneCodes t2
+  ON t1.PULocationID = t2.PULocationID AND
+     t1.DOLocationID = t2.DOLocationID
+WHERE t1.year = 2023
+USING SAMPLE reservoir(60 ROWS) REPEATABLE (3518);
+"
+
+SimulationStartDay <- dbGetQuery(con, SimulationStartDayQuery)
+
+setDT(SimulationStartDay)
+
+pillar::glimpse(SimulationStartDay)
+```
+
+```{r include=FALSE, eval=FALSE}
+usethis::use_data(SimulationStartDay,
+                  overwrite = TRUE,
+                  compress = "xz",
+                  version = 3)
+```
+
+```{r include=FALSE}
+pillar::glimpse(SimulationStartDay)
+```
+
+We can also confirm that the sample satisfy the initial restrictions:
+
+- All trips are from 2023.
+
+```{r}
+SimulationStartDay[, .N, year]
+```
+
+- The trips begin on the expected boroughs.
+
+```{r}
+ZoneCodes[SimulationStartDay, 
+          on = c("LocationID" = "PULocationID"),
+          .N,
+          by = "Borough"]
+```
+
+- The trips end on the expected boroughs.
+
+```{r}
+ZoneCodes[SimulationStartDay, 
+          on = c("LocationID" = "DOLocationID"),
+          .N,
+          by = "Borough"]
+```
+
+Now we can conclude that the initial data **satisfy the assumption 1**.
+
+6. Calculating the mean distance present from one location to other if it has **less than 7 miles**.
+
+```{r}
+MeanDistanceQuery <- "
+CREATE TABLE PointMeanDistance AS
+
+-- Selecting all avaiable from trips that don't start and end at same point
+WITH ListOfPoints AS (
   SELECT 
     t1.PULocationID,
     t1.DOLocationID,
     AVG(t1.trip_miles) AS trip_miles_mean
   FROM 
-    {ParquetSource} t1
+    NycTrips t1
   INNER JOIN
     ValidZoneCodes t2
     ON t1.PULocationID = t2.PULocationID AND
        t1.DOLocationID = t2.DOLocationID
   WHERE
-    t1.PULocationID <> t1.DOLocationID
+    t1.PULocationID <> t1.DOLocationID AND
+    t1.year = 2023
   GROUP BY 
     t1.PULocationID, 
     t1.DOLocationID
   HAVING 
     AVG(t1.trip_miles) <= 7
 ),
-MeanDistanceComplete AS (
+
+-- Defining all available distances
+ListOfPointsComplete AS (
   SELECT
     PULocationID,
     DOLocationID,
     trip_miles_mean
-  FROM MeanDistance
+  FROM ListOfPoints
   UNION ALL
   SELECT
     DOLocationID AS PULocationID,
     PULocationID AS DOLocationID,
     trip_miles_mean
-  FROM MeanDistance
+  FROM ListOfPoints
 ),
 NumeredRows AS (
   SELECT
@@ -310,52 +388,22 @@ NumeredRows AS (
     DOLocationID,
     trip_miles_mean,
     row_number() OVER (PARTITION BY PULocationID, DOLocationID) AS n_row
-  FROM MeanDistanceComplete
+  FROM ListOfPointsComplete
 )
-  
+
+-- Selecting the first combination of distances
 SELECT 
   PULocationID,
   DOLocationID,
   trip_miles_mean
 FROM NumeredRows
 WHERE n_row = 1
-ORDER BY PULocationID, trip_miles_mean
-")
+ORDER BY PULocationID, trip_miles_mean;
+"
 
 dbExecute(con, MeanDistanceQuery) |> comma()
 
 dbListTables(con)
-```
-
-5. Getting the starting trips to run the simulation based on random sample from valid zones in Manhattan, Brooklyn and Queens.
-
-```{r eval= params$UpdateSimulation}
-SimulationStartDayQuery <- glue_safe("
-SELECT * 
-FROM (
-  SELECT t1.*
-  FROM {ParquetSource} t1
-  INNER JOIN ValidZoneCodes t2
-    ON t1.PULocationID = t2.PULocationID AND
-       t1.DOLocationID = t2.DOLocationID
-) 
-USING SAMPLE reservoir(60 ROWS) REPEATABLE (3518);
-")
-
-SimulationStartDay <- dbGetQuery(con, SimulationStartDayQuery)
-
-setDT(SimulationStartDay) |> dim()
-```
-
-```{r include=FALSE}
-if(params$UpdateSimulation){
-  usethis::use_data(SimulationStartDay,
-                    overwrite = TRUE,
-                    compress = "xz",
-                    version = 3)
-}else{
-  dim(SimulationStartDay)
-}
 ```
 
 
@@ -519,12 +567,10 @@ better_trips AS (
     FROM 
         trip_performance t1
 )
+
 -- Unir los resultados con los detalles de cada viaje
 SELECT *
-FROM 
-    trip_performance t1
-JOIN 
-    better_trips t2
-ON 
-    t1.trip_id = t2.trip_id;
+FROM trip_performance t1
+JOIN better_trips t2
+ON t1.trip_id = t2.trip_id;
 ```
