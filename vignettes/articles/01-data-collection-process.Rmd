@@ -25,11 +25,17 @@ To solve this problem, we have created the next script to automate the data coll
 
 To always have a updated list of 2022 and 2023 links of **High Volume For-Hire Vehicles** documents let's scrape the [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) by using the `rvest` library.
 
+### Downloading source page
 
-```{r parsermd-chunk-1}
+```{r SourcePage}
 SourcePage <-
   rvest::read_html("https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page")
+```
 
+
+### Getting links for taxi trips
+
+```{r getting-trip-links}
 TripLinks <-
   SourcePage |>
   rvest::html_elements(xpath = '//div[@class="faq-answers"]//li/a') |>
@@ -43,10 +49,9 @@ FileNames <- basename(TripLinks)
 FileNames
 ```
 
-From the same page we also can find the link to download the codes related to each Zone.
+### Getting link for trip zones.
 
-
-```{r parsermd-chunk-2}
+```{r getting-taxi-zone-link}
 TaxiZoneLink <-
   SourcePage |>
   rvest::html_elements(xpath = '//ul/li/a[text()="Taxi Zone Lookup Table"]')  |>
@@ -56,50 +61,54 @@ TaxiZoneLink <-
 TaxiZoneLink
 ```
 
-## Saving files
+## Saving trips data
 
-To take advantage of the best capacities of `arrow` we need save a each parquet file in folder with useful information to filter later, that why we will have one folder level related to years the next sub-folders related to a month with each parquet with the name `part-0.parquet` by following the next process:
+To take advantage of the best capacities of `Duckdb` we need save a each parquet file in folder with useful information to filter later, that why we will have one folder level related to years the next sub-folders related to a month with each parquet with the name `part-0.parquet` by following process.
 
-- Creating our main folder store the data.
+### Defining folder paths
 
+```{r data-paths}
+SourcePath <- here::here()
 
-```{r parsermd-chunk-3}
-RawDataPath <- here::here("raw-data")
+RawDataPath <- file.path(SourcePath, "raw-data")
 
-if(!"raw-data" %in% dir(here::here())) dir.create(RawDataPath)
-```
-
-- Defining a new folder only to save the trip data in parquet files.
-
-
-```{r parsermd-chunk-4}
 ParquetFolderPath <- file.path(RawDataPath, "trip-data")
 
-if(!"trip-data" %in% dir(RawDataPath)) dir.create(ParquetFolderPath)
+YearFoldersPath <- 
+  gsub(x = FileNames,
+       pattern = "^fhvhv_tripdata_|-\\d{2}\\.parquet$",
+       replacement = "") |>
+  paste0("year=", a = _) |>
+  unique() |>
+  file.path(ParquetFolderPath, a = _)
+
 ```
 
-- Defining the sub-folders to split the files based on year.
+### Creating folders to use
 
-```{r validate-parquet-files, include=FALSE}
+```{r creating-folders}
+for(paths in c(RawDataPath, ParquetFolderPath, YearFoldersPath)) {
+  
+  if(!file.exists(paths)){
+    dir.create(paths)
+  }
+  
+}
+```
+
+### Defining the sub-folders to split the files based on year.
+
+```{r count-parquet-files, include=FALSE}
 HasAllParquet <- length(list.files(ParquetFolderPath, recursive = TRUE)) == 24L
 ```
 
-
 ```{r parsermd-chunk-5, eval=!HasAllParquet}
-YearFolders <- gsub(
-  x = FileNames,
-  pattern = "^fhvhv_tripdata_|-\\d{2}\\.parquet$",
-  replacement = ""
-) |>
-  paste0("year=", a = _)
 
-YearFoldersUnique <- unique(YearFolders)
-YearFoldersPath <- file.path(ParquetFolderPath, YearFoldersUnique)
 
 for(year_i in YearFoldersPath) dir.create(year_i, showWarnings = FALSE)
 ```
 
-- Creating a folder for each month.
+### Creating a folder for each month
 
 ```{r parsermd-chunk-6, eval=!HasAllParquet}
 MonthFolders <- gsub(
@@ -114,7 +123,7 @@ MonthFoldersPath <- file.path(ParquetFolderPath, YearFolders, MonthFolders)
 for(month_i in MonthFoldersPath) dir.create(month_i, showWarnings = FALSE)
 ```
 
-- Downloading each file on each folder.
+### Downloading each file on each folder
 
 ```{r eval=!HasAllParquet}
 # Parquet files might time a longer time to be downloaded
