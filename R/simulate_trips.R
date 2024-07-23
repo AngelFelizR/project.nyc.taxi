@@ -5,5 +5,4 @@ simulate_trips = function(conn,
 
   DBI::dbListTables(conn)
 
-
 }
