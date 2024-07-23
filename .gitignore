@@ -14,3 +14,6 @@ inst/doc
 my-db.duckdb
 my-db.duckdb.wal
 my-db.duckdb.tmp/
+
+tests/testthat/fixtures/test-db.duckdb.wal
+tests/testthat/fixtures/test-db..duckdb.tmp/
