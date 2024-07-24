@@ -84,7 +84,7 @@ TripDuration = lubridate::hours(2)
 # A trips after some seconds
 NycTripsList[[1L]] = data.table::data.table(
   # Unique Ids
-  trip_id = 1L,
+  trip_id = 1,
 
   # UBER TRIP
   hvfhs_license_num = "HV0005",
@@ -110,14 +110,14 @@ NycTripsList[[3L]] = data.table::copy(
 # A trips after one second we cannot take the trip
 NycTripsList[[2L]] = data.table::copy(
   NycTripsList[[1L]]
-  )[, `:=`(trip_id = 2L,
+  )[, `:=`(trip_id = 2,
            request_datetime = request_datetime + lubridate::seconds(1),
            dropoff_datetime = dropoff_datetime + lubridate::seconds(1))
   ][]
 
 NycTripsList[[4L]] = data.table::copy(
   NycTripsList[[3L]]
-)[, `:=`(trip_id = 4L,
+)[, `:=`(trip_id = 4,
          request_datetime = request_datetime + lubridate::seconds(1),
          dropoff_datetime = dropoff_datetime + lubridate::seconds(1))
 ][]
@@ -130,7 +130,7 @@ NycTripsList[[4L]] = data.table::copy(
 # Taxi 1 can take WA trips
 NycTripsList[[5L]] = data.table::copy(
   NycTripsList[[1L]]
-)[, `:=`(trip_id = 5L,
+)[, `:=`(trip_id = 5,
          wav_match_flag = "Y",
          # From 1 to 3: 3-mile radius
          PULocationID = 3,
@@ -142,7 +142,7 @@ NycTripsList[[5L]] = data.table::copy(
 # Taxi 2 cannot take WA trips
 NycTripsList[[6L]] = data.table::copy(
   NycTripsList[[3L]]
-)[, `:=`(trip_id = 6L,
+)[, `:=`(trip_id = 6,
          wav_match_flag = "Y",
          # From 1 to 3: 3-mile radius
          PULocationID = 3,
@@ -155,12 +155,13 @@ NycTripsList[[6L]] = data.table::copy(
 # we aren't adding more time as it was added on element 6
 NycTripsList[[7L]] = data.table::copy(
   NycTripsList[[6L]]
-)[, `:=`(trip_id = 7L,
+)[, `:=`(trip_id = 7,
          # Changing the problem condition
          wav_match_flag = "N",
          # From 1 to 2: 1-mile radius
          PULocationID = 2,
-         DOLocationID = 5)
+         DOLocationID = 5,
+         request_datetime = request_datetime + lubridate::seconds(5))
 ][]
 
 
@@ -170,7 +171,7 @@ NycTripsList[[7L]] = data.table::copy(
 # Taxi 1 No due BRAKE
 NycTripsList[[8L]] = data.table::copy(
   NycTripsList[[5L]]
-)[, `:=`(trip_id = 8L,
+)[, `:=`(trip_id = 8,
          wav_match_flag = "N",
          # From 5 to 3: 4-mile radius
          PULocationID = 3,
@@ -182,7 +183,7 @@ NycTripsList[[8L]] = data.table::copy(
 # Taxi 2 No due BRAKE
 NycTripsList[[9L]] = data.table::copy(
   NycTripsList[[7L]]
-)[, `:=`(trip_id = 9L,
+)[, `:=`(trip_id = 9,
          # From 5 to 3: 4-mile radius
          PULocationID = 3,
          DOLocationID = 1,
@@ -193,7 +194,7 @@ NycTripsList[[9L]] = data.table::copy(
 # After passing the bake Taxi 1 take the trip
 NycTripsList[[10L]] = data.table::copy(
   NycTripsList[[5L]]
-)[, `:=`(trip_id = 10L,
+)[, `:=`(trip_id = 10,
          wav_match_flag = "N",
          # 5-mile radius
          PULocationID = 3,
@@ -205,7 +206,7 @@ NycTripsList[[10L]] = data.table::copy(
 # After passing the bake Taxi 2 take the trip
 NycTripsList[[11L]] = data.table::copy(
   NycTripsList[[7L]]
-)[, `:=`(trip_id = 11L,
+)[, `:=`(trip_id = 11,
          wav_match_flag = "N",
          # 5-mile radius
          PULocationID = 3,
@@ -222,7 +223,7 @@ NycTripsList[[11L]] = data.table::copy(
 
 NycTripsList[[12L]] = data.table::copy(
   NycTripsList[[10L]]
-)[, `:=`(trip_id = 12L,
+)[, `:=`(trip_id = 12,
          wav_match_flag = "N",
          # From 1 to 5: 7-mile radius
          PULocationID = 5,
@@ -233,7 +234,7 @@ NycTripsList[[12L]] = data.table::copy(
 
 NycTripsList[[13L]] = data.table::copy(
   NycTripsList[[11L]]
-)[, `:=`(trip_id = 13L,
+)[, `:=`(trip_id = 13,
          wav_match_flag = "N",
          # From 1 to 5: 7-mile radius
          PULocationID = 5,
@@ -243,7 +244,7 @@ NycTripsList[[13L]] = data.table::copy(
 ][]
 
 
-# 15 seconds is not enough for long trip
+# Some seconds after a long trip is enough to take the trip
 NycTripsList[[14L]] = data.table::copy(
   NycTripsList[[12L]]
 )[, `:=`(trip_id = 14L,

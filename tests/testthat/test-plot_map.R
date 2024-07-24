@@ -118,7 +118,7 @@ test_that("The map shows informative errors",{
                         'Brooklyn'= '#4daf4a')
     )
   },
-  regexp = "couldn't be found")
+  regexp = "color_levels names don't match with values stored in color_var")
 
 
   expect_error({
