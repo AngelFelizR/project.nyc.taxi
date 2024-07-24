@@ -1,7 +1,10 @@
 
 
 simulate_trips = function(conn,
-                          start_points) {
+                          start_points,
+                          model = NULL) {
+
+  stopifnot("start_points")
 
   DBI::dbListTables(conn)
 

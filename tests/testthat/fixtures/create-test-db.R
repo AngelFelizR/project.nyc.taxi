@@ -1,3 +1,6 @@
+library(data.table)
+library(DBI)
+
 # 1. Creating connection ----
 temp_con = DBI::dbConnect(duckdb::duckdb(),
                           here::here("tests/testthat/fixtures/test-db.duckdb"))
