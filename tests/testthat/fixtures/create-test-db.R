@@ -259,11 +259,22 @@ NycTripsList[[15L]] = data.table::copy(
          dropoff_datetime = dropoff_datetime + lubridate::seconds(15))
 ][]
 
+# Consolidating table and adding money
+
+set.seed(1587)
+
+final_table =
+  data.table::rbindlist(NycTripsList
+  )[, `:=`(driver_pay = runif(.N, 10, 60),
+           tips = runif(.N, 0, 10))]
+
+set.seed(NULL)
+
 # Saving the results on DB
 
 DBI::dbWriteTable(temp_con,
                   name = "NycTrips",
-                  value = data.table::rbindlist(NycTripsList) ,
+                  value =  final_table,
                   overwrite = TRUE)
 
 

@@ -11,7 +11,7 @@ describe("simulate_trips()",{
     expect_error({
       simulate_trips(empty_con, SimulationStartTrips)
     },
-    regexp = "Missing NycTrips and PointMeanDistance on DB")
+    regexp = "Missing NycTrips or PointMeanDistance on DB")
 
   })
 
@@ -30,7 +30,7 @@ describe("simulate_trips()",{
 
     # ACT and ASSERT
     expect_error({
-      simulate_trips(empty_con, SimulationStartTrips)
+      simulate_trips(temp_con, SimulationStartTrips)
     },
     regexp = "NycTrips is missing:")
 
@@ -43,16 +43,15 @@ describe("simulate_trips()",{
     on.exit(DBI::dbDisconnect(test_con, shutdown = TRUE), add = TRUE)
 
     temp_con = DBI::dbConnect(duckdb::duckdb())
-    on.exit(duckdb::duckdb_shutdown(temp_con), add = TRUE)
+    on.exit(DBI::dbDisconnect(temp_con, shutdown = TRUE), add = TRUE)
     DBI::dbWriteTable(temp_con, "PointMeanDistance", datasets::iris)
     DBI::dbWriteTable(temp_con, "NycTrips", DBI::dbReadTable(test_con, "NycTrips"))
-    on.exit(DBI::dbDisconnect(temp_con, shutdown = TRUE), add = TRUE)
 
     SimulationStartTrips = readRDS(test_path("fixtures", "SimulationStartTrips.rds"))
 
     # ACT and ASSERT
     expect_error({
-      simulate_trips(empty_con, SimulationStartTrips)
+      simulate_trips(temp_con, SimulationStartTrips)
     },
     regexp = "PointMeanDistance is missing:")
 
