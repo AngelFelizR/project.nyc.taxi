@@ -212,11 +212,11 @@ The simulation will be based on the following **assumptions** related to the tax
 - 0-1 Minute: Search within a 1-mile radius.
 - 1-3 Minutes: Expand search to a 3-mile radius if no trip is found.
 - 3-5 Minutes: Expand search to a 5-mile radius if still no trip is found.
-- >5 Minutes: Expand search to a 7-mile radius if no trip is found yet.
+- Keep adding 2 miles every to minutes until finding a trip.
 
 6. They have a 30 minutes break after 4 hours working once ending the current trip.
 
-7. They will take their last trip after working 8 hours.
+7. They will take their last trip after working 8 hours, without taking in consideration the 30 minutes break.
 
 ### Running trips simulation
 

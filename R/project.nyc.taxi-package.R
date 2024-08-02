@@ -12,6 +12,7 @@
 #' @importFrom data.table fcase
 #' @importFrom data.table fifelse
 #' @importFrom data.table is.data.table
+#' @importFrom data.table rbindlist
 #' @importFrom data.table setattr
 #' @importFrom data.table setDT
 #' @importFrom data.table setkeyv

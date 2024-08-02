@@ -76,7 +76,7 @@ saveRDS(SimulationStartTrips,
 # 4. Defining the table to query from ----
 
 NycTripsList = vector("list", 15L)
-TripDuration = lubridate::hours(2)
+TripDuration = lubridate::minutes(20)
 
 
 # 1. TAKE TRIPS 1 and 3 to confirm we are picking the first trip 1 one mile
@@ -136,7 +136,7 @@ NycTripsList[[5L]] = data.table::copy(
          PULocationID = 3,
          DOLocationID = 5,
          request_datetime = dropoff_datetime + lubridate::minutes(2),
-         dropoff_datetime = dropoff_datetime + lubridate::minutes(2) + TripDuration)
+         dropoff_datetime = dropoff_datetime + lubridate::minutes(2) + lubridate::hours(4))
 ][]
 
 # Taxi 2 cannot take WA trips
@@ -148,7 +148,7 @@ NycTripsList[[6L]] = data.table::copy(
          PULocationID = 3,
          DOLocationID = 5,
          request_datetime = dropoff_datetime + lubridate::minutes(2),
-         dropoff_datetime = dropoff_datetime + lubridate::minutes(2) + TripDuration)
+         dropoff_datetime = dropoff_datetime + lubridate::minutes(2) + lubridate::hours(4))
 ][]
 
 # We want to validate if it can take also lower distance after the time
@@ -168,7 +168,7 @@ NycTripsList[[7L]] = data.table::copy(
 # 3. TAKE 10 and 11 TRIPS as TAXIS need a 30 min break
 #    and take trips in 5 miles radius after waiting 3 min
 
-# Taxi 1 No due BRAKE
+# Taxi 1 No due break
 NycTripsList[[8L]] = data.table::copy(
   NycTripsList[[5L]]
 )[, `:=`(trip_id = 8,
@@ -180,7 +180,7 @@ NycTripsList[[8L]] = data.table::copy(
          dropoff_datetime = dropoff_datetime + lubridate::minutes(4) + TripDuration)
 ][]
 
-# Taxi 2 No due BRAKE
+# Taxi 2 No due break
 NycTripsList[[9L]] = data.table::copy(
   NycTripsList[[7L]]
 )[, `:=`(trip_id = 9,
@@ -191,7 +191,7 @@ NycTripsList[[9L]] = data.table::copy(
          dropoff_datetime = dropoff_datetime + lubridate::minutes(4) + TripDuration)
 ][]
 
-# After passing the bake Taxi 1 take the trip
+# After passing the break Taxi 1 take the trip
 NycTripsList[[10L]] = data.table::copy(
   NycTripsList[[5L]]
 )[, `:=`(trip_id = 10,
@@ -203,7 +203,7 @@ NycTripsList[[10L]] = data.table::copy(
          dropoff_datetime = dropoff_datetime + lubridate::minutes(34) + TripDuration)
 ][]
 
-# After passing the bake Taxi 2 take the trip
+# After passing the break Taxi 2 take the trip
 NycTripsList[[11L]] = data.table::copy(
   NycTripsList[[7L]]
 )[, `:=`(trip_id = 11,

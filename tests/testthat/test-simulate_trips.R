@@ -109,7 +109,7 @@ describe("simulate_trips()",{
 
     # The simulation_id correspond to first trip
     expect_equal(simulation_example[simulation_id == sim_trip_id, `sim_trip_id`],
-                 simulation_example[, .SD[1, `sim_trip_id`], by = "simulation_id"])
+                 simulation_example[, .SD[1], by = "simulation_id"]$`sim_trip_id`)
 
     # The taxi company is constant on each simulation
     expect_equal(simulation_example[, .(unique_count = uniqueN(sim_hvfhs_license_num)),
@@ -121,6 +121,18 @@ describe("simulate_trips()",{
                                     by = "simulation_id"][, unique_count],
                  c(2L, 1L))
 
+    # The total time working when taking last trip
+    last_trip_hours_working =
+      simulation_example[, .(min_time = min(sim_request_datetime),
+                             max_time = max(sim_request_datetime)),
+                         by = "simulation_id"
+      ][, diff_hours :=
+          difftime(max_time, min_time, units = "hours") |>
+          as.double()]
+
+    expect_lte(last_trip_hours_working$diff_hours[1L], 8.5)
+    expect_lte(last_trip_hours_working$diff_hours[2L], 8.5)
+
     # Validating the remaining rules based on trips taken
     expect_equal(simulation_example$sim_trip_id,
                  # UBER TRIPS
@@ -129,7 +141,7 @@ describe("simulate_trips()",{
                    1,
                    # it can take WA trips
                    5,
-                   # Skipping trip 8 due 30 min BRAKE
+                   # Skipping trip 8 due 30 min BREAK
                    # Now taking a trip after the brake
                    10,
                    # Skipping trip 12 as 5 min waiting is not enough for long recollection trip
