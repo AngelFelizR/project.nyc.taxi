@@ -8,10 +8,13 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
-^raw-data$
 ^doc$
 ^Meta$
 ^Dockerfile$
 ^vignettes/articles$
 ^run-docker\.sh$
 ^stop-docker\.sh$
+^raw-data$
+^my-db.duckdb$
+^my-db.duckdb.wal$
+

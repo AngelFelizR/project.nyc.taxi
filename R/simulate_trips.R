@@ -110,13 +110,14 @@ simulate_trips = function(conn,
         query_to_find_trips = glue::glue("
         SELECT t1.*
         FROM NycTrips t1
-        INNER JOIN PointMeanDistance t2
-        ON t1.PULocationID = t2.DOLocationID
+        INNER JOIN (
+          SELECT * FROM PointMeanDistance WHERE PULocationID = {current_position}
+        ) t2
+          ON t1.PULocationID = t2.DOLocationID
         WHERE t1.hvfhs_license_num = '{taxi_company_code}'
         AND t1.wav_match_flag IN {can_take_wav}
-        AND t1.request_datetime > '{current_time}'
+        AND t1.request_datetime >= '{current_time}'
         AND t1.request_datetime <= '{trip_time_limit}'
-        AND t2.PULocationID == {current_position}
         AND t2.trip_miles_mean <= {trip_dist_limit}
         ORDER BY t1.request_datetime
       ")
@@ -147,16 +148,23 @@ simulate_trips = function(conn,
         }else{
 
           # Getting ready for a new search
-          current_time = current_time + lubridate::minutes(trip_dist_limit)
+          if(n_search_iteration == 0){
+            current_time = current_time + lubridate::minutes(1)
+          }else{
+            current_time = current_time + lubridate::minutes(2)
+          }
           n_search_iteration = n_search_iteration + 1
           trip_dist_limit = 1 + n_search_iteration * 2
           trip_time_limit = current_time + lubridate::minutes(2)
 
         }
 
-        if(length(simulated_trips$trip_id) == 3L && n_search_iteration == 0) {
-          browser()
-        }
+
+        # USEFULL FOR TESTING THE SIMULATION
+        # if(length(simulated_trips$trip_id) == 4L && n_search_iteration == 2) {
+        #   browser()
+        # }
+
 
         # Confirming if is time to take the break
         if(break_taken == FALSE && current_time >= time_to_take_break){
@@ -165,6 +173,7 @@ simulate_trips = function(conn,
           current_time = current_time + lubridate::minutes(30)
 
         }
+
 
       }
 

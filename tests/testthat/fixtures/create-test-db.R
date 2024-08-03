@@ -173,7 +173,7 @@ NycTripsList[[8L]] = data.table::copy(
   NycTripsList[[5L]]
 )[, `:=`(trip_id = 8,
          wav_match_flag = "N",
-         # From 5 to 3: 4-mile radius
+         # From 5 to 3: 4.03 mile radius
          PULocationID = 3,
          DOLocationID = 1,
          request_datetime = dropoff_datetime + lubridate::minutes(4),
@@ -196,7 +196,7 @@ NycTripsList[[10L]] = data.table::copy(
   NycTripsList[[5L]]
 )[, `:=`(trip_id = 10,
          wav_match_flag = "N",
-         # 5-mile radius
+         # From 5 to 3: 4.03 mile radius
          PULocationID = 3,
          DOLocationID = 1,
          request_datetime = dropoff_datetime + lubridate::minutes(34),
@@ -219,7 +219,7 @@ NycTripsList[[11L]] = data.table::copy(
 # 3. TAKE 14 and 15 to only take over 5 miles trips
 #    only after waiting for more than 5 minutes
 
-# 5 minutes is not enough for long trip
+# 4 minutes is not enough for long trip
 
 NycTripsList[[12L]] = data.table::copy(
   NycTripsList[[10L]]
@@ -228,8 +228,10 @@ NycTripsList[[12L]] = data.table::copy(
          # From 1 to 5: 7-mile radius
          PULocationID = 5,
          DOLocationID = 1,
-         request_datetime = dropoff_datetime + lubridate::minutes(5),
-         dropoff_datetime = dropoff_datetime + lubridate::minutes(5) + TripDuration)
+         request_datetime =
+           dropoff_datetime + lubridate::minutes(4) + lubridate::seconds(30),
+         dropoff_datetime =
+           dropoff_datetime + lubridate::minutes(4) + lubridate::seconds(30) + TripDuration)
 ][]
 
 NycTripsList[[13L]] = data.table::copy(
@@ -239,24 +241,26 @@ NycTripsList[[13L]] = data.table::copy(
          # From 1 to 5: 7-mile radius
          PULocationID = 5,
          DOLocationID = 1,
-         request_datetime = dropoff_datetime + lubridate::minutes(5),
-         dropoff_datetime = dropoff_datetime + lubridate::minutes(5) + TripDuration)
+         request_datetime =
+           dropoff_datetime + lubridate::minutes(4) + lubridate::seconds(30),
+         dropoff_datetime =
+           dropoff_datetime + lubridate::minutes(4) + lubridate::seconds(30) + TripDuration)
 ][]
 
 
-# Some seconds after a long trip is enough to take the trip
+# We need to wait 7 min to take a trip of 7 miles
 NycTripsList[[14L]] = data.table::copy(
   NycTripsList[[12L]]
 )[, `:=`(trip_id = 14L,
-         request_datetime = request_datetime + lubridate::seconds(15),
-         dropoff_datetime = dropoff_datetime + lubridate::seconds(15))
+         request_datetime = request_datetime + lubridate::minutes(3),
+         dropoff_datetime = dropoff_datetime + lubridate::minutes(3))
 ][]
 
 NycTripsList[[15L]] = data.table::copy(
   NycTripsList[[13L]]
 )[, `:=`(trip_id = 15L,
-         request_datetime = request_datetime + lubridate::seconds(15),
-         dropoff_datetime = dropoff_datetime + lubridate::seconds(15))
+         request_datetime = request_datetime + lubridate::minutes(3),
+         dropoff_datetime = dropoff_datetime + lubridate::minutes(3))
 ][]
 
 # Consolidating table and adding money

@@ -410,7 +410,7 @@ dbWriteTable(con, "ZoneCodesRefClean", ZoneCodesRefClean)
 
 5. Creating and saving a temporal table listing all possible combinations of locations in **Manhattan**, **Brooklyn** and **Queens** (they have more trips that other borough in NYC) to be used as filter.
 
-```{r}
+```{r eval=FALSE}
 ZoneCodesFilter <-
   ZoneCodesRefClean[c("Manhattan", "Brooklyn", "Queens"), 
                     on = "Borough",
@@ -479,7 +479,7 @@ ZoneCodesRefClean[SimulationStartDay,
 
 Now we can conclude that the initial data **satisfy the assumption 1**.
 
-6. Calculating the mean distance present from one location to other if it has **less than 7 miles**.
+6. Calculating the mean distance present from one location to other if it has **less than 10 miles**.
 
 ```{r eval=FALSE}
 MeanDistanceQuery <- "
@@ -540,7 +540,7 @@ WHERE n_row = 1
 ORDER BY PULocationID, trip_miles_mean;
 "
 
-dbExecute(con, MeanDistanceQuery) |> comma()
+dbExecute(con, MeanDistanceQuery)
 
 dbListTables(con)
 ```
@@ -555,18 +555,26 @@ After simulating 30 days, we can use **bootstrap** to infer the distribution of 
 
 1. Calculate the *Daily Hourly Wage* for each simulated day.
 
-```{r parsermd-chunk-10}
-SimulationHourlyWage <-
-  BaseLineSimulation[, .(`Driver Pay` = sum(s_driver_pay),
-                         `Tips` = sum(s_tips),
-                         `Hours Worked` = 
-                           difftime(max(s_dropoff_datetime),
-                                    min(s_request_datetime),
-                                    units = "hours") |>
-                           as.double()),
-                     by = "simulation_day"]
+```{r run-simulation}
+SimulationHourlyWage <- simulate_trips(con, SimulationStartDay)
 
-SimulationHourlyWage[, `Daily Hourly Wage` := (`Driver Pay` + Tips) / `Hours Worked`]
+TempSimulation <-
+  SimulationHourlyWage[, .(`Daily Hourly Wage` = 
+                             sum(sim_driver_pay + sim_tips) /
+                             as.double(difftime(max(sim_dropoff_datetime), 
+                                                min(sim_request_datetime),
+                                                units = "hours"))),
+                       by = "simulation_id"
+  ][SimulationStartDay,
+    on = c("simulation_id" = "trip_id")
+  ][, ZoneCodesRefClean[.SD, on = c("LocationID" = "PULocationID")]]
+
+
+TempSimulation |>
+  ggplot()+
+  geom_histogram(aes(`Daily Hourly Wage`),
+                 bins = 6)+
+  facet_wrap(~Borough, ncol = 1, scales = "free_y")
 
 SimulationHourlyWage[order(-`Daily Hourly Wage`)]
 ```
