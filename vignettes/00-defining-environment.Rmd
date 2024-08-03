@@ -63,8 +63,8 @@ git clone https://github.com/AngelFelizR/project.nyc.taxi.git
 
 8. After creating both folders we can run the our container by running the next command based on your working directory.
 
-```{r engine='bash', comment='', echo=FALSE}
-cat ../run-docker.sh
+```bash
+docker compose up -d
 ```
 
 9. Then you can go to your favorite browser and go to [localhost:5555](http://localhost:5555/).

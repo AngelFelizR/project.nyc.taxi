@@ -9,11 +9,10 @@
 ^docs$
 ^pkgdown$
 ^doc$
-^Meta$
-^Dockerfile$
 ^vignettes/articles$
+^Dockerfile$
+^docker-compose.yml$
 ^run-docker\.sh$
-^stop-docker\.sh$
 ^raw-data$
 ^my-db.duckdb$
 ^my-db.duckdb.wal$

@@ -29,6 +29,8 @@
 #' @importFrom dplyr slice_sample
 #' @importFrom dplyr summarize
 #' @importFrom duckdb duckdb
+#' @importFrom glue glue
+#' @importFrom glue glue_safe
 #' @importFrom leaflet addCircleMarkers
 #' @importFrom leaflet addLegend
 #' @importFrom leaflet addProviderTiles
@@ -56,6 +58,29 @@
 #' @importFrom stats quantile
 #' @importFrom stats sd
 #' @importFrom timeDate listHolidays
+#' @importFrom utils tail
 #' @importFrom withr local_seed
 ## usethis namespace: end
 NULL
+
+
+
+# Solving Global Variables problem
+
+utils::globalVariables(c(
+
+  ## From plot_map
+  "color_variable",
+
+  ## From simulate_trips
+  "trip_id",
+  "hvfhs_license_num",
+  "wav_match_flag",
+  "PULocationID",
+  "DOLocationID",
+  "request_datetime",
+  "dropoff_datetime",
+  "driver_pay",
+  "tips"
+
+))

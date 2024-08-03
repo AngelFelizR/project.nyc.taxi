@@ -26,7 +26,7 @@ A data frame with 60 rows and 22 columns:
 \item{bcf}{Total amount collected in trip for Black Car Fund.}
 \item{sales_tax}{Total amount collected in trip for NYS sales tax.}
 \item{congestion_surcharge}{Total amount collected in trip for NYS congestion surcharge.}
-\item{airport_fee}{\$2.50 for both drop off and pick up at LaGuardia, Newark, and John F. Kennedy airports.}
+\item{airport_fee}{$2.50 for both drop off and pick up at LaGuardia, Newark, and John F. Kennedy airports.}
 \item{tips}{Total amount of tips received from passenger.}
 \item{driver_pay}{Total driver pay (not including tolls or tips and net of commission, surcharges, or taxes).}
 \item{shared_request_flag}{Did the passenger agree to a shared/pooled ride? (Y/N)}

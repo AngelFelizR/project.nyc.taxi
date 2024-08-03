@@ -139,8 +139,8 @@ simulate_trips = function(conn,
                   fill = TRUE)
 
           # Getting ready for a new search
-          current_time = tail(trips_found$dropoff_datetime, 1L)
-          current_position = tail(trips_found$DOLocationID, 1L)
+          current_time = utils::tail(trips_found$dropoff_datetime, 1L)
+          current_position = utils::tail(trips_found$DOLocationID, 1L)
           n_search_iteration = 0
           trip_time_limit = current_time + lubridate::minutes(1)
           trip_dist_limit = 1
