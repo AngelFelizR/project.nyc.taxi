@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   taxi_project:
     image: angelfelizr/project.nyc.taxi:0.0.0.9000

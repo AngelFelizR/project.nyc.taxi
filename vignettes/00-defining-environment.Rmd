@@ -18,41 +18,36 @@ knitr::opts_chunk$set(
 
 In order to reproduce the results of this project we need to follow the following steps to run the code using the same environment:
 
-1. Install docker by installing [Docker Desktop](https://www.docker.com/products/docker-desktop/) or just [Docker Engine](https://docs.docker.com/engine/install/) if your is linux is your operating system. In Manjaro, you can install it using the next command to install the Docker Engine:
+1. Install **docker** by installing [Docker Desktop](https://www.docker.com/products/docker-desktop/) or just the [Docker Engine](https://docs.docker.com/engine/install/) if Linux is your operating system. I used [this article](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-10) as a guide to complete the task on debian 12.
+
+2. Install [git](https://git-scm.com/downloads).
 
 ```bash
-sudo pacman -S docker
+sudo apt install git
 ```
 
-2. Start the docker by opening the Docker Desktop or running the systemctl start command for docker.service based on the systemd packeage.
+3. Download the image related with this project.
 
 ```bash
-sudo systemctl start docker.service
+docker pull angelfelizr/project.nyc.taxi:0.0.0.9000
 ```
 
-3. To avoid using sudo with each docker command, you can add yourself to the docker group.
-
-```bash
-sudo usermod -aG docker $USER
-newgrp docker
-```
-
-4. Download the image related with this problem.
-
-```bas
-docker pull angelfelizr/project.nyc.taxi:0.0.99                                  
-```
-
-5. Change to a directory where you want to save the project. You can see the path by running the next command.
+4. Select the parent directory to save your project and confirm its path by running.
 
 ```bash
 pwd
 ```
 
-6. Create a directory to save the package cache related to the project.
+5. Create a directory to save the installed packages.
 
 ```bash
-mkdir cache_4.3
+mkdir r-lib-4.4
+```
+
+6. Create other directory to cache installed packages.
+
+```bash
+mkdir cache_4.4
 ```
 
 7. Download the repo by running `git clone` or downloading as a zip.
@@ -61,39 +56,58 @@ mkdir cache_4.3
 git clone https://github.com/AngelFelizR/project.nyc.taxi.git
 ```
 
-8. After creating both folders we can run the our container by running the next command based on your working directory.
+8. Update the `docker-compose.yml` file with your parent directory path.
+
+```
+services:
+  taxi_project:
+    image: angelfelizr/project.nyc.taxi:0.0.0.9000
+    container_name: TaxiProject
+    environment:
+      - DISABLE_AUTH=true
+      - RENV_PATHS_CACHE=/home/rstudio/.cache/R/renv/library/project.nyc.taxi-dd1eca8a/linux-ubuntu-jammy/R-4.4/x86_64-pc-linux-gnu
+    ports:
+      - "127.0.0.1:5555:8787"
+    volumes:
+      - [parent directory path]:/home/rstudio
+      - [parent directory path]/r-lib-4.4:/usr/local/lib/R/site-library
+      - [parent directory path]/cache_4.4:/home/rstudio/.cache/R/renv/library/project.nyc.taxi-dd1eca8a/linux-ubuntu-jammy/R-4.4/x86_64-pc-linux-gnu
+
+```
+
+9. After creating both folders we can run our container by running the next command based on your working directory.
 
 ```bash
 docker compose up -d
 ```
 
-9. Then you can go to your favorite browser and go to [localhost:5555](http://localhost:5555/).
+10. Then you can go to your favorite browser and go to [localhost:5555](http://localhost:5555/). This address is used to access the RStudio Server interface running in the Docker container.
 
 11. Click over `~/project.nyc.taxi/project.nyc.taxi.Rproj` to open the project.
 
-12. Install the package used:
+12. Open an R console or an R script in the RStudio interface.
+
+13. Install the packages used:
 
 ```r
 renv::restore()
 ```
-
-13. To reproduce the analysis presented we have to alternatives:
-
-  - Using the function `devtools::build_rmd()` to render each article without install the library.
+14. To reproduce the analysis presented, we have two alternatives:
+  - Using the function `devtools::build_rmd()` to render each article without installing the library.
 
 ```r
 devtools::build_rmd("vignettes/01-data-collection-process.Rmd")
 ```
+  - Installing the local library to be able to run the code in an interactive session.
 
-  - Installing the library local library to be able to run the code in an interactive session.
-  
 ```r
 devtools::install_local()
 ```
   
-
-14. If you want to keep running the container you can kill it.
+15. When you're done with your work and want to stop the container, you can use the following command:
 
 ```bash
-docker container kill project
+docker container kill TaxiProject
 ```
+
+Note: Make sure to save your work before stopping the container.
