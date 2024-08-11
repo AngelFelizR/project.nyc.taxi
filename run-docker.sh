@@ -5,4 +5,4 @@ docker compose up -d
 sleep 1
 
 # We need to open the page
-chromium http://localhost:5555
+chromium http://localhost:5555 &
