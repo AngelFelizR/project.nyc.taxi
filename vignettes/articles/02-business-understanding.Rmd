@@ -27,12 +27,15 @@ library('project.nyc.taxi')
 
 ## Problem Statement
 
-The problem is that taxi drivers’ net earnings are not as high as they could be due to a lack of strategy for increasing tips.
+Taxi drivers could increase their earnings by changing the strategy to select the trips to take, and zone and time to start working.
 
+## Project Objective
+
+Develop a model to increase NYC taxi drivers' hourly earnings by 20% through optimal trip selection.
 
 ## Project Scope
 
-This project will be limited to Juno, Uber, Via and Lyft taxi drivers who work in New York City.
+This project will be limited to Juno, Uber, Via and Lyft taxi drivers who work in New York City in trips that take place between any zone of Manhattan, Brooklyn or Queens (the more active ones).
 
 
 ## Stakeholders
@@ -45,7 +48,7 @@ This project will be limited to Juno, Uber, Via and Lyft taxi drivers who work i
 
 ## Top Process Definition
 
-To define the elements of the process, we use a **SIPOC** diagram.
+The elements of the process are defined using a **SIPOC** diagram.
 
 
 ```{r parsermd-chunk-1, echo = FALSE}
@@ -58,7 +61,7 @@ digraph SIPOC {
         S1 [label="Gas Station"];
         S2 [label="Car Manufacturer"];
         S3 [label="Taxi Application"];
-        S4 [label="Telecomuncation\nCompany"];
+        S4 [label="Telecommunication\nCompany"];
         S5 [label="Smartphone Supplier"];
         S6 [label="Maintenance\nService Providers"];
     }
@@ -74,18 +77,17 @@ digraph SIPOC {
     }
     subgraph cluster_P {
         label="Process";
-        P1 [label="The customer request a taxi"];
-        P2 [label="The driver arrived at\nthe pick-up location"];
-        P3 [label="Drivers pick the customer up"];
-        P4 [label="Drivers drive to destination"];
-        P5 [label="Drivers leave the customer\nat the end point"];
+        P1 [label="The customer requests a taxi"];
+        P2 [label="the driver arrives at\nthe pick-up location"];
+        P3 [label="The driver picks the customer up"];
+        P4 [label="The driver drives to destination"];
+        P5 [label="The driver leaves the customer\nat the end point"];
     }
     subgraph cluster_O {
         label="Outputs";
-        O1 [label="The customer is picked up\n at start location"];
-        O2 [label="The customer recives a\ntravel experience"];
-        O3 [label="The Customer gets\nat end location"];
-        O4 [label="Payment Received"]
+        O2 [label="Customer travel experience"];
+        O3 [label="Customer transfer"];
+        O4 [label="Payment"]
     }
     subgraph cluster_C {
         label="Customers";
@@ -93,8 +95,8 @@ digraph SIPOC {
     }
     S1 -> I1 [style=invis];
     I1 -> P1 [style=invis];
-    P1 -> O1 [style=invis];
-    O1 -> C1 [style=invis];
+    P1 -> O2 [style=invis];
+    O2 -> C1 [style=invis];
     P1 -> P2 [constraint=false];
     P2 -> P3 [constraint=false];
     P3 -> P4 [constraint=false];
@@ -106,7 +108,7 @@ digraph SIPOC {
 
 ## Data to Use
 
-In this project, we will use a subset of the data available in the [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) from 2022 to 2023 for **High Volume For-Hire Vehicle** with the columns described below as describes the [source data dictonary](https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_hvfhs.pdf).
+In this project, we will use a subset of the data available in the [TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page) from 2022 to 2023 for **High Volume For-Hire Vehicle** with the columns described below in the [data dictionary](https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_hvfhs.pdf).
 
 |**Field Name**|**Description**|
 |:-------------|:--------------|
@@ -135,8 +137,7 @@ In this project, we will use a subset of the data available in the [TLC Trip Rec
 |**wav_request_flag**|Did the passenger request a wheelchair-accessible vehicle (WAV)? (Y/N)|
 |**wav_match_flag**|Did the trip occur in a wheelchair-accessible vehicle (WAV)? (Y/N)|
 
-Based on the variables available, we can divide them in to 2 categories.
-
+Based on the variables available, we can divide them into 2 categories:
 
 ### Available Before Arriving at the Pick-Up Location
 
@@ -146,10 +147,12 @@ They will be used as the predictors to train the model and can be divided into 2
   - *hvfhs_license_num*
   - *wav_match_flag*
 
-2. Valid to be changed from trip to trip.
+2. Valid for changing from trip to trip.
 - ***request_datetime***
 - ***PULocationID***
 - ***DOLocationID***
+- *airport_fee*
+- *base_passenger_fare*
 - *trip_miles*
 - *shared_request_flag*
 - *access_a_ride_flag*
@@ -160,26 +163,19 @@ They will be used as the predictors to train the model and can be divided into 2
 
 ### Available After Ending the Trip
 
-They will be used to create the outcome variable needs to be predicted by the model.
+They can be used to create the **outcome variable** needed to be predicted by the model.
 
 - ***dropoff_datetime***
 - ***driver_pay***
 - ***tips***
-- *base_passenger_fare*
 - *on_scene_datetime*
 - *pickup_datetime*
+- *congestion_surcharge*
 - *trip_time*
 - *tolls*
 - *bcf*
 - *sales_tax*
-- *congestion_surcharge*
-- *airport_fee*
 - *shared_match_flag*
-
-
-## Project Objective
-
-The objective of this project is to develop a strategy to select the best paid trips possible to get an consistent increase in NYC taxi drivers' income. 
 
 
 ## Defining Business Metric
@@ -190,7 +186,7 @@ $$
 \text{Daily Hourly Wage} = \frac{\text{Total Earnings}}{\text{Total Hours Worked}}
 $$
 
-## Defining Metric's Base Line 
+## Defining Metric's Base Line
 
 Defining the baseline based on this data is a challenge as the data doesn't have any *unique id* to make the estimation, but we can **run a simulation** to estimate its value with a confident interval.
 
@@ -201,22 +197,22 @@ The simulation will be based on the following **assumptions** related to the tax
 - From any zone of Manhattan, Brooklyn or Queens (the more active ones)
 - From any month, weekday or hour.
     
-2. The TLC license number (taxi company) needs to keep constant for all trips in work day.
+2. The TLC license number (taxi company) needs to keep constant for all trips in workday.
 
 3. Only wheelchair-accessible vehicles can accept trips with that request.
 
-4. As we cannot estimate the waiting time due high offer of taxis, so we will assume that **they will be able to accept the first requested trip**.
+4. As we cannot estimate whether each zone have more active taxis than passengers we will assume that there is always more passengers than taxis and each taxi driver can **accept the first requested trip**.
 
 5. The taxis will find trips based on their time waiting and will take the first trip in their valid radius:
 
 - 0-1 Minute: Search within a 1-mile radius.
 - 1-3 Minutes: Expand search to a 3-mile radius if no trip is found.
 - 3-5 Minutes: Expand search to a 5-mile radius if still no trip is found.
-- Keep adding 2 miles every to minutes until finding a trip.
+- Keep adding 2 miles every two minutes until finding a trip.
 
 6. They have a 30 minutes break after 4 hours working once ending the current trip.
 
-7. They will take their last trip after working 8 hours, without taking in consideration the 30 minutes break.
+7. They will take their last trip after working 8 hours, without taking into consideration the 30 minutes break.
 
 ### Running trips simulation
 
@@ -479,7 +475,7 @@ ZoneCodesRefClean[SimulationStartDay,
 
 Now we can conclude that the initial data **satisfy the assumption 1**.
 
-6. Calculating the mean distance present from one location to other if it has **less than 10 miles**.
+6. Calculating the mean distance present from one location to other if it has **fewer than 10 miles**.
 
 ```{r eval=FALSE}
 MeanDistanceQuery <- "
@@ -549,43 +545,40 @@ dbListTables(con)
 dbListTables(con)
 ```
 
-### Infering Daily Hourly Wage
+7. Running the simulation.
 
-After simulating 30 days, we can use **bootstrap** to infer the distribution of the mean **Daily Hourly Wage** for any day in the year by following the next steps.
-
-1. Calculate the *Daily Hourly Wage* for each simulated day.
-
-```{r run-simulation}
+```{r}
 SimulationHourlyWage <- simulate_trips(con, SimulationStartDay)
 
-TempSimulation <-
+DailyHourlyWage <-
   SimulationHourlyWage[, .(`Daily Hourly Wage` = 
                              sum(sim_driver_pay + sim_tips) /
                              as.double(difftime(max(sim_dropoff_datetime), 
                                                 min(sim_request_datetime),
                                                 units = "hours"))),
-                       by = "simulation_id"
-  ][SimulationStartDay,
-    on = c("simulation_id" = "trip_id")
-  ][, ZoneCodesRefClean[.SD, on = c("LocationID" = "PULocationID")]]
+                       by = "simulation_id"]
 
 
-TempSimulation |>
+DailyHourlyWage |>
   ggplot()+
   geom_histogram(aes(`Daily Hourly Wage`),
-                 bins = 6)+
-  facet_wrap(~Borough, ncol = 1, scales = "free_y")
-
-SimulationHourlyWage[order(-`Daily Hourly Wage`)]
+                 bins = 10) +
+  scale_x_continuous(breaks = breaks_width(10)) +
+  theme_light()
 ```
 
-2. Then we need to resample with replacement a new 30 days hourly wage 3,000 times and calculate the mean of each resample.
 
+### Defining a Condifence Interval
+
+After simulating 60 days, we can use **bootstrap** to infer the distribution of the mean **Daily Hourly Wage** for any day in the year by following the next steps.
+
+1. Resample with replacement a new 60 days hourly wage 3,000 times and calculate the mean of each resample.
 
 ```{r parsermd-chunk-11}
 set.seed(1586)
+
 BootstrapHourlyWage <-
-  specify(SimulationHourlyWage,
+  specify(DailyHourlyWage,
           `Daily Hourly Wage` ~ NULL) |>
   generate(reps = 3000, type = "bootstrap") |>
   calculate(stat = "mean")
@@ -593,8 +586,7 @@ BootstrapHourlyWage <-
 BootstrapHourlyWage
 ```
 
-3. Compute the 95% confident interval.
-
+2. Compute the 95% confident interval.
 
 ```{r parsermd-chunk-12}
 BootstrapInterval <- 
@@ -605,8 +597,7 @@ BootstrapInterval <-
 BootstrapInterval
 ```
 
-4. Visualize the estimated distribution.
-
+3. Visualize the estimated distribution.
 
 ```{r parsermd-chunk-13}
 visualize(BootstrapHourlyWage)+
@@ -619,8 +610,6 @@ visualize(BootstrapHourlyWage)+
                  BootstrapInterval[2L][[1L]] + 0.4),
            label = unlist(BootstrapInterval) |> comma(accuracy = 0.01))+
   labs(title = "Mean Hourly Wage Distribution",
-       subtitle = paste0("Mean: ", round(mean(SimulationHourlyWage$`Daily Hourly Wage`), 2),
-                         ", Median: ", round(median(SimulationHourlyWage$`Daily Hourly Wage`), 2)),
        y = "Count")+
   theme_light()+
   theme(panel.grid.minor.y = element_blank(),
@@ -631,64 +620,47 @@ visualize(BootstrapHourlyWage)+
 
 ## Business Case
 
-As the base driver's pay increases with costs like gas, time and car's maintenance the best way to increase total earning is by increasing the amount of **tips** that drivers receive from customers.
+Based on the simulation's results we can confirm that the average earnings for a taxi driver per hour goes between 44.32 and 50.63, but that doesn't represent the highest values observed on the simulation.
 
-Based on *424,389,806* trips recorded between 2022 and 2023, drivers received *$469,726,156* in tips which is only 5% of the total earnings for that year, for example if a driver improves his strategy to increase his tips to **20%** of his current earning he could be earning **`r dollar(41.69*8*5*4*0.2)` extra monthly** if he works 8 hours a day, 5 days each week and earns *$41.69* hourly.
+If we can check the simulation results we can confirm that a 10% of the simulated days presented earnings over the 60 dollars per hour.
 
-
-```{r parsermd-chunk-14}
-NycTrips |>
-  summarize(number_of_trips = sum(!is.na(PULocationID)),
-            trips_with_tips = sum(tips > 0, na.rm = TRUE),
-            driver_net_earning = sum(driver_pay + tips, na.rm = TRUE),
-            tips = sum(tips, na.rm = TRUE)) |>
-  collect() |>
-  as.data.table() |>
-  (\(dt)  dt[, .(number_of_trips = comma(number_of_trips),
-                 trips_with_tips = comma(trips_with_tips),
-                 trips_with_tips_pct = percent(trips_with_tips / number_of_trips),
-                 driver_net_earning = dollar(driver_net_earning),
-                 tips = dollar(tips),
-                 tips_pct = percent(tips/driver_net_earning))
-          ][, melt(.SD, 
-                   measure.vars = names(.SD),
-                   variable.name = "Summary Variable",
-                   value.name = "Total",
-                   variable.factor = FALSE)]
-   )()
-
+```{r}
+DailyHourlyWage$`Daily Hourly Wage` |> 
+  quantile(probs = 0.9)
 ```
 
-## Project's Side Benefits
+If we can apply a strategy that can move the `Daily Hourly Wage` to 60 dollars per hour ($ \frac{60 - 50}{50} = 20\% $) if woud be a be a great change for many taxi driver if they apply this strategy.
 
-It's also important to consider that Taxi companies and customers can both benefit from drivers earning more tips in several ways:
 
-1. **Taxi Companies**: 
-    - **Employee Satisfaction**: Higher tips can lead to increased job satisfaction among drivers, which can improve their performance and reduce turnover rates.
-    - **Company Reputation**: If drivers are earning more tips, it could indicate that they are providing excellent service, which can enhance the company's reputation.
-    - **Customer Retention**: Satisfied drivers are more likely to provide better customer service, which can lead to higher customer retention rates.
+## Ethical Considerations
 
-2. **Customers**:
-    - **Better Service**: Drivers who earn more tips are often those who provide better service. This could mean cleaner vehicles, more courteous behavior, and a more enjoyable ride overall.
-    - **Driver Availability**: If the tip earnings are high, it could attract more drivers to work, potentially reducing wait times for customers.
-    - **Safety**: Drivers who are not worried about their earnings might be less likely to engage in risky behaviors (like speeding or working overly long shifts) to earn more.
+While this project aims to increase taxi driver earnings, it's important to acknowledge that optimizing for driver profits could have significant downsides:
+
+1. **Reduced service quality:** Drivers focusing solely on maximizing earnings may avoid less profitable areas or times, potentially leaving some passengers underserved.
+
+2. **Discrimination risks**: An earnings-focused strategy could inadvertently lead to discriminatory practices if certain demographics or neighborhoods are perceived as less profitable.
+
+3. **Increased congestion**: Drivers congregating in high-profit areas could worsen traffic in already busy parts of the city.
+
+In conclusion, this project was created to show my abilities as Data Scientist, but it is not a project that should be implemented due this considerations.
     
     
 ## Defining Outcome to Predict
 
-Once we have a clear business problem to solve, it's important to also make the translation into a *data science* problem that we can solve using the available data.
+As a taxi driver only can take 2 decisions when working to increase their earnings:
 
-As we want to increase earning and reduce time, we can use calculate and predict the `profit_rate` of each trip, to understand **what is behind the best pay trips**.
+1. When and where to start working.
+2. Accept or reject each individual trip request.
 
-$$
-\text{profit rate} = \frac{\text{driver pay} + \text{tips}}{\text{dropoff datetime}-\text{request datetime}}
-$$
+To address the first decision, we need explore the factors that can improve the `performance_per_hour` of each trip.
 
-
+But to address the second question, we need to create the variable `best_trip_20_m` which shows 1 if the current trip is the best to take in the following 20 minutes.
 
 ## Deliverables
 
-A **Shiny app** which assists the drivers in focusing their attention on the better trips.
+1. An HTML presentation, explaining the best places and times to start working as taxi drivers to increase your earnings.
+
+2. A **Shiny app** which assists the drivers reject o accept trips to increase their earnings.
 
 
 ```
