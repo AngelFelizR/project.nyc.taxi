@@ -661,37 +661,3 @@ But to address the second question, we need to create the variable `best_trip_20
 1. An HTML presentation, explaining the best places and times to start working as taxi drivers to increase your earnings.
 
 2. A **Shiny app** which assists the drivers reject o accept trips to increase their earnings.
-
-
-```
--- Crear una tabla temporal final para almacenar los resultados
-CREATE TEMP TABLE better_trip_validation AS
-WITH trip_performance AS (
-    SELECT 
-        ROW_NUMBER() OVER () AS trip_id,
-        *,
-        (driver_pay + tips) / (EXTRACT(EPOCH FROM (dropoff_datetime - request_datetime)) / 3600) AS performance_per_hour
-    FROM 
-        trips
-),
-better_trips AS (
-    SELECT 
-        t1.trip_id AS trip_id,
-        CASE WHEN EXISTS (
-            SELECT 1
-            FROM trip_performance t2
-            WHERE t2.trip_id <> t1.trip_id
-              AND t2.request_datetime > t1.request_datetime
-              AND t2.request_datetime <= t1.request_datetime + INTERVAL '20 minutes'
-              AND (t2.driver_pay + t2.tips) / (EXTRACT(EPOCH FROM (t2.dropoff_datetime - t1.request_datetime)) / 3600) > t1.performance_per_hour
-        ) THEN 1 ELSE 0 END AS better_trip_20_m
-    FROM 
-        trip_performance t1
-)
-
--- Unir los resultados con los detalles de cada viaje
-SELECT *
-FROM trip_performance t1
-JOIN better_trips t2
-ON t1.trip_id = t2.trip_id;
-```
