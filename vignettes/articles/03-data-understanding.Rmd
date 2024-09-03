@@ -93,7 +93,7 @@ setDT(TrainingSample)
 Before saving the sample on DB, we need to create this function.
 
 ```{r}
-is_best_trip_20_min <- function()
+is_best_trip_20_min <- function() 5
 ```
 
 

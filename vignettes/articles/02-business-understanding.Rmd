@@ -443,7 +443,7 @@ usethis::use_data(SimulationStartDay,
                   version = 3)
 ```
 
-```{r include=FALSE}
+```{r echo=FALSE}
 pillar::glimpse(SimulationStartDay)
 ```
 

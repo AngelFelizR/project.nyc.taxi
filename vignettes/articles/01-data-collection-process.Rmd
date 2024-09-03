@@ -190,7 +190,7 @@ DBI::dbExecute(con, NycTripsCreateTable)
 
 4. Disconnecting the data base.
 
-```{r eval=FALSEs}
+```{r eval=FALSE}
 DBI::dbDisconnect(con, shutdown = TRUE)
 
 rm(con)

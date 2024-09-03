@@ -34,7 +34,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">project.nyc.taxi</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.99</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -100,11 +100,18 @@ just by running the code below.</p>
 <p>To always have a updated list of 2022 and 2023 links of <strong>High
 Volume For-Hire Vehicles</strong> documents let’s scrape the <a href="https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page" class="external-link">TLC
 Trip Record Data</a> by using the <code>rvest</code> library.</p>
+<div class="section level3">
+<h3 id="downloading-source-page">Downloading source page<a class="anchor" aria-label="anchor" href="#downloading-source-page"></a>
+</h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">SourcePage</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu">rvest</span><span class="fu">::</span><span class="fu"><a href="http://xml2.r-lib.org/reference/read_xml.html" class="external-link">read_html</a></span><span class="op">(</span><span class="st">"https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">TripLinks</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu">rvest</span><span class="fu">::</span><span class="fu"><a href="http://xml2.r-lib.org/reference/read_xml.html" class="external-link">read_html</a></span><span class="op">(</span><span class="st">"https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="getting-links-for-taxi-trips">Getting links for taxi trips<a class="anchor" aria-label="anchor" href="#getting-links-for-taxi-trips"></a>
+</h3>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">TripLinks</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">SourcePage</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">rvest</span><span class="fu">::</span><span class="fu"><a href="https://rvest.tidyverse.org/reference/html_element.html" class="external-link">html_elements</a></span><span class="op">(</span>xpath <span class="op">=</span> <span class="st">'//div[@class="faq-answers"]//li/a'</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">rvest</span><span class="fu">::</span><span class="fu"><a href="https://rvest.tidyverse.org/reference/html_attr.html" class="external-link">html_attr</a></span><span class="op">(</span><span class="st">"href"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -127,9 +134,11 @@ Trip Record Data</a> by using the <code>rvest</code> library.</p>
 <span><span class="co">#&gt; [19] "fhvhv_tripdata_2023-07.parquet" "fhvhv_tripdata_2023-08.parquet"</span></span>
 <span><span class="co">#&gt; [21] "fhvhv_tripdata_2023-09.parquet" "fhvhv_tripdata_2023-10.parquet"</span></span>
 <span><span class="co">#&gt; [23] "fhvhv_tripdata_2023-11.parquet" "fhvhv_tripdata_2023-12.parquet"</span></span></code></pre></div>
-<p>From the same page we also can find the link to download the codes
-related to each Zone.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+</div>
+<div class="section level3">
+<h3 id="getting-link-for-trip-zones-">Getting link for trip zones.<a class="anchor" aria-label="anchor" href="#getting-link-for-trip-zones-"></a>
+</h3>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">TaxiZoneLink</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">SourcePage</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">rvest</span><span class="fu">::</span><span class="fu"><a href="https://rvest.tidyverse.org/reference/html_element.html" class="external-link">html_elements</a></span><span class="op">(</span>xpath <span class="op">=</span> <span class="st">'//ul/li/a[text()="Taxi Zone Lookup Table"]'</span><span class="op">)</span>  <span class="op">|&gt;</span></span>
@@ -139,48 +148,57 @@ related to each Zone.</p>
 <span><span class="va">TaxiZoneLink</span></span>
 <span><span class="co">#&gt; [1] "https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv"</span></span></code></pre></div>
 </div>
+</div>
 <div class="section level2">
-<h2 id="saving-files">Saving files<a class="anchor" aria-label="anchor" href="#saving-files"></a>
+<h2 id="saving-trips-data">Saving trips data<a class="anchor" aria-label="anchor" href="#saving-trips-data"></a>
 </h2>
-<p>To take advantage of the best capacities of <code>arrow</code> we
+<p>To take advantage of the best capacities of <code>Duckdb</code> we
 need save a each parquet file in folder with useful information to
 filter later, that why we will have one folder level related to years
 the next sub-folders related to a month with each parquet with the name
-<code>part-0.parquet</code> by following the next process:</p>
-<ul>
-<li>Creating our main folder store the data.</li>
-</ul>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">RawDataPath</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"raw-data"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="st">"raw-data"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">RawDataPath</span><span class="op">)</span></span></code></pre></div>
-<ul>
-<li>Defining a new folder only to save the trip data in parquet
-files.</li>
-</ul>
+<code>part-0.parquet</code> by following process.</p>
+<div class="section level3">
+<h3 id="defining-folder-paths">Defining folder paths<a class="anchor" aria-label="anchor" href="#defining-folder-paths"></a>
+</h3>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ParquetFolderPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">RawDataPath</span>, <span class="st">"trip-data"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">SourcePath</span> <span class="op">&lt;-</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="st">"trip-data"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">dir</a></span><span class="op">(</span><span class="va">RawDataPath</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">ParquetFolderPath</span><span class="op">)</span></span></code></pre></div>
-<ul>
-<li>Defining the sub-folders to split the files based on year.</li>
-</ul>
+<span><span class="va">RawDataPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">SourcePath</span>, <span class="st">"raw-data"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ParquetFolderPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">RawDataPath</span>, <span class="st">"trip-data"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">YearFoldersPath</span> <span class="op">&lt;-</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">FileNames</span>,</span>
+<span>       pattern <span class="op">=</span> <span class="st">"^fhvhv_tripdata_|-\\d{2}\\.parquet$"</span>,</span>
+<span>       replacement <span class="op">=</span> <span class="st">""</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"year="</span>, a <span class="op">=</span> <span class="va">_</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ParquetFolderPath</span>, a <span class="op">=</span> <span class="va">_</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="creating-folders-to-use">Creating folders to use<a class="anchor" aria-label="anchor" href="#creating-folders-to-use"></a>
+</h3>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">YearFolders</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span></span>
-<span>  x <span class="op">=</span> <span class="va">FileNames</span>,</span>
-<span>  pattern <span class="op">=</span> <span class="st">"^fhvhv_tripdata_|-\\d{2}\\.parquet$"</span>,</span>
-<span>  replacement <span class="op">=</span> <span class="st">""</span></span>
-<span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"year="</span>, a <span class="op">=</span> <span class="va">_</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">YearFoldersUnique</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">YearFolders</span><span class="op">)</span></span>
-<span><span class="va">YearFoldersPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ParquetFolderPath</span>, <span class="va">YearFoldersUnique</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw">for</span><span class="op">(</span><span class="va">paths</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">RawDataPath</span>, <span class="va">ParquetFolderPath</span>, <span class="va">YearFoldersPath</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  </span>
+<span>  <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">paths</span><span class="op">)</span><span class="op">)</span><span class="op">{</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">paths</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span>  </span>
+<span><span class="op">}</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="defining-the-sub-folders-to-split-the-files-based-on-year-">Defining the sub-folders to split the files based on year.<a class="anchor" aria-label="anchor" href="#defining-the-sub-folders-to-split-the-files-based-on-year-"></a>
+</h3>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
 <span></span>
 <span><span class="kw">for</span><span class="op">(</span><span class="va">year_i</span> <span class="kw">in</span> <span class="va">YearFoldersPath</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">year_i</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<ul>
-<li>Creating a folder for each month.</li>
-</ul>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+</div>
+<div class="section level3">
+<h3 id="creating-a-folder-for-each-month">Creating a folder for each month<a class="anchor" aria-label="anchor" href="#creating-a-folder-for-each-month"></a>
+</h3>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">MonthFolders</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="va">FileNames</span>,</span>
 <span>  pattern <span class="op">=</span> <span class="st">"^fhvhv_tripdata_\\d{4}-|\\.parquet$"</span>,</span>
@@ -191,10 +209,11 @@ files.</li>
 <span><span class="va">MonthFoldersPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ParquetFolderPath</span>, <span class="va">YearFolders</span>, <span class="va">MonthFolders</span><span class="op">)</span></span>
 <span></span>
 <span><span class="kw">for</span><span class="op">(</span><span class="va">month_i</span> <span class="kw">in</span> <span class="va">MonthFoldersPath</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">month_i</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<ul>
-<li>Downloading each file on each folder.</li>
-</ul>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+</div>
+<div class="section level3">
+<h3 id="downloading-each-file-on-each-folder">Downloading each file on each folder<a class="anchor" aria-label="anchor" href="#downloading-each-file-on-each-folder"></a>
+</h3>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Parquet files might time a longer time to be downloaded</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>timeout <span class="op">=</span> <span class="fl">1800</span><span class="op">)</span></span>
 <span></span>
@@ -214,67 +233,68 @@ files.</li>
 <span>              destfile <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">RawDataPath</span>,<span class="st">"taxi_zone_lookup.csv"</span><span class="op">)</span>,</span>
 <span>              mode <span class="op">=</span> <span class="st">"wb"</span><span class="op">)</span></span></code></pre></div>
 </div>
+</div>
 <div class="section level2">
-<h2 id="final-result">Final result<a class="anchor" aria-label="anchor" href="#final-result"></a>
+<h2 id="saving-results-in-a-database">Saving results in a database<a class="anchor" aria-label="anchor" href="#saving-results-in-a-database"></a>
 </h2>
-<p>After getting all the files you should end with the next structure
-for the <code>data</code> folder.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_tree.html" class="external-link">dir_tree</a></span><span class="op">(</span><span class="va">RawDataPath</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #0000BB; font-weight: bold;">/home/rstudio/project.nyc.taxi/raw-data</span></span></span>
-<span><span class="co">#&gt; ├── TrainingTrips.fst</span></span>
-<span><span class="co">#&gt; ├── <span style="color: #00BB00; font-weight: bold;">taxi_zone_lookup.csv</span></span></span>
-<span><span class="co">#&gt; └── <span style="color: #0000BB; font-weight: bold;">trip-data</span></span></span>
-<span><span class="co">#&gt;     ├── <span style="color: #0000BB; font-weight: bold;">year=2022</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=01</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=02</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=03</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=04</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=05</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=06</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=07</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=08</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=09</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=10</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   ├── <span style="color: #0000BB; font-weight: bold;">month=11</span></span></span>
-<span><span class="co">#&gt;     │   │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     │   └── <span style="color: #0000BB; font-weight: bold;">month=12</span></span></span>
-<span><span class="co">#&gt;     │       └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;     └── <span style="color: #0000BB; font-weight: bold;">year=2023</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=01</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=02</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=03</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=04</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=05</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=06</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=07</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=08</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=09</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=10</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         ├── <span style="color: #0000BB; font-weight: bold;">month=11</span></span></span>
-<span><span class="co">#&gt;         │   └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span>
-<span><span class="co">#&gt;         └── <span style="color: #0000BB; font-weight: bold;">month=12</span></span></span>
-<span><span class="co">#&gt;             └── <span style="color: #00BB00; font-weight: bold;">part-0.parquet</span></span></span></code></pre></div>
+<p>Despite that parquet files are great for sharing big data files
+keeping save the format for each format, it presents problems if we need
+to apply <strong>sampling operations</strong>.</p>
+<p>To work with data large than RAM, we will need to create a simple
+data base with <code>duckdb</code> by following the next simple
+steps.</p>
+<ol style="list-style-type: decimal">
+<li>Listing all files to read.</li>
+</ol>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ParquetSource</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">ParquetFolderPath</span>,</span>
+<span>             recursive <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>             full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"'"</span>, a <span class="op">=</span> <span class="va">_</span> ,<span class="st">"'"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span>collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"read_parquet(["</span>, a <span class="op">=</span> <span class="va">_</span> ,<span class="st">"])"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">ParquetSource</span></span>
+<span><span class="co">#&gt; [1] "read_parquet(['/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=01/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=02/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=03/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=04/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=05/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=06/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=07/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=08/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=09/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=10/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=11/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2022/month=12/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=01/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=02/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=03/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=04/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=05/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=06/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=07/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=08/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=09/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=10/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=11/part-0.parquet', '/home/rstudio/project.nyc.taxi/raw-data/trip-data/year=2023/month=12/part-0.parquet'])"</span></span></code></pre></div>
+<ol start="2" style="list-style-type: decimal">
+<li>Creating a connection.</li>
+</ol>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">duckdb</span><span class="fu">::</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span>, </span>
+<span>                      dbdir <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"my-db.duckdb"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<ol start="3" style="list-style-type: decimal">
+<li>Saving all files in the database after adding an id to differentiate
+between trips and adding the performance per our each trips.</li>
+</ol>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">NycTripsCreateTable</span> <span class="op">&lt;-</span> <span class="fu">glue</span><span class="fu">::</span><span class="fu"><a href="https://glue.tidyverse.org/reference/glue_safe.html" class="external-link">glue_safe</a></span><span class="op">(</span><span class="st">"</span></span>
+<span><span class="st">CREATE TABLE NycTrips AS</span></span>
+<span><span class="st">    SELECT </span></span>
+<span><span class="st">        ROW_NUMBER() OVER () AS trip_id,</span></span>
+<span><span class="st">        *,</span></span>
+<span><span class="st">        (driver_pay + tips) / (EXTRACT(EPOCH FROM (dropoff_datetime - request_datetime)) / 3600) AS performance_per_hour</span></span>
+<span><span class="st">    FROM {ParquetSource}</span></span>
+<span><span class="st">"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbExecute.html" class="external-link">dbExecute</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">NycTripsCreateTable</span><span class="op">)</span></span></code></pre></div>
+<ol start="4" style="list-style-type: decimal">
+<li>Disconnecting the data base.</li>
+</ol>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span>, shutdown <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+<ol start="5" style="list-style-type: decimal">
+<li>After saving the data in the data base we can confirm its final
+size.</li>
+</ol>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"my-db.duckdb"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/structure.html" class="external-link">structure</a></span><span class="op">(</span>class <span class="op">=</span> <span class="st">"object_size"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span>units <span class="op">=</span> <span class="st">"auto"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "36.4 Gb"</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

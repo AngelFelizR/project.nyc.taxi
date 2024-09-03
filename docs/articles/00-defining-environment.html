@@ -34,7 +34,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">project.nyc.taxi</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.99</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,80 +91,91 @@
 <p>In order to reproduce the results of this project we need to follow
 the following steps to run the code using the same environment:</p>
 <ol style="list-style-type: decimal">
-<li>Install docker by installing <a href="https://www.docker.com/products/docker-desktop/" class="external-link">Docker
-Desktop</a> or just <a href="https://docs.docker.com/engine/install/" class="external-link">Docker Engine</a> if your
-is linux is your operating system. In Manjaro, you can install it using
-the next command to install the Docker Engine:</li>
+<li><p>Install <strong>docker</strong> by installing <a href="https://www.docker.com/products/docker-desktop/" class="external-link">Docker
+Desktop</a> or just the <a href="https://docs.docker.com/engine/install/" class="external-link">Docker Engine</a> if
+Linux is your operating system. I used <a href="https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-debian-10" class="external-link">this
+article</a> as a guide to complete the task on debian 12.</p></li>
+<li><p>Install <a href="https://git-scm.com/downloads" class="external-link">git</a>.</p></li>
 </ol>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">sudo</span> pacman <span class="at">-S</span> docker</span></code></pre></div>
-<ol start="2" style="list-style-type: decimal">
-<li>Start the docker by opening the Docker Desktop or running the
-systemctl start command for docker.service based on the systemd
-packeage.</li>
-</ol>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">sudo</span> systemctl start docker.service</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">sudo</span> apt install git</span></code></pre></div>
 <ol start="3" style="list-style-type: decimal">
-<li>To avoid using sudo with each docker command, you can add yourself
-to the docker group.</li>
+<li>Download the image related with this project.</li>
 </ol>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">sudo</span> usermod <span class="at">-aG</span> docker <span class="va">$USER</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="ex">newgrp</span> docker</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">docker</span> pull angelfelizr/project.nyc.taxi:0.0.0.9000</span></code></pre></div>
 <ol start="4" style="list-style-type: decimal">
-<li>Download the image related with this problem.</li>
+<li>Select the parent directory to save your project and confirm its
+path by running.</li>
 </ol>
-<pre class="bas"><code>docker pull angelfelizr/project.nyc.taxi:0.0.99                                  </code></pre>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div>
 <ol start="5" style="list-style-type: decimal">
-<li>Change to a directory where you want to save the project. You can
-see the path by running the next command.</li>
+<li>Create a directory to save the installed packages.</li>
 </ol>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">mkdir</span> r-lib-4.4</span></code></pre></div>
 <ol start="6" style="list-style-type: decimal">
-<li>Create a directory to save the package cache related to the
-project.</li>
+<li>Create other directory to cache installed packages.</li>
 </ol>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">mkdir</span> cache_4.3</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">mkdir</span> cache_4.4</span></code></pre></div>
 <ol start="7" style="list-style-type: decimal">
 <li>Download the repo by running <code>git clone</code> or downloading
 as a zip.</li>
 </ol>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/AngelFelizR/project.nyc.taxi.git</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/AngelFelizR/project.nyc.taxi.git</span></code></pre></div>
 <ol start="8" style="list-style-type: decimal">
-<li>After creating both folders we can run the our container by running
-the next command based on your working directory.</li>
+<li>Update the <code>docker-compose.yml</code> file with your parent
+directory path.</li>
 </ol>
-<pre><code>docker run -d --rm -ti \
-    --name project \
-    -p 8787:8787 \
-    -v  [your_working_dir]/cache_4.3:/home/rstudio/.cache/R/renv/cache/v5/R-4.3/x86_64-pc-linux-gnu \
-    -v [your_working_dir]:/home/rstudio \
-    angelfelizr/project.nyc.taxi:0.0.99</code></pre>
+<pre><code>services:
+  taxi_project:
+    image: angelfelizr/project.nyc.taxi:0.0.0.9000
+    container_name: TaxiProject
+    environment:
+      - DISABLE_AUTH=true
+      - RENV_PATHS_CACHE=/home/rstudio/.cache/R/renv/library/project.nyc.taxi-dd1eca8a/linux-ubuntu-jammy/R-4.4/x86_64-pc-linux-gnu
+    ports:
+      - "127.0.0.1:5555:8787"
+    volumes:
+      - [parent directory path]:/home/rstudio
+      - [parent directory path]/r-lib-4.4:/usr/local/lib/R/site-library
+      - [parent directory path]/cache_4.4:/home/rstudio/.cache/R/renv/library/project.nyc.taxi-dd1eca8a/linux-ubuntu-jammy/R-4.4/x86_64-pc-linux-gnu
+</code></pre>
 <ol start="9" style="list-style-type: decimal">
-<li><p>Then you can go to your favorite browser and go to <a href="http://localhost:8787/" class="external-link">localhost:8787</a>.</p></li>
+<li>After creating both folders we can run our container by running the
+next command based on your working directory.</li>
+</ol>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span></code></pre></div>
+<ol start="10" style="list-style-type: decimal">
+<li><p>Then you can go to your favorite browser and go to <a href="http://localhost:5555/" class="external-link">localhost:5555</a>. This address is used
+to access the RStudio Server interface running in the Docker
+container.</p></li>
 <li><p>Click over <code>~/project.nyc.taxi/project.nyc.taxi.Rproj</code>
 to open the project.</p></li>
-<li><p>Install the package used:</p></li>
+<li><p>Open an R console or an R script in the RStudio
+interface.</p></li>
+<li><p>Install the packages used:</p></li>
 </ol>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">renv</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/renv/reference/restore.html" class="external-link">restore</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<ol start="13" style="list-style-type: decimal">
-<li>To reproduce the analysis presented we have to alternatives:</li>
+<ol start="14" style="list-style-type: decimal">
+<li>To reproduce the analysis presented, we have two alternatives:</li>
 </ol>
 <ul>
 <li>Using the function <code><a href="https://devtools.r-lib.org/reference/build_rmd.html" class="external-link">devtools::build_rmd()</a></code> to render each
-article without install the library.</li>
+article without installing the library.</li>
 </ul>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/build_rmd.html" class="external-link">build_rmd</a></span><span class="op">(</span><span class="st">"vignettes/01-data-collection-process.Rmd"</span><span class="op">)</span></span></code></pre></div>
 <ul>
-<li>Installing the library local library to be able to run the code in
-an interactive session.</li>
+<li>Installing the local library to be able to run the code in an
+interactive session.</li>
 </ul>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_local.html" class="external-link">install_local</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<ol start="14" style="list-style-type: decimal">
-<li>If you want to keep running the container you can kill it.</li>
+<ol start="15" style="list-style-type: decimal">
+<li>When you’re done with your work and want to stop the container, you
+can use the following command:</li>
 </ol>
-<div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">docker</span> container kill project</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="ex">docker</span> container kill TaxiProject</span></code></pre></div>
+<p>Note: Make sure to save your work before stopping the container.</p>
   </main>
 </div>
 

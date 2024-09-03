@@ -34,7 +34,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">project.nyc.taxi</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.99</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,10 @@
 
 <link href="02-business-understanding_files/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
 <script src="02-business-understanding_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><script src="02-business-understanding_files/viz-1.8.2/viz.js"></script><link href="02-business-understanding_files/DiagrammeR-styles-0.2/styles.css" rel="stylesheet">
-<script src="02-business-understanding_files/grViz-binding-1.0.11/grViz.js"></script><div class="row">
+<script src="02-business-understanding_files/grViz-binding-1.0.11/grViz.js"></script><link href="02-business-understanding_files/leaflet-1.3.1/leaflet.css" rel="stylesheet">
+<script src="02-business-understanding_files/leaflet-1.3.1/leaflet.js"></script><link href="02-business-understanding_files/leafletfix-1.0.0/leafletfix.css" rel="stylesheet">
+<script src="02-business-understanding_files/proj4-2.6.2/proj4.min.js"></script><script src="02-business-understanding_files/Proj4Leaflet-1.0.1/proj4leaflet.js"></script><link href="02-business-understanding_files/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet">
+<script src="02-business-understanding_files/leaflet-binding-2.2.2/leaflet.js"></script><script src="02-business-understanding_files/leaflet-providers-2.0.0/leaflet-providers_2.0.0.js"></script><script src="02-business-understanding_files/leaflet-providers-plugin-2.2.2/leaflet-providers-plugin.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Business Understanding</h1>
             
@@ -97,14 +100,21 @@
 <div class="section level2">
 <h2 id="problem-statement">Problem Statement<a class="anchor" aria-label="anchor" href="#problem-statement"></a>
 </h2>
-<p>The problem is that taxi drivers’ net earnings are not as high as
-they could be due to a lack of strategy for increasing tips.</p>
+<p>Taxi drivers could increase their earnings by changing the strategy
+to select the trips to take, and zone and time to start working.</p>
+</div>
+<div class="section level2">
+<h2 id="project-objective">Project Objective<a class="anchor" aria-label="anchor" href="#project-objective"></a>
+</h2>
+<p>Develop a model to increase NYC taxi drivers’ hourly earnings by 20%
+through optimal trip selection.</p>
 </div>
 <div class="section level2">
 <h2 id="project-scope">Project Scope<a class="anchor" aria-label="anchor" href="#project-scope"></a>
 </h2>
 <p>This project will be limited to Juno, Uber, Via and Lyft taxi drivers
-who work in New York City.</p>
+who work in New York City in trips that take place between any zone of
+Manhattan, Brooklyn or Queens (the more active ones).</p>
 </div>
 <div class="section level2">
 <h2 id="stakeholders">Stakeholders<a class="anchor" aria-label="anchor" href="#stakeholders"></a>
@@ -119,18 +129,18 @@ who work in New York City.</p>
 <div class="section level2">
 <h2 id="top-process-definition">Top Process Definition<a class="anchor" aria-label="anchor" href="#top-process-definition"></a>
 </h2>
-<p>To define the elements of the process, we use a
+<p>The elements of the process are defined using a
 <strong>SIPOC</strong> diagram.</p>
 <div class="grViz html-widget html-fill-item" id="htmlwidget-ac96cb3ee4656e2e9ec3" style="width:700px;height:432.632880098888px;"></div>
-<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"diagram":"\ndigraph SIPOC {\n    rankdir=LR;\n    node [shape=box];\n    subgraph cluster_S {\n        label=\"Suppliers\";\n        S1 [label=\"Gas Station\"];\n        S2 [label=\"Car Manufacturer\"];\n        S3 [label=\"Taxi Application\"];\n        S4 [label=\"Telecomuncation\nCompany\"];\n        S5 [label=\"Smartphone Supplier\"];\n        S6 [label=\"Maintenance\nService Providers\"];\n    }\n    subgraph cluster_I {\n        label=\"Inputs\";\n        I1 [label=\"Gas\"];\n        I2 [label=\"Car\"];\n        I3 [label=\"Start\nLocation\"];\n        I4 [label=\"End\nLocation\"];\n        I5 [label=\"Internet\"];\n        I6 [label=\"Smartphone\"];\n        I7 [label=\"Customer\nRequests\"];\n    }\n    subgraph cluster_P {\n        label=\"Process\";\n        P1 [label=\"The customer request a taxi\"];\n        P2 [label=\"The driver arrived at\nthe pick-up location\"];\n        P3 [label=\"Drivers pick the customer up\"];\n        P4 [label=\"Drivers drive to destination\"];\n        P5 [label=\"Drivers leave the customer\nat the end point\"];\n    }\n    subgraph cluster_O {\n        label=\"Outputs\";\n        O1 [label=\"The customer is picked up\n at start location\"];\n        O2 [label=\"The customer recives a\ntravel experience\"];\n        O3 [label=\"The Customer gets\nat end location\"];\n        O4 [label=\"Payment Received\"]\n    }\n    subgraph cluster_C {\n        label=\"Customers\";\n        C1 [label=\"Taxi User\"];\n    }\n    S1 -> I1 [style=invis];\n    I1 -> P1 [style=invis];\n    P1 -> O1 [style=invis];\n    O1 -> C1 [style=invis];\n    P1 -> P2 [constraint=false];\n    P2 -> P3 [constraint=false];\n    P3 -> P4 [constraint=false];\n    P4 -> P5 [constraint=false];\n}\n\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
+<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"diagram":"\ndigraph SIPOC {\n    rankdir=LR;\n    node [shape=box];\n    subgraph cluster_S {\n        label=\"Suppliers\";\n        S1 [label=\"Gas Station\"];\n        S2 [label=\"Car Manufacturer\"];\n        S3 [label=\"Taxi Application\"];\n        S4 [label=\"Telecommunication\nCompany\"];\n        S5 [label=\"Smartphone Supplier\"];\n        S6 [label=\"Maintenance\nService Providers\"];\n    }\n    subgraph cluster_I {\n        label=\"Inputs\";\n        I1 [label=\"Gas\"];\n        I2 [label=\"Car\"];\n        I3 [label=\"Start\nLocation\"];\n        I4 [label=\"End\nLocation\"];\n        I5 [label=\"Internet\"];\n        I6 [label=\"Smartphone\"];\n        I7 [label=\"Customer\nRequests\"];\n    }\n    subgraph cluster_P {\n        label=\"Process\";\n        P1 [label=\"The customer requests a taxi\"];\n        P2 [label=\"the driver arrives at\nthe pick-up location\"];\n        P3 [label=\"The driver picks the customer up\"];\n        P4 [label=\"The driver drives to destination\"];\n        P5 [label=\"The driver leaves the customer\nat the end point\"];\n    }\n    subgraph cluster_O {\n        label=\"Outputs\";\n        O2 [label=\"Customer travel experience\"];\n        O3 [label=\"Customer transfer\"];\n        O4 [label=\"Payment\"]\n    }\n    subgraph cluster_C {\n        label=\"Customers\";\n        C1 [label=\"Taxi User\"];\n    }\n    S1 -> I1 [style=invis];\n    I1 -> P1 [style=invis];\n    P1 -> O2 [style=invis];\n    O2 -> C1 [style=invis];\n    P1 -> P2 [constraint=false];\n    P2 -> P3 [constraint=false];\n    P3 -> P4 [constraint=false];\n    P4 -> P5 [constraint=false];\n}\n\n","config":{"engine":"dot","options":null}},"evals":[],"jsHooks":[]}</script>
 </div>
 <div class="section level2">
 <h2 id="data-to-use">Data to Use<a class="anchor" aria-label="anchor" href="#data-to-use"></a>
 </h2>
 <p>In this project, we will use a subset of the data available in the <a href="https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page" class="external-link">TLC
 Trip Record Data</a> from 2022 to 2023 for <strong>High Volume For-Hire
-Vehicle</strong> with the columns described below as describes the <a href="https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_hvfhs.pdf" class="external-link">source
-data dictonary</a>.</p>
+Vehicle</strong> with the columns described below in the <a href="https://www.nyc.gov/assets/tlc/downloads/pdf/data_dictionary_trip_records_hvfhs.pdf" class="external-link">data
+dictionary</a>.</p>
 <table class="table">
 <colgroup>
 <col width="48%">
@@ -254,54 +264,57 @@ vehicle (WAV)? (Y/N)</td>
 </tr>
 </tbody>
 </table>
-<p>Based on the variables available, we can divide them in to 2
-categories.</p>
+<p>Based on the variables available, we can divide them into 2
+categories:</p>
 <div class="section level3">
 <h3 id="available-before-arriving-at-the-pick-up-location">Available Before Arriving at the Pick-Up Location<a class="anchor" aria-label="anchor" href="#available-before-arriving-at-the-pick-up-location"></a>
 </h3>
-<p>They will be used as the predictors to train the model.</p>
+<p>They will be used as the predictors to train the model and can be
+divided into 2 groups:</p>
+<ol style="list-style-type: decimal">
+<li>Fixed during the experiment as they can not be changed from trip to
+trip.</li>
+</ol>
+<ul>
+<li><em>hvfhs_license_num</em></li>
+<li><em>wav_match_flag</em></li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>Valid for changing from trip to trip.</li>
+</ol>
 <ul>
 <li><strong><em>request_datetime</em></strong></li>
 <li><strong><em>PULocationID</em></strong></li>
 <li><strong><em>DOLocationID</em></strong></li>
-<li><em>hvfhs_license_num</em></li>
-<li><em>dispatching_base_num</em></li>
-<li><em>originating_base_num</em></li>
-<li><em>trip_miles</em></li>
+<li><em>airport_fee</em></li>
 <li><em>base_passenger_fare</em></li>
+<li><em>trip_miles</em></li>
 <li><em>shared_request_flag</em></li>
 <li><em>access_a_ride_flag</em></li>
 <li><em>wav_request_flag</em></li>
-<li><em>wav_match_flag</em></li>
+<li><em>dispatching_base_num</em></li>
+<li><em>originating_base_num</em></li>
 </ul>
 </div>
 <div class="section level3">
 <h3 id="available-after-ending-the-trip">Available After Ending the Trip<a class="anchor" aria-label="anchor" href="#available-after-ending-the-trip"></a>
 </h3>
-<p>They will be used to create the outcome variable needs to be
-predicted by the model.</p>
+<p>They can be used to create the <strong>outcome variable</strong>
+needed to be predicted by the model.</p>
 <ul>
 <li><strong><em>dropoff_datetime</em></strong></li>
 <li><strong><em>driver_pay</em></strong></li>
 <li><strong><em>tips</em></strong></li>
 <li><em>on_scene_datetime</em></li>
 <li><em>pickup_datetime</em></li>
+<li><em>congestion_surcharge</em></li>
 <li><em>trip_time</em></li>
 <li><em>tolls</em></li>
 <li><em>bcf</em></li>
 <li><em>sales_tax</em></li>
-<li><em>congestion_surcharge</em></li>
-<li><em>airport_fee</em></li>
 <li><em>shared_match_flag</em></li>
 </ul>
 </div>
-</div>
-<div class="section level2">
-<h2 id="project-objective">Project Objective<a class="anchor" aria-label="anchor" href="#project-objective"></a>
-</h2>
-<p>The objective of this project is to develop a strategy to select the
-best paid trips possible to get an consistent increase in NYC taxi
-drivers’ income.</p>
 </div>
 <div class="section level2">
 <h2 id="defining-business-metric">Defining Business Metric<a class="anchor" aria-label="anchor" href="#defining-business-metric"></a>
@@ -315,47 +328,53 @@ Hours Worked}}
 \]</span></p>
 </div>
 <div class="section level2">
-<h2 id="defining-outcome-to-predict">Defining Outcome to Predict<a class="anchor" aria-label="anchor" href="#defining-outcome-to-predict"></a>
-</h2>
-<p>Once we have a clear business problem to solve, it’s important to
-also make the translation into a <em>data science</em> problem that we
-can solve using the available data.</p>
-<p>As we want to increase earning and reduce time, we can use calculate
-and predict the <code>profit_rate</code> of each trip, to understand
-<strong>what is behind the best pay trips</strong>.</p>
-<p><span class="math display">\[
-\text{profit rate} = \frac{\text{driver pay} +
-\text{tips}}{\text{dropoff datetime}-\text{request datetime}}
-\]</span></p>
-</div>
-<div class="section level2">
 <h2 id="defining-metrics-base-line">Defining Metric’s Base Line<a class="anchor" aria-label="anchor" href="#defining-metrics-base-line"></a>
 </h2>
 <p>Defining the baseline based on this data is a challenge as the data
 doesn’t have any <em>unique id</em> to make the estimation, but we can
 <strong>run a simulation</strong> to estimate its value with a confident
 interval.</p>
-<p>The simulation will be based on the following assumptions related to
-the taxi drivers:</p>
+<p>The simulation will be based on the following
+<strong>assumptions</strong> related to the taxi drivers:</p>
+<ol style="list-style-type: decimal">
+<li>They can start to work:</li>
+</ol>
 <ul>
-<li>They can start to work from any zone of Manhattan, Brooklyn or
-Queens (the more active ones).</li>
-<li>They work from 8 to 12 hour every day.</li>
-<li>They can start to work in any month, weekday or hour.</li>
-<li>They just can take trips starting at the same zone they are after
-ending the their last trip</li>
-<li>The maximum waiting time before receiving a new trip request is 6
-minutes.</li>
-<li>If a taxi driver cannot find a new trip in the first 6 minutes, he
-can to extend 6 minutes more and drive to the closest zone to find a new
-trip, but if that doesn’t work in the next 6 minutes he can drive to any
-zone in the current Borough.</li>
+<li>From any zone of Manhattan, Brooklyn or Queens (the more active
+ones)</li>
+<li>From any month, weekday or hour.</li>
 </ul>
+<ol start="2" style="list-style-type: decimal">
+<li><p>The TLC license number (taxi company) needs to keep constant for
+all trips in workday.</p></li>
+<li><p>Only wheelchair-accessible vehicles can accept trips with that
+request.</p></li>
+<li><p>As we cannot estimate whether each zone have more active taxis
+than passengers we will assume that there is always more passengers than
+taxis and each taxi driver can <strong>accept the first requested
+trip</strong>.</p></li>
+<li><p>The taxis will find trips based on their time waiting and will
+take the first trip in their valid radius:</p></li>
+</ol>
+<ul>
+<li>0-1 Minute: Search within a 1-mile radius.</li>
+<li>1-3 Minutes: Expand search to a 3-mile radius if no trip is
+found.</li>
+<li>3-5 Minutes: Expand search to a 5-mile radius if still no trip is
+found.</li>
+<li>Keep adding 2 miles every two minutes until finding a trip.</li>
+</ul>
+<ol start="6" style="list-style-type: decimal">
+<li><p>They have a 30 minutes break after 4 hours working once ending
+the current trip.</p></li>
+<li><p>They will take their last trip after working 8 hours, without
+taking into consideration the 30 minutes break.</p></li>
+</ol>
 <div class="section level3">
-<h3 id="runing-trips-simulation">Runing trips simulation<a class="anchor" aria-label="anchor" href="#runing-trips-simulation"></a>
+<h3 id="running-trips-simulation">Running trips simulation<a class="anchor" aria-label="anchor" href="#running-trips-simulation"></a>
 </h3>
 <ol style="list-style-type: decimal">
-<li>Load the environment to use.</li>
+<li>Loading the functions to use.</li>
 </ol>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://here.r-lib.org/" class="external-link">here</a></span><span class="op">)</span></span>
@@ -363,208 +382,381 @@ zone in the current Borough.</li>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lubridate.tidyverse.org" class="external-link">lubridate</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/apache/arrow/" class="external-link">arrow</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/tidymodels/infer" class="external-link">infer</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dbi.r-dbi.org" class="external-link">DBI</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.duckdb.org/" class="external-link">duckdb</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://glue.tidyverse.org/" class="external-link">glue</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>datatable.print.nrows <span class="op">=</span> <span class="fl">15</span><span class="op">)</span></span></code></pre></div>
 <ol start="2" style="list-style-type: decimal">
-<li>Create a connection with the parquet files without loading them into
-RAM.</li>
+<li>Creating a connection with DuckDB.</li>
 </ol>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"raw-data/trip-data"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">NycTrips</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">scales</span><span class="fu">::</span><span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">" rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "444,906,103 rows"</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span>, dbdir <span class="op">=</span> <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"my-db.duckdb"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <ol start="3" style="list-style-type: decimal">
-<li>Use the locations ids of all the trips we can estimate the mean
-distance between each pear of locations.</li>
+<li>Importing the definition of each code zone.</li>
 </ol>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">LocationsMeanDistance</span> <span class="op">&lt;-</span></span>
-<span>  <span class="va">NycTrips</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">PULocationID</span>, <span class="va">DOLocationID</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>trip_miles_mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">trip_miles</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">LocationsMeanDistance</span></span>
-<span><span class="co">#&gt;        PULocationID DOLocationID trip_miles_mean</span></span>
-<span><span class="co">#&gt;               &lt;int&gt;        &lt;int&gt;           &lt;num&gt;</span></span>
-<span><span class="co">#&gt;     1:           17          225        1.425072</span></span>
-<span><span class="co">#&gt;     2:           37           37        1.364529</span></span>
-<span><span class="co">#&gt;     3:          225           21       10.125073</span></span>
-<span><span class="co">#&gt;     4:           25           17        2.546591</span></span>
-<span><span class="co">#&gt;     5:           49           79        4.344479</span></span>
-<span><span class="co">#&gt;    ---                                          </span></span>
-<span><span class="co">#&gt; 66201:           99           65       15.550000</span></span>
-<span><span class="co">#&gt; 66202:          154          174       28.210000</span></span>
-<span><span class="co">#&gt; 66203:          194          178       20.470000</span></span>
-<span><span class="co">#&gt; 66204:          110           67        8.830000</span></span>
-<span><span class="co">#&gt; 66205:          149          120       21.417000</span></span></code></pre></div>
-<ol start="4" style="list-style-type: decimal">
-<li>Define a named vectors that can return the closest location id for
-all locations ids in the dataset.</li>
-</ol>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ClosestZone</span> <span class="op">&lt;-</span></span>
-<span>  </span>
-<span>  <span class="co"># We are bind the same table after exchanging the id columns</span></span>
-<span>  <span class="co"># to make sure that all ids are present in both column for any</span></span>
-<span>  <span class="co"># pair of ids</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">LocationsMeanDistance</span>,</span>
-<span>        <span class="va">LocationsMeanDistance</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>PULocationID <span class="op">=</span> <span class="va">DOLocationID</span>,</span>
-<span>                                  DOLocationID <span class="op">=</span> <span class="va">PULocationID</span>,</span>
-<span>                                  <span class="va">trip_miles_mean</span><span class="op">)</span><span class="op">]</span></span>
-<span>  </span>
-<span>  <span class="co"># We need to make sure to place the lower distances at the top  </span></span>
-<span>  <span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span></span>
-<span>    <span class="co"># This expression help me to place distances between the same location</span></span>
-<span>    <span class="co"># at the bottom of the list with needing to open another []</span></span>
-<span>    <span class="op">(</span><span class="va">PULocationID</span> <span class="op">==</span> <span class="va">DOLocationID</span><span class="op">)</span>, </span>
-<span>    <span class="co"># Then we just need to pass the distance column</span></span>
-<span>    <span class="va">trip_miles_mean</span></span>
-<span>    <span class="op">)</span>, </span>
-<span>    </span>
-<span>    <span class="co"># This expression will select the first row of the data.table</span></span>
-<span>    <span class="co"># for each PULocationID to avoid duplication</span></span>
-<span>    <span class="va">.SD</span><span class="op">[</span><span class="fl">1L</span><span class="op">]</span>,</span>
-<span>    by <span class="op">=</span> <span class="st">"PULocationID"</span></span>
-<span>    </span>
-<span>  <span class="co"># To end the process we just need to create named vector</span></span>
-<span>  <span class="co"># that we will use to return the closest location for any  id</span></span>
-<span>  <span class="op">]</span><span class="op">[</span>, <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/setattr.html" class="external-link">setattr</a></span><span class="op">(</span><span class="va">DOLocationID</span>, <span class="st">"names"</span>, <span class="va">PULocationID</span><span class="op">)</span><span class="op">]</span></span>
-<span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ClosestZone</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 105 228 153 128  87 209 </span></span>
-<span><span class="co">#&gt; 228 105 128 153 209  87</span></span></code></pre></div>
-<ol start="5" style="list-style-type: decimal">
-<li>Restrict the location ids to use to the ones related to those
-zones.</li>
-</ol>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ValidZoneCodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">fread</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">ZoneCodesRef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">fread</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="st">"raw-data/taxi_zone_lookup.csv"</span><span class="op">)</span>,</span>
 <span>  colClasses <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"integer"</span>,</span>
 <span>                 <span class="st">"character"</span>,</span>
 <span>                 <span class="st">"character"</span>,</span>
-<span>                 <span class="st">"character"</span><span class="op">)</span></span>
-<span><span class="op">)</span><span class="op">[</span><span class="va">Borough</span> <span class="op"><a href="https://rdatatable.gitlab.io/data.table/reference/chmatch.html" class="external-link">%chin%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Manhattan"</span>, <span class="st">"Brooklyn"</span>, <span class="st">"Queens"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
-<ol start="6" style="list-style-type: decimal">
-<li>Link all possible zones for each location id based on each
-Borough.</li>
-</ol>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">BoroughZones</span> <span class="op">&lt;-</span></span>
-<span>  <span class="va">ValidZoneCodes</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">LocationID</span>,</span>
-<span>                     id_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">LocationID</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                 by <span class="op">=</span> <span class="st">"Borough"</span><span class="op">]</span></span>
+<span>                 <span class="st">"character"</span><span class="op">)</span>,</span>
+<span>  data.table <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  key <span class="op">=</span> <span class="st">"Borough"</span></span>
+<span><span class="op">)</span><span class="op">[</span>, <span class="va">Address</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">Zone</span>,</span>
+<span>                     <span class="va">Borough</span>,</span>
+<span>                     <span class="st">"New York"</span>,</span>
+<span>                     <span class="st">"United States"</span>,</span>
+<span>                     sep <span class="op">=</span> <span class="st">", "</span><span class="op">)</span></span>
+<span><span class="op">]</span><span class="op">[</span>, <span class="fu">tidygeocoder</span><span class="fu">::</span><span class="fu"><a href="https://jessecambon.github.io/tidygeocoder/reference/geocode.html" class="external-link">geocode</a></span><span class="op">(</span><span class="va">.SD</span>,</span>
+<span>                          address <span class="op">=</span> <span class="va">Address</span>,</span>
+<span>                          method <span class="op">=</span> <span class="st">'arcgis'</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">BoroughZones</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    Borough LocationID               id_list</span></span>
-<span><span class="co">#&gt;     &lt;char&gt;      &lt;int&gt;                &lt;list&gt;</span></span>
-<span><span class="co">#&gt; 1:  Queens          2  2, 7, 8, 9,10,15,...</span></span>
-<span><span class="co">#&gt; 2:  Queens          7  2, 7, 8, 9,10,15,...</span></span>
-<span><span class="co">#&gt; 3:  Queens          8  2, 7, 8, 9,10,15,...</span></span>
-<span><span class="co">#&gt; 4:  Queens          9  2, 7, 8, 9,10,15,...</span></span>
-<span><span class="co">#&gt; 5:  Queens         10  2, 7, 8, 9,10,15,...</span></span>
-<span><span class="co">#&gt; 6:  Queens         15  2, 7, 8, 9,10,15,...</span></span></code></pre></div>
-<ol start="7" style="list-style-type: decimal">
-<li>Defining when and where each simulation will start.</li>
-</ol>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Repeating the experiment to create confident intervals</span></span>
-<span><span class="va">NumRepetitions</span> <span class="op">&lt;-</span> <span class="fl">30L</span></span>
+<span><span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/setDT.html" class="external-link">setDT</a></span><span class="op">(</span><span class="va">ZoneCodesRef</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Defining the seed</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1558</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Defining the starting point of each repetition</span></span>
-<span><span class="va">RandomStartPoint</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/data.table.html" class="external-link">data.table</a></span><span class="op">(</span></span>
-<span>  simulation_day <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">NumRepetitions</span>,</span>
-<span>  PULocationID <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="va">ValidZoneCodes</span><span class="op">$</span><span class="va">LocationID</span>, <span class="va">NumRepetitions</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>  hours_to_work <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">8</span><span class="op">:</span><span class="fl">12</span>, <span class="va">NumRepetitions</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>  start_time <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/make_datetime.html" class="external-link">make_datetime</a></span><span class="op">(</span></span>
-<span>    year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022L</span>, <span class="fl">2023L</span><span class="op">)</span>, <span class="va">NumRepetitions</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>    month <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span>, <span class="va">NumRepetitions</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>    day <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">31</span>, <span class="va">NumRepetitions</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>    hour <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">23</span>, <span class="va">NumRepetitions</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
+<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbWriteTable.html" class="external-link">dbWriteTable</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"ZoneCodesRef"</span>, <span class="va">ZoneCodesRef</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">BoroughColors</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">'Manhattan'</span> <span class="op">=</span> <span class="st">'#e41a1c'</span>,</span>
+<span>  <span class="st">'Queens'</span> <span class="op">=</span> <span class="st">'#377eb8'</span>,</span>
+<span>  <span class="st">'Brooklyn'</span><span class="op">=</span> <span class="st">'#4daf4a'</span>,</span>
+<span>  <span class="st">'Bronx'</span> <span class="op">=</span> <span class="st">'#984ea3'</span>,</span>
+<span>  <span class="st">'Staten Island'</span> <span class="op">=</span> <span class="st">'#ff7f00'</span>,</span>
+<span>  <span class="st">'EWR'</span> <span class="op">=</span> <span class="st">'#a65628'</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">RandomStartPoint</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    simulation_day PULocationID hours_to_work          start_time</span></span>
-<span><span class="co">#&gt;             &lt;int&gt;        &lt;int&gt;         &lt;int&gt;              &lt;POSc&gt;</span></span>
-<span><span class="co">#&gt; 1:              1           82             8 2023-06-05 22:00:00</span></span>
-<span><span class="co">#&gt; 2:              2          216            10 2022-08-30 23:00:00</span></span>
-<span><span class="co">#&gt; 3:              3          149             8 2022-05-27 02:00:00</span></span>
-<span><span class="co">#&gt; 4:              4           91            10 2022-11-22 04:00:00</span></span>
-<span><span class="co">#&gt; 5:              5          219            10 2022-03-31 21:00:00</span></span>
-<span><span class="co">#&gt; 6:              6          108            12 2023-03-29 14:00:00</span></span></code></pre></div>
-<ol start="8" style="list-style-type: decimal">
-<li>Based on each start point simulate a day of work.</li>
+<span><span class="fu"><a href="../reference/plot_map.html">plot_map</a></span><span class="op">(</span></span>
+<span>  <span class="va">ZoneCodesRef</span>,</span>
+<span>  lng_var <span class="op">=</span> <span class="st">"long"</span>,</span>
+<span>  lat_var <span class="op">=</span> <span class="st">"lat"</span>,</span>
+<span>  color_var <span class="op">=</span> <span class="st">"Borough"</span>,</span>
+<span>  color_palette <span class="op">=</span> <span class="va">BoroughColors</span>,</span>
+<span>  radius <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  label_var <span class="op">=</span> <span class="st">"Zone"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-e5c8c404fe174e4c81bd" style="width:700px;height:432.632880098888px;"></div>
+<script type="application/json" data-for="htmlwidget-e5c8c404fe174e4c81bd">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addProviderTiles","args":["CartoDB",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircleMarkers","args":[[40.865255444798,40.874474,40.859355,40.866828,40.854452,40.847253,40.849644,40.87295,40.848039,40.8450729,40.835724,40.823483016595,40.846281,40.88913,40.847220162826,40.840182,40.813183,40.865463,40.826794,40.82432903472,40.82829,40.801046,40.850488,40.877819,40.837219,40.84454,40.873232,40.858592,40.791136,40.908427668621,40.823514264743,40.826665,40.822830514192,40.879375,40.849089915563,40.900114,40.891039391594,40.846396010024,40.832628,40.838629,40.83292452722,40.868716196746,40.89816,40.59606,40.62784,40.679552492536,40.607425,40.607425,40.683556,40.627328,40.574524,40.695212,40.7037594,40.66395,40.692736676847,40.692736676847,40.637203,40.680872,40.689825,40.688632,40.68446578315,40.576862,40.66636335251,40.66636335251,40.688488,40.697504,40.703689,40.617106,40.6439,40.651155,40.668229,40.664851670978,40.712202994898,40.649656004361,40.642674990022,40.630388,40.687187,40.672668,40.598533,40.659213,40.727094,40.587374,40.640556,40.68390699601,40.579887,40.583228224343,40.607178,40.622576,40.675848,40.582513988563,40.665818,40.662956,40.676183,40.658523,40.675151,40.589144,40.697343747445,40.643375,40.69064398176,40.645012606691,40.645012606691,40.716239,40.70020724879,40.659668,43.06083,40.719283,40.7071937,40.715102,44.406314,40.8165089,40.793571676206,40.7833546,40.714459,40.714143561851,40.714143561851,40.745237,40.796681,40.796681,40.727263,40.708987,40.708987,40.738479,40.75529,40.690087359667,40.690087359667,40.690087359667,40.738545,40.70843269013,40.70843269013,40.823941,40.839969,40.753525759744,40.867699,40.8708575,40.7532511,40.801382102647,40.801382102647,40.772217073339,40.772217073339,40.719328,40.7141171,40.799135,40.78343,40.876959,40.734089,40.759924,40.75175,40.764914,40.747897,40.812259,40.747678,40.743103495679,40.796540205794,40.76298,40.7532511,40.724156,40.734891261808,40.75573114742,40.752533001974,40.716739,40.712465,40.756752,40.7365223,40.770412,40.770412,40.788463,40.788463,40.705739207415,40.705739207415,40.7532511,40.734089,40.7125943,40.77525,40.77525,40.60399,40.766892,40.775630039268,40.759949,40.679501714069,40.792398,40.765331,40.737894,40.565373,40.715013,40.609204,40.694313,40.78168,40.746385,40.746385,40.756509,40.763552,40.776768584441,40.7394,40.7394,40.605345,40.761532,40.734524,40.728293,40.682861,40.738593,40.744872,40.702737,40.589969791747,40.726286,40.714313,40.65863,40.751198,40.703343,40.720042,40.645827,40.709348,40.7240207,40.771127,40.675269,40.7416306,40.745378,40.724378,40.71716,40.766298,40.754809,40.74624,40.766892,40.680132,40.720416,40.738936,40.7564028,40.727244,40.699703,40.700508,40.577586,40.657555,40.69646,40.766414,40.69498,40.673501,40.758910498531,40.758910498531,40.779307,40.745221,40.781116,40.787486142812,40.692655,40.741519,40.5576147,40.6021443,40.602958514636,40.509596,40.528994,40.578831,40.548841897644,40.5512,40.617454,40.591099,40.635801594797,40.5769931,40.561759,40.63883167041,40.548648443967,40.642025,40.592303749762,40.625507,40.632678,40.621134],[-73.845771700673,-73.891606,-73.889791,-73.880796,-73.864812,-73.78649299999999,-73.89660600000001,-73.82656299999999,-73.820138,-73.9140333,-73.89204599999999,-73.919618533178,-73.888924,-73.83554100000001,-73.78376964533101,-73.926451,-73.890956,-73.90849799999999,-73.892922,-73.913772178947,-73.90703999999999,-73.91024299999999,-73.904951,-73.87958399999999,-73.859944,-73.83063,-73.80845100000001,-73.85124399999999,-73.884255,-73.903682467488,-73.811282782462,-73.873903,-73.806646072828,-73.90748600000001,-73.91765309723399,-73.879324,-73.90051330968799,-73.856148479949,-73.925358,-73.881145,-73.862138663967,-73.863893749488,-73.86736000000001,-73.996289,-74.02927,-73.95425499135401,-73.99529099999999,-73.99529099999999,-73.98437199999999,-73.992959,-73.96066500000001,-73.99307399999999,-73.970523,-73.91024400000001,-73.92388384406399,-73.92388384406399,-73.897582,-73.998885,-73.965219,-73.999422,-74.002973307917,-73.98265000000001,-73.952262694835,-73.952262694835,-73.87520499999999,-73.98226699999999,-73.984624,-74.014346,-73.938259,-73.918143,-73.878389,-73.89406821684901,-73.967796951986,-73.95263815427001,-73.957629242571,-73.930053,-73.974637,-73.990009,-73.959181,-73.99624300000001,-73.946729,-73.95976,-73.976876,-73.95761999020201,-73.947722,-73.887043260089,-73.922301,-73.962801,-73.91654200000001,-73.96718508020901,-73.975841,-73.953773,-73.966292,-73.9734089,-74.009607,-73.943623,-73.96310638190199,-73.877972,-73.933587658614,-74.008623724866,-74.008623724866,-73.95853,-73.96216862326401,-73.995166,-77.10167,-73.989349,-74.0174549,-74.015953,-74.08613,-73.9465587,-73.92164411805599,-73.9649732,-73.99958599999999,-73.987150197566,-73.987150197566,-74.00596400000001,-73.934912,-73.934912,-73.98265499999999,-74.012162,-74.012162,-73.98993299999999,-73.994923,-74.045269557498,-74.045269557498,-74.045269557498,-73.980411,-74.013411099924,-74.013411099924,-73.94855099999999,-73.933898,-74.00195396386501,-73.921221,-73.920129,-74.00380989999999,-73.95005716308501,-73.95005716308501,-73.982905733919,-73.982905733919,-73.997314,-73.9895618,-73.966674,-73.96625,-73.91007,-74.008489,-73.980419,-73.97080699999999,-73.985108,-73.98917299999999,-73.962108,-73.97878300000001,-73.98738752304899,-73.91935853469801,-73.94908100000001,-74.00380989999999,-74.001121,-73.976981271912,-73.96184499229901,-73.993220007047,-74.002066,-73.99230300000001,-73.967151,-73.9907688,-73.96220700000001,-73.96220700000001,-73.981065,-73.981065,-74.015340206974,-74.015340206974,-74.00380989999999,-74.008489,-74.0097957,-73.947621,-73.947621,-73.83541,-73.921387,-73.92594690953599,-73.796497,-73.777732605587,-73.777376,-73.771907,-73.725095,-73.88359,-73.802775,-73.81796199999999,-73.737522,-73.842308,-73.859909,-73.859909,-73.733429,-73.872517,-73.749050576709,-73.877906,-73.877906,-73.755259,-73.831114,-73.838577,-73.844612,-73.88448099999999,-73.78765,-73.711119,-73.871104,-73.804536682463,-73.800015,-73.76657299999999,-73.843621,-73.890258,-73.800194,-73.78605899999999,-73.7778119,-73.829686,-73.8230167,-73.8653178,-73.732055,-73.95687409999999,-73.932194,-73.904365,-73.87954000000001,-73.814233,-73.858906,-73.759783,-73.921387,-73.846869,-73.743233,-73.82839199999999,-73.94864560000001,-73.861571,-73.834551,-73.90016900000001,-73.843867,-73.735664,-73.75958199999999,-73.896908,-73.790086,-73.816058,-73.762229160743,-73.762229160743,-73.906823,-73.921127,-73.812009,-73.79119697225499,-73.856503,-73.906324,-74.1970218,-74.05558980000001,-74.099889888475,-74.25026699999999,-74.197644,-74.1878172,-74.143726508836,-74.13182500000001,-74.07898900000001,-74.164272,-74.152379680005,-74.0805725,-74.119894,-74.138500820895,-74.21072835941401,-74.09514799999999,-74.071082995588,-74.075985,-74.116848,-74.133736],3,null,null,{"interactive":true,"className":"","stroke":true,"color":["#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#A65628","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#A65628","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00"],"fillOpacity":0.2},null,null,null,null,["Allerton/Pelham Gardens","Bedford Park","Belmont","Bronx Park","Bronxdale","City Island","Claremont/Bathgate","Co-Op City","Country Club","Crotona Park","Crotona Park East","East Concourse/Concourse Village","East Tremont","Eastchester","Fordham South","Highbridge","Hunts Point","Kingsbridge Heights","Longwood","Melrose South","Morrisania/Melrose","Mott Haven/Port Morris","Mount Hope","Norwood","Parkchester","Pelham Bay","Pelham Bay Park","Pelham Parkway","Rikers Island","Riverdale/North Riverdale/Fieldston","Schuylerville/Edgewater Park","Soundview/Bruckner","Soundview/Castle Hill","Spuyten Duyvil/Kingsbridge","University Heights/Morris Heights","Van Cortlandt Park","Van Cortlandt Village","Van Nest/Morris Park","West Concourse","West Farms/Bronx River","Westchester Village/Unionport","Williamsbridge/Olinville","Woodlawn/Wakefield","Bath Beach","Bay Ridge","Bedford","Bensonhurst East","Bensonhurst West","Boerum Hill","Borough Park","Brighton Beach","Brooklyn Heights","Brooklyn Navy Yard","Brownsville","Bushwick North","Bushwick South","Canarsie","Carroll Gardens","Clinton Hill","Cobble Hill","Columbia Street","Coney Island","Crown Heights North","Crown Heights South","Cypress Hills","Downtown Brooklyn/MetroTech","DUMBO/Vinegar Hill","Dyker Heights","East Flatbush/Farragut","East Flatbush/Remsen Village","East New York","East New York/Pennsylvania Avenue","East Williamsburg","Erasmus","Flatbush/Ditmas Park","Flatlands","Fort Greene","Gowanus","Gravesend","Green-Wood Cemetery","Greenpoint","Homecrest","Kensington","Madison","Manhattan Beach","Marine Park/Floyd Bennett Field","Marine Park/Mill Basin","Midwood","Ocean Hill","Ocean Parkway South","Park Slope","Prospect-Lefferts Gardens","Prospect Heights","Prospect Park","Red Hook","Sheepshead Bay","South Williamsburg","Starrett City","Stuyvesant Heights","Sunset Park East","Sunset Park West","Williamsburg (North Side)","Williamsburg (South Side)","Windsor Terrace","Newark Airport","Alphabet City","Battery Park","Battery Park City","Bloomingdale","Central Harlem","Central Harlem North","Central Park","Chinatown","Clinton East","Clinton West","East Chelsea","East Harlem North","East Harlem South","East Village","Financial District North","Financial District South","Flatiron","Garment District","Governor's Island/Ellis Island/Liberty Island","Governor's Island/Ellis Island/Liberty Island","Governor's Island/Ellis Island/Liberty Island","Gramercy","Greenwich Village North","Greenwich Village South","Hamilton Heights","Highbridge Park","Hudson Sq","Inwood","Inwood Hill Park","Kips Bay","Lenox Hill East","Lenox Hill West","Lincoln Square East","Lincoln Square West","Little Italy/NoLiTa","Lower East Side","Manhattan Valley","Manhattanville","Marble Hill","Meatpacking/West Village West","Midtown Center","Midtown East","Midtown North","Midtown South","Morningside Heights","Murray Hill","Penn Station/Madison Sq West","Randalls Island","Roosevelt Island","Seaport","SoHo","Stuy Town/Peter Cooper Village","Sutton Place/Turtle Bay North","Times Sq/Theatre District","TriBeCa/Civic Center","Two Bridges/Seward Park","UN/Turtle Bay South","Union Sq","Upper East Side North","Upper East Side South","Upper West Side North","Upper West Side South","Washington Heights North","Washington Heights South","West Chelsea/Hudson Yards","West Village","World Trade Center","Yorkville East","Yorkville West","Jamaica Bay","Astoria","Astoria Park","Auburndale","Baisley Park","Bay Terrace/Fort Totten","Bayside","Bellerose","Breezy Point/Fort Tilden/Riis Beach","Briarwood/Jamaica Hills","Broad Channel","Cambria Heights","College Point","Corona","Corona","Douglaston","East Elmhurst","East Flushing","Elmhurst","Elmhurst/Maspeth","Far Rockaway","Flushing","Flushing Meadows-Corona Park","Forest Hills","Forest Park/Highland Park","Fresh Meadows","Glen Oaks","Glendale","Hammels/Arverne","Hillcrest/Pomonok","Hollis","Howard Beach","Jackson Heights","Jamaica","Jamaica Estates","JFK Airport","Kew Gardens","Kew Gardens Hills","LaGuardia Airport","Laurelton","Long Island City/Hunters Point","Long Island City/Queens Plaza","Maspeth","Middle Village","Murray Hill-Queens","North Corona","Oakland Gardens","Old Astoria","Ozone Park","Queens Village","Queensboro Hill","Queensbridge/Ravenswood","Rego Park","Richmond Hill","Ridgewood","Rockaway Park","Rosedale","Saint Albans","Saint Michaels Cemetery/Woodside","South Jamaica","South Ozone Park","Springfield Gardens North","Springfield Gardens South","Steinway","Sunnyside","Whitestone","Willets Point","Woodhaven","Woodside","Arden Heights","Arrochar/Fort Wadsworth","Bloomfield/Emerson Hill","Charleston/Tottenville","Eltingville/Annadale/Prince's Bay","Freshkills Park","Great Kills","Great Kills Park","Grymes Hill/Clifton","Heartland Village/Todt Hill","Mariners Harbor","New Dorp/Midland Beach","Oakwood","Port Richmond","Rossville/Woodrow","Saint George/New Brighton","South Beach/Dongan Hills","Stapleton","West Brighton","Westerleigh"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addLegend","args":[{"colors":["#984EA3","#4DAF4A","#A65628","#E41A1C","#377EB8","#FF7F00"],"labels":["Bronx","Brooklyn","EWR","Manhattan","Queens","Staten Island"],"na_color":null,"na_label":"NA","opacity":0.5,"position":"topleft","type":"factor","title":null,"extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[40.509596,44.406314],"lng":[-77.10167,-73.711119]}},"evals":[],"jsHooks":[]}</script><ol start="4" style="list-style-type: decimal">
+<li>As we saw before there are we need to fix some problems with the
+locations.</li>
+</ol>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ZoneCodesRefClean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/copy.html" class="external-link">copy</a></span><span class="op">(</span><span class="va">ZoneCodesRef</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Corrected by looking the location on Google Maps</span></span>
+<span><span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="va">Zone</span> <span class="op">==</span> <span class="st">"Bloomingdale"</span>,</span>
+<span>                  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lat"</span>, <span class="st">"long"</span><span class="op">)</span> <span class="op">:=</span> <span class="fu">.</span><span class="op">(</span><span class="fl">40.7987912430794</span>, </span>
+<span>                                        <span class="op">-</span><span class="fl">73.96978865023877</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="va">Zone</span> <span class="op">==</span> <span class="st">"Newark Airport"</span>,</span>
+<span>                  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lat"</span>, <span class="st">"long"</span><span class="op">)</span> <span class="op">:=</span> <span class="fu">.</span><span class="op">(</span><span class="fl">40.689499</span>,</span>
+<span>                                        <span class="op">-</span><span class="fl">74.174484</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="va">Zone</span> <span class="op">==</span> <span class="st">"Governor's Island"</span>, </span>
+<span>                  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lat"</span>, <span class="st">'long'</span><span class="op">)</span> <span class="op">:=</span> <span class="fu">.</span><span class="op">(</span><span class="fl">40.68759208028148</span>,</span>
+<span>                                        <span class="op">-</span><span class="fl">74.02010657167092</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="va">Zone</span> <span class="op">==</span> <span class="st">"Ellis Island"</span>, </span>
+<span>                  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lat"</span>, <span class="st">'long'</span><span class="op">)</span> <span class="op">:=</span> <span class="fu">.</span><span class="op">(</span><span class="fl">40.69930943708351</span>,</span>
+<span>                                        <span class="op">-</span><span class="fl">74.03975375195799</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="va">Zone</span> <span class="op">==</span> <span class="st">"Liberty Island"</span>, </span>
+<span>                  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lat"</span>, <span class="st">'long'</span><span class="op">)</span> <span class="op">:=</span> <span class="fu">.</span><span class="op">(</span><span class="fl">40.689975518189954</span>,</span>
+<span>                                        <span class="op">-</span><span class="fl">74.04541235583368</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Consolidating Zone names with same locations</span></span>
+<span><span class="va">ZoneCodesRefClean</span><span class="op">[</span>, <span class="va">Zone</span> <span class="op">:=</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/fcase.html" class="external-link">fcase</a></span><span class="op">(</span></span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7L</span>, <span class="fl">179L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"(Old) Astoria"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21L</span>, <span class="fl">22L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Bensonhurst (East|West)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">36L</span>, <span class="fl">37L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Bushwick (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">41L</span>, <span class="fl">42L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Central Harlem (North)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">48L</span>, <span class="fl">50L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Clinton (East|West)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">61L</span>, <span class="fl">62L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Crown Heights (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">71L</span>, <span class="fl">72L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"East Flatbush (Farragut|Remsen Village)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">74L</span>, <span class="fl">75L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"East Harlem (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">82L</span>, <span class="fl">83L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Elmhurst (Maspeth)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">87L</span>, <span class="fl">88L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Financial District (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">113L</span>, <span class="fl">114L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Greenwich Village (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">140L</span>, <span class="fl">141L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Lenox Hill (East|West)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">142L</span>, <span class="fl">143L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Lincoln Square (East|West)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">158L</span>, <span class="fl">249L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"(Meatpacking) West Village"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">177L</span>, <span class="fl">178L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Ocean (Hill|Parkway South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">218L</span>, <span class="fl">219L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Springfield Gardens (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">227L</span>, <span class="fl">228L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Sunset Park (East|West)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">236L</span>, <span class="fl">237L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Upper East Side (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">238L</span>, <span class="fl">239L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Upper West Side (North|South)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">262L</span>, <span class="fl">263L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"Yorkville (East|West)"</span>,</span>
+<span>  </span>
+<span>  <span class="va">LocationID</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">264L</span>, <span class="fl">265L</span><span class="op">)</span>,</span>
+<span>  <span class="st">"NA"</span>,</span>
+<span>  </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">TRUE</span>, times <span class="op">=</span> <span class="va">.N</span><span class="op">)</span>, </span>
+<span>  <span class="va">Zone</span></span>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/plot_map.html">plot_map</a></span><span class="op">(</span></span>
+<span>  <span class="va">ZoneCodesRefClean</span>,</span>
+<span>  lng_var <span class="op">=</span> <span class="st">"long"</span>,</span>
+<span>  lat_var <span class="op">=</span> <span class="st">"lat"</span>,</span>
+<span>  color_var <span class="op">=</span> <span class="st">"Borough"</span>,</span>
+<span>  color_palette <span class="op">=</span> <span class="va">BoroughColors</span>,</span>
+<span>  radius <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  label_var <span class="op">=</span> <span class="st">"Zone"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="leaflet html-widget html-fill-item" id="htmlwidget-36aa3d2a04d42bbc2145" style="width:700px;height:432.632880098888px;"></div>
+<script type="application/json" data-for="htmlwidget-36aa3d2a04d42bbc2145">{"x":{"options":{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}}},"calls":[{"method":"addTiles","args":["https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",null,null,{"minZoom":0,"maxZoom":18,"tileSize":256,"subdomains":"abc","errorTileUrl":"","tms":false,"noWrap":false,"zoomOffset":0,"zoomReverse":false,"opacity":1,"zIndex":1,"detectRetina":false,"attribution":"&copy; <a href=\"https://openstreetmap.org/copyright/\">OpenStreetMap<\/a>,  <a href=\"https://opendatacommons.org/licenses/odbl/\">ODbL<\/a>"}]},{"method":"addProviderTiles","args":["CartoDB",null,null,{"errorTileUrl":"","noWrap":false,"detectRetina":false}]},{"method":"addCircleMarkers","args":[[40.865255444798,40.874474,40.859355,40.866828,40.854452,40.847253,40.849644,40.87295,40.848039,40.8450729,40.835724,40.823483016595,40.846281,40.88913,40.847220162826,40.840182,40.813183,40.865463,40.826794,40.82432903472,40.82829,40.801046,40.850488,40.877819,40.837219,40.84454,40.873232,40.858592,40.791136,40.908427668621,40.823514264743,40.826665,40.822830514192,40.879375,40.849089915563,40.900114,40.891039391594,40.846396010024,40.832628,40.838629,40.83292452722,40.868716196746,40.89816,40.59606,40.62784,40.679552492536,40.607425,40.607425,40.683556,40.627328,40.574524,40.695212,40.7037594,40.66395,40.692736676847,40.692736676847,40.637203,40.680872,40.689825,40.688632,40.68446578315,40.576862,40.66636335251,40.66636335251,40.688488,40.697504,40.703689,40.617106,40.6439,40.651155,40.668229,40.664851670978,40.712202994898,40.649656004361,40.642674990022,40.630388,40.687187,40.672668,40.598533,40.659213,40.727094,40.587374,40.640556,40.68390699601,40.579887,40.583228224343,40.607178,40.622576,40.675848,40.582513988563,40.665818,40.662956,40.676183,40.658523,40.675151,40.589144,40.697343747445,40.643375,40.69064398176,40.645012606691,40.645012606691,40.716239,40.70020724879,40.659668,40.689499,40.719283,40.7071937,40.715102,40.7987912430794,40.8165089,40.793571676206,40.7833546,40.714459,40.714143561851,40.714143561851,40.745237,40.796681,40.796681,40.727263,40.708987,40.708987,40.738479,40.75529,40.690087359667,40.690087359667,40.690087359667,40.738545,40.70843269013,40.70843269013,40.823941,40.839969,40.753525759744,40.867699,40.8708575,40.7532511,40.801382102647,40.801382102647,40.772217073339,40.772217073339,40.719328,40.7141171,40.799135,40.78343,40.876959,40.734089,40.759924,40.75175,40.764914,40.747897,40.812259,40.747678,40.743103495679,40.796540205794,40.76298,40.7532511,40.724156,40.734891261808,40.75573114742,40.752533001974,40.716739,40.712465,40.756752,40.7365223,40.770412,40.770412,40.788463,40.788463,40.705739207415,40.705739207415,40.7532511,40.734089,40.7125943,40.77525,40.77525,40.60399,40.766892,40.775630039268,40.759949,40.679501714069,40.792398,40.765331,40.737894,40.565373,40.715013,40.609204,40.694313,40.78168,40.746385,40.746385,40.756509,40.763552,40.776768584441,40.7394,40.7394,40.605345,40.761532,40.734524,40.728293,40.682861,40.738593,40.744872,40.702737,40.589969791747,40.726286,40.714313,40.65863,40.751198,40.703343,40.720042,40.645827,40.709348,40.7240207,40.771127,40.675269,40.7416306,40.745378,40.724378,40.71716,40.766298,40.754809,40.74624,40.766892,40.680132,40.720416,40.738936,40.7564028,40.727244,40.699703,40.700508,40.577586,40.657555,40.69646,40.766414,40.69498,40.673501,40.758910498531,40.758910498531,40.779307,40.745221,40.781116,40.787486142812,40.692655,40.741519,40.5576147,40.6021443,40.602958514636,40.509596,40.528994,40.578831,40.548841897644,40.5512,40.617454,40.591099,40.635801594797,40.5769931,40.561759,40.63883167041,40.548648443967,40.642025,40.592303749762,40.625507,40.632678,40.621134],[-73.845771700673,-73.891606,-73.889791,-73.880796,-73.864812,-73.78649299999999,-73.89660600000001,-73.82656299999999,-73.820138,-73.9140333,-73.89204599999999,-73.919618533178,-73.888924,-73.83554100000001,-73.78376964533101,-73.926451,-73.890956,-73.90849799999999,-73.892922,-73.913772178947,-73.90703999999999,-73.91024299999999,-73.904951,-73.87958399999999,-73.859944,-73.83063,-73.80845100000001,-73.85124399999999,-73.884255,-73.903682467488,-73.811282782462,-73.873903,-73.806646072828,-73.90748600000001,-73.91765309723399,-73.879324,-73.90051330968799,-73.856148479949,-73.925358,-73.881145,-73.862138663967,-73.863893749488,-73.86736000000001,-73.996289,-74.02927,-73.95425499135401,-73.99529099999999,-73.99529099999999,-73.98437199999999,-73.992959,-73.96066500000001,-73.99307399999999,-73.970523,-73.91024400000001,-73.92388384406399,-73.92388384406399,-73.897582,-73.998885,-73.965219,-73.999422,-74.002973307917,-73.98265000000001,-73.952262694835,-73.952262694835,-73.87520499999999,-73.98226699999999,-73.984624,-74.014346,-73.938259,-73.918143,-73.878389,-73.89406821684901,-73.967796951986,-73.95263815427001,-73.957629242571,-73.930053,-73.974637,-73.990009,-73.959181,-73.99624300000001,-73.946729,-73.95976,-73.976876,-73.95761999020201,-73.947722,-73.887043260089,-73.922301,-73.962801,-73.91654200000001,-73.96718508020901,-73.975841,-73.953773,-73.966292,-73.9734089,-74.009607,-73.943623,-73.96310638190199,-73.877972,-73.933587658614,-74.008623724866,-74.008623724866,-73.95853,-73.96216862326401,-73.995166,-74.17448400000001,-73.989349,-74.0174549,-74.015953,-73.96978865023877,-73.9465587,-73.92164411805599,-73.9649732,-73.99958599999999,-73.987150197566,-73.987150197566,-74.00596400000001,-73.934912,-73.934912,-73.98265499999999,-74.012162,-74.012162,-73.98993299999999,-73.994923,-74.045269557498,-74.045269557498,-74.045269557498,-73.980411,-74.013411099924,-74.013411099924,-73.94855099999999,-73.933898,-74.00195396386501,-73.921221,-73.920129,-74.00380989999999,-73.95005716308501,-73.95005716308501,-73.982905733919,-73.982905733919,-73.997314,-73.9895618,-73.966674,-73.96625,-73.91007,-74.008489,-73.980419,-73.97080699999999,-73.985108,-73.98917299999999,-73.962108,-73.97878300000001,-73.98738752304899,-73.91935853469801,-73.94908100000001,-74.00380989999999,-74.001121,-73.976981271912,-73.96184499229901,-73.993220007047,-74.002066,-73.99230300000001,-73.967151,-73.9907688,-73.96220700000001,-73.96220700000001,-73.981065,-73.981065,-74.015340206974,-74.015340206974,-74.00380989999999,-74.008489,-74.0097957,-73.947621,-73.947621,-73.83541,-73.921387,-73.92594690953599,-73.796497,-73.777732605587,-73.777376,-73.771907,-73.725095,-73.88359,-73.802775,-73.81796199999999,-73.737522,-73.842308,-73.859909,-73.859909,-73.733429,-73.872517,-73.749050576709,-73.877906,-73.877906,-73.755259,-73.831114,-73.838577,-73.844612,-73.88448099999999,-73.78765,-73.711119,-73.871104,-73.804536682463,-73.800015,-73.76657299999999,-73.843621,-73.890258,-73.800194,-73.78605899999999,-73.7778119,-73.829686,-73.8230167,-73.8653178,-73.732055,-73.95687409999999,-73.932194,-73.904365,-73.87954000000001,-73.814233,-73.858906,-73.759783,-73.921387,-73.846869,-73.743233,-73.82839199999999,-73.94864560000001,-73.861571,-73.834551,-73.90016900000001,-73.843867,-73.735664,-73.75958199999999,-73.896908,-73.790086,-73.816058,-73.762229160743,-73.762229160743,-73.906823,-73.921127,-73.812009,-73.79119697225499,-73.856503,-73.906324,-74.1970218,-74.05558980000001,-74.099889888475,-74.25026699999999,-74.197644,-74.1878172,-74.143726508836,-74.13182500000001,-74.07898900000001,-74.164272,-74.152379680005,-74.0805725,-74.119894,-74.138500820895,-74.21072835941401,-74.09514799999999,-74.071082995588,-74.075985,-74.116848,-74.133736],3,null,null,{"interactive":true,"className":"","stroke":true,"color":["#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#A65628","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00"],"weight":5,"opacity":0.5,"fill":true,"fillColor":["#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#984EA3","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#4DAF4A","#A65628","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#E41A1C","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#377EB8","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00","#FF7F00"],"fillOpacity":0.2},null,null,null,null,["Allerton/Pelham Gardens","Bedford Park","Belmont","Bronx Park","Bronxdale","City Island","Claremont/Bathgate","Co-Op City","Country Club","Crotona Park","Crotona Park East","East Concourse/Concourse Village","East Tremont","Eastchester","Fordham South","Highbridge","Hunts Point","Kingsbridge Heights","Longwood","Melrose South","Morrisania/Melrose","Mott Haven/Port Morris","Mount Hope","Norwood","Parkchester","Pelham Bay","Pelham Bay Park","Pelham Parkway","Rikers Island","Riverdale/North Riverdale/Fieldston","Schuylerville/Edgewater Park","Soundview/Bruckner","Soundview/Castle Hill","Spuyten Duyvil/Kingsbridge","University Heights/Morris Heights","Van Cortlandt Park","Van Cortlandt Village","Van Nest/Morris Park","West Concourse","West Farms/Bronx River","Westchester Village/Unionport","Williamsbridge/Olinville","Woodlawn/Wakefield","Bath Beach","Bay Ridge","Bedford","Bensonhurst (East|West)","Bensonhurst (East|West)","Boerum Hill","Borough Park","Brighton Beach","Brooklyn Heights","Brooklyn Navy Yard","Brownsville","Bushwick (North|South)","Bushwick (North|South)","Canarsie","Carroll Gardens","Clinton Hill","Cobble Hill","Columbia Street","Coney Island","Crown Heights (North|South)","Crown Heights (North|South)","Cypress Hills","Downtown Brooklyn/MetroTech","DUMBO/Vinegar Hill","Dyker Heights","East Flatbush (Farragut|Remsen Village)","East Flatbush (Farragut|Remsen Village)","East New York","East New York/Pennsylvania Avenue","East Williamsburg","Erasmus","Flatbush/Ditmas Park","Flatlands","Fort Greene","Gowanus","Gravesend","Green-Wood Cemetery","Greenpoint","Homecrest","Kensington","Madison","Manhattan Beach","Marine Park/Floyd Bennett Field","Marine Park/Mill Basin","Midwood","Ocean (Hill|Parkway South)","Ocean (Hill|Parkway South)","Park Slope","Prospect-Lefferts Gardens","Prospect Heights","Prospect Park","Red Hook","Sheepshead Bay","South Williamsburg","Starrett City","Stuyvesant Heights","Sunset Park (East|West)","Sunset Park (East|West)","Williamsburg (North Side)","Williamsburg (South Side)","Windsor Terrace","Newark Airport","Alphabet City","Battery Park","Battery Park City","Bloomingdale","Central Harlem (North)","Central Harlem (North)","Central Park","Chinatown","Clinton (East|West)","Clinton (East|West)","East Chelsea","East Harlem (North|South)","East Harlem (North|South)","East Village","Financial District (North|South)","Financial District (North|South)","Flatiron","Garment District","Governor's Island/Ellis Island/Liberty Island","Governor's Island/Ellis Island/Liberty Island","Governor's Island/Ellis Island/Liberty Island","Gramercy","Greenwich Village (North|South)","Greenwich Village (North|South)","Hamilton Heights","Highbridge Park","Hudson Sq","Inwood","Inwood Hill Park","Kips Bay","Lenox Hill (East|West)","Lenox Hill (East|West)","Lincoln Square (East|West)","Lincoln Square (East|West)","Little Italy/NoLiTa","Lower East Side","Manhattan Valley","Manhattanville","Marble Hill","(Meatpacking) West Village","Midtown Center","Midtown East","Midtown North","Midtown South","Morningside Heights","Murray Hill","Penn Station/Madison Sq West","Randalls Island","Roosevelt Island","Seaport","SoHo","Stuy Town/Peter Cooper Village","Sutton Place/Turtle Bay North","Times Sq/Theatre District","TriBeCa/Civic Center","Two Bridges/Seward Park","UN/Turtle Bay South","Union Sq","Upper East Side (North|South)","Upper East Side (North|South)","Upper West Side (North|South)","Upper West Side (North|South)","Washington Heights North","Washington Heights South","West Chelsea/Hudson Yards","(Meatpacking) West Village","World Trade Center","Yorkville (East|West)","Yorkville (East|West)","Jamaica Bay","(Old) Astoria","Astoria Park","Auburndale","Baisley Park","Bay Terrace/Fort Totten","Bayside","Bellerose","Breezy Point/Fort Tilden/Riis Beach","Briarwood/Jamaica Hills","Broad Channel","Cambria Heights","College Point","Corona","Corona","Douglaston","East Elmhurst","East Flushing","Elmhurst (Maspeth)","Elmhurst (Maspeth)","Far Rockaway","Flushing","Flushing Meadows-Corona Park","Forest Hills","Forest Park/Highland Park","Fresh Meadows","Glen Oaks","Glendale","Hammels/Arverne","Hillcrest/Pomonok","Hollis","Howard Beach","Jackson Heights","Jamaica","Jamaica Estates","JFK Airport","Kew Gardens","Kew Gardens Hills","LaGuardia Airport","Laurelton","Long Island City/Hunters Point","Long Island City/Queens Plaza","Maspeth","Middle Village","Murray Hill-Queens","North Corona","Oakland Gardens","(Old) Astoria","Ozone Park","Queens Village","Queensboro Hill","Queensbridge/Ravenswood","Rego Park","Richmond Hill","Ridgewood","Rockaway Park","Rosedale","Saint Albans","Saint Michaels Cemetery/Woodside","South Jamaica","South Ozone Park","Springfield Gardens (North|South)","Springfield Gardens (North|South)","Steinway","Sunnyside","Whitestone","Willets Point","Woodhaven","Woodside","Arden Heights","Arrochar/Fort Wadsworth","Bloomfield/Emerson Hill","Charleston/Tottenville","Eltingville/Annadale/Prince's Bay","Freshkills Park","Great Kills","Great Kills Park","Grymes Hill/Clifton","Heartland Village/Todt Hill","Mariners Harbor","New Dorp/Midland Beach","Oakwood","Port Richmond","Rossville/Woodrow","Saint George/New Brighton","South Beach/Dongan Hills","Stapleton","West Brighton","Westerleigh"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addLegend","args":[{"colors":["#984EA3","#4DAF4A","#A65628","#E41A1C","#377EB8","#FF7F00"],"labels":["Bronx","Brooklyn","EWR","Manhattan","Queens","Staten Island"],"na_color":null,"na_label":"NA","opacity":0.5,"position":"topleft","type":"factor","title":null,"extra":null,"layerId":null,"className":"info legend","group":null}]}],"limits":{"lat":[40.509596,40.908427668621],"lng":[-74.25026699999999,-73.711119]}},"evals":[],"jsHooks":[]}</script><p>Now we can save the results in the database.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbWriteTable.html" class="external-link">dbWriteTable</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"ZoneCodesRefClean"</span>, <span class="va">ZoneCodesRefClean</span><span class="op">)</span></span></code></pre></div>
+<ol start="5" style="list-style-type: decimal">
+<li>Creating and saving a temporal table listing all possible
+combinations of locations in <strong>Manhattan</strong>,
+<strong>Brooklyn</strong> and <strong>Queens</strong> (they have more
+trips that other borough in NYC) to be used as filter.</li>
+</ol>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ZoneCodesFilter</span> <span class="op">&lt;-</span></span>
+<span>  <span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Manhattan"</span>, <span class="st">"Brooklyn"</span>, <span class="st">"Queens"</span><span class="op">)</span>, </span>
+<span>                    on <span class="op">=</span> <span class="st">"Borough"</span>,</span>
+<span>                    <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/J.html" class="external-link">CJ</a></span><span class="op">(</span>PULocationID <span class="op">=</span> <span class="va">LocationID</span>,</span>
+<span>                       DOLocationID <span class="op">=</span> <span class="va">LocationID</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbWriteTable.html" class="external-link">dbWriteTable</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"ZoneCodesFilter"</span>, <span class="va">ZoneCodesFilter</span><span class="op">)</span></span></code></pre></div>
+<ol start="5" style="list-style-type: decimal">
+<li>Selecting at random the first trip of each simulation. It’s
+important to know that even after setting the seed 3518 <strong>the
+sample is not reproducible</strong>, so I saved the data as part of the
+package of this project, so you have a easy access by running
+<code>proyect.nyc.taxi::SimulationStartDay</code>, this why creating the
+<code>trip_id</code> column was so important.</li>
 </ol>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">BaseLineSimulation</span> <span class="op">&lt;-</span></span>
-<span>  <span class="va">RandomStartPoint</span><span class="op">[</span></span>
-<span>    , <span class="fu"><a href="../reference/simulate_trips.html">simulate_trips</a></span><span class="op">(</span><span class="va">NycTrips</span>,</span>
-<span>                     start_datetime <span class="op">=</span> <span class="va">start_time</span>,</span>
-<span>                     start_zone <span class="op">=</span> <span class="va">PULocationID</span>,</span>
-<span>                     minutes_next_trip <span class="op">=</span> <span class="fl">6L</span>,</span>
-<span>                     end_datetime <span class="op">=</span> <span class="va">start_time</span> <span class="op">+</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/period.html" class="external-link">hours</a></span><span class="op">(</span><span class="va">hours_to_work</span><span class="op">)</span>,</span>
-<span>                     valid_end_zones <span class="op">=</span> <span class="va">ValidZoneCodes</span><span class="op">$</span><span class="va">LocationID</span>,</span>
-<span>                     closest_zone <span class="op">=</span> <span class="va">ClosestZone</span>,</span>
-<span>                     borough_zones <span class="op">=</span> <span class="va">BoroughZones</span><span class="op">)</span>,</span>
-<span>    by <span class="op">=</span> <span class="st">"simulation_day"</span></span>
-<span>  <span class="op">]</span><span class="op">[</span><span class="va">RandomStartPoint</span>, on <span class="op">=</span> <span class="st">"simulation_day"</span><span class="op">]</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">SimulationStartDayQuery</span> <span class="op">&lt;-</span> <span class="st">"</span></span>
+<span><span class="st">SELECT t1.*</span></span>
+<span><span class="st">FROM NycTrips t1</span></span>
+<span><span class="st">INNER JOIN ZoneCodesFilter t2</span></span>
+<span><span class="st">  ON t1.PULocationID = t2.PULocationID AND</span></span>
+<span><span class="st">     t1.DOLocationID = t2.DOLocationID</span></span>
+<span><span class="st">WHERE t1.year = 2023</span></span>
+<span><span class="st">USING SAMPLE reservoir(60 ROWS) REPEATABLE (3518);</span></span>
+<span><span class="st">"</span></span>
+<span></span>
+<span><span class="va">SimulationStartDay</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">SimulationStartDayQuery</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/setDT.html" class="external-link">setDT</a></span><span class="op">(</span><span class="va">SimulationStartDay</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">pillar</span><span class="fu">::</span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">SimulationStartDay</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; Rows: 60</span></span>
+<span><span class="co">#&gt; Columns: 28</span></span>
+<span><span class="co">#&gt; $ trip_id              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 218799831, 260042034, 260089720, 295417701, 33294…</span></span>
+<span><span class="co">#&gt; $ hvfhs_license_num    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "HV0005", "HV0003", "HV0003", "HV0003", "HV0003",…</span></span>
+<span><span class="co">#&gt; $ dispatching_base_num <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "B03406", "B03404", "B03404", "B03404", "B03404",…</span></span>
+<span><span class="co">#&gt; $ originating_base_num <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> NA, "B03404", "B03404", "B03404", "B03404", "B034…</span></span>
+<span><span class="co">#&gt; $ request_datetime     <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span> 2023-01-12 20:14:29, 2023-03-17 18:50:16, 2023-0…</span></span>
+<span><span class="co">#&gt; $ on_scene_datetime    <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span> NA, 2023-03-17 18:54:32, 2023-03-17 19:19:38, 20…</span></span>
+<span><span class="co">#&gt; $ pickup_datetime      <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span> 2023-01-12 20:17:48, 2023-03-17 18:55:06, 2023-0…</span></span>
+<span><span class="co">#&gt; $ dropoff_datetime     <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span> 2023-01-12 20:25:49, 2023-03-17 19:11:35, 2023-0…</span></span>
+<span><span class="co">#&gt; $ PULocationID         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 50, 80, 11, 112, 135, 76, 107, 230, 79, 210, 260,…</span></span>
+<span><span class="co">#&gt; $ DOLocationID         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 230, 17, 14, 37, 10, 63, 138, 246, 198, 61, 138, …</span></span>
+<span><span class="co">#&gt; $ trip_miles           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.993, 2.250, 4.520, 2.120, 5.370, 3.260, 9.740, …</span></span>
+<span><span class="co">#&gt; $ trip_time            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 481, 989, 1732, 670, 988, 1001, 1000, 894, 2900, …</span></span>
+<span><span class="co">#&gt; $ base_passenger_fare  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 8.26, 16.93, 24.00, 13.38, 20.57, 16.96, 29.59, 1…</span></span>
+<span><span class="co">#&gt; $ tolls                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 6.94, 0.00, 0…</span></span>
+<span><span class="co">#&gt; $ bcf                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.25, 0.51, 0.72, 0.40, 0.57, 0.47, 1.07, 0.35, 1…</span></span>
+<span><span class="co">#&gt; $ sales_tax            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.73, 1.50, 2.13, 1.19, 1.83, 1.51, 3.46, 1.13, 3…</span></span>
+<span><span class="co">#&gt; $ congestion_surcharge <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 2.75, 0.00, 0.00, 0.00, 0.00, 0.00, 2.75, 2.75, 2…</span></span>
+<span><span class="co">#&gt; $ airport_fee          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 2.50, 0.00, 0…</span></span>
+<span><span class="co">#&gt; $ tips                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 0.00, 0.00, 0.00, 0.00, 3.44, 0.00, 0.00, 0.00, 1…</span></span>
+<span><span class="co">#&gt; $ driver_pay           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 5.47, 13.32, 22.22, 9.09, 16.41, 13.69, 22.25, 10…</span></span>
+<span><span class="co">#&gt; $ shared_request_flag  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N", "N", "N", "N", "N", "N", "N", "N", "N", "N",…</span></span>
+<span><span class="co">#&gt; $ shared_match_flag    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N", "N", "N", "N", "N", "N", "N", "N", "N", "N",…</span></span>
+<span><span class="co">#&gt; $ access_a_ride_flag   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N", " ", " ", " ", " ", " ", " ", " ", " ", "N",…</span></span>
+<span><span class="co">#&gt; $ wav_request_flag     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N", "N", "N", "N", "N", "N", "N", "N", "N", "N",…</span></span>
+<span><span class="co">#&gt; $ wav_match_flag       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "N", "N", "N", "N", "N", "N", "N", "N", "N", "N",…</span></span>
+<span><span class="co">#&gt; $ month                <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "01", "03", "03", "05", "07", "08", "09", "10", "…</span></span>
+<span><span class="co">#&gt; $ year                 <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 2023, 2023, 2023, 2023, 2023, 2023, 2023, 2023, 2…</span></span>
+<span><span class="co">#&gt; $ performance_per_hour <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> 28.95882, 37.49179, 43.00645, 31.16571, 65.74057,…</span></span></code></pre>
+<p>We can also confirm that the sample satisfy the initial
+restrictions:</p>
+<ul>
+<li>All trips are from 2023.</li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">SimulationStartDay</span><span class="op">[</span>, <span class="va">.N</span>, <span class="va">year</span><span class="op">]</span></span>
+<span><span class="co">#&gt;     year     N</span></span>
+<span><span class="co">#&gt;    &lt;num&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1:  2023    60</span></span></code></pre></div>
+<ul>
+<li>The trips begin on the expected boroughs.</li>
+</ul>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="va">SimulationStartDay</span>, </span>
+<span>                  on <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LocationID"</span> <span class="op">=</span> <span class="st">"PULocationID"</span><span class="op">)</span>,</span>
+<span>                  <span class="va">.N</span>,</span>
+<span>                  by <span class="op">=</span> <span class="st">"Borough"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;      Borough     N</span></span>
+<span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1: Manhattan    25</span></span>
+<span><span class="co">#&gt; 2:  Brooklyn    22</span></span>
+<span><span class="co">#&gt; 3:    Queens    13</span></span></code></pre></div>
+<ul>
+<li>The trips end on the expected boroughs.</li>
+</ul>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ZoneCodesRefClean</span><span class="op">[</span><span class="va">SimulationStartDay</span>, </span>
+<span>                  on <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"LocationID"</span> <span class="op">=</span> <span class="st">"DOLocationID"</span><span class="op">)</span>,</span>
+<span>                  <span class="va">.N</span>,</span>
+<span>                  by <span class="op">=</span> <span class="st">"Borough"</span><span class="op">]</span></span>
+<span><span class="co">#&gt;      Borough     N</span></span>
+<span><span class="co">#&gt;       &lt;char&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1: Manhattan    24</span></span>
+<span><span class="co">#&gt; 2:  Brooklyn    17</span></span>
+<span><span class="co">#&gt; 3:    Queens    19</span></span></code></pre></div>
+<p>Now we can conclude that the initial data <strong>satisfy the
+assumption 1</strong>.</p>
+<ol start="6" style="list-style-type: decimal">
+<li>Calculating the mean distance present from one location to other if
+it has <strong>fewer than 10 miles</strong>.</li>
+</ol>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">MeanDistanceQuery</span> <span class="op">&lt;-</span> <span class="st">"</span></span>
+<span><span class="st">CREATE TABLE PointMeanDistance AS</span></span>
+<span><span class="st"></span></span>
+<span><span class="st">-- Selecting all avaiable from trips that don't start and end at same point</span></span>
+<span><span class="st">WITH ListOfPoints AS (</span></span>
+<span><span class="st">  SELECT </span></span>
+<span><span class="st">    t1.PULocationID,</span></span>
+<span><span class="st">    t1.DOLocationID,</span></span>
+<span><span class="st">    AVG(t1.trip_miles) AS trip_miles_mean</span></span>
+<span><span class="st">  FROM </span></span>
+<span><span class="st">    NycTrips t1</span></span>
+<span><span class="st">  INNER JOIN</span></span>
+<span><span class="st">    ZoneCodesFilter t2</span></span>
+<span><span class="st">    ON t1.PULocationID = t2.PULocationID AND</span></span>
+<span><span class="st">       t1.DOLocationID = t2.DOLocationID</span></span>
+<span><span class="st">  WHERE</span></span>
+<span><span class="st">    t1.PULocationID &lt;&gt; t1.DOLocationID AND</span></span>
+<span><span class="st">    t1.year = 2023</span></span>
+<span><span class="st">  GROUP BY </span></span>
+<span><span class="st">    t1.PULocationID, </span></span>
+<span><span class="st">    t1.DOLocationID</span></span>
+<span><span class="st">  HAVING </span></span>
+<span><span class="st">    AVG(t1.trip_miles) &lt;= 7</span></span>
+<span><span class="st">),</span></span>
+<span><span class="st"></span></span>
+<span><span class="st">-- Defining all available distances</span></span>
+<span><span class="st">ListOfPointsComplete AS (</span></span>
+<span><span class="st">  SELECT</span></span>
+<span><span class="st">    PULocationID,</span></span>
+<span><span class="st">    DOLocationID,</span></span>
+<span><span class="st">    trip_miles_mean</span></span>
+<span><span class="st">  FROM ListOfPoints</span></span>
+<span><span class="st">  UNION ALL</span></span>
+<span><span class="st">  SELECT</span></span>
+<span><span class="st">    DOLocationID AS PULocationID,</span></span>
+<span><span class="st">    PULocationID AS DOLocationID,</span></span>
+<span><span class="st">    trip_miles_mean</span></span>
+<span><span class="st">  FROM ListOfPoints</span></span>
+<span><span class="st">),</span></span>
+<span><span class="st">NumeredRows AS (</span></span>
+<span><span class="st">  SELECT</span></span>
+<span><span class="st">    PULocationID,</span></span>
+<span><span class="st">    DOLocationID,</span></span>
+<span><span class="st">    trip_miles_mean,</span></span>
+<span><span class="st">    row_number() OVER (PARTITION BY PULocationID, DOLocationID) AS n_row</span></span>
+<span><span class="st">  FROM ListOfPointsComplete</span></span>
+<span><span class="st">)</span></span>
+<span><span class="st"></span></span>
+<span><span class="st">-- Selecting the first combination of distances</span></span>
+<span><span class="st">SELECT </span></span>
+<span><span class="st">  PULocationID,</span></span>
+<span><span class="st">  DOLocationID,</span></span>
+<span><span class="st">  trip_miles_mean</span></span>
+<span><span class="st">FROM NumeredRows</span></span>
+<span><span class="st">WHERE n_row = 1</span></span>
+<span><span class="st">ORDER BY PULocationID, trip_miles_mean;</span></span>
+<span><span class="st">"</span></span>
+<span></span>
+<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbExecute.html" class="external-link">dbExecute</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">MeanDistanceQuery</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbListTables.html" class="external-link">dbListTables</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+<ol start="7" style="list-style-type: decimal">
+<li>Running the simulation.</li>
+</ol>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">SimulationHourlyWage</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate_trips.html">simulate_trips</a></span><span class="op">(</span><span class="va">con</span>, <span class="va">SimulationStartDay</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">DailyHourlyWage</span> <span class="op">&lt;-</span></span>
+<span>  <span class="va">SimulationHourlyWage</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>`Daily Hourly Wage` <span class="op">=</span> </span>
+<span>                             <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">sim_driver_pay</span> <span class="op">+</span> <span class="va">sim_tips</span><span class="op">)</span> <span class="op">/</span></span>
+<span>                             <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">as.double</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/difftime.html" class="external-link">difftime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">sim_dropoff_datetime</span><span class="op">)</span>, </span>
+<span>                                                <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">sim_request_datetime</span><span class="op">)</span>,</span>
+<span>                                                units <span class="op">=</span> <span class="st">"hours"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                       by <span class="op">=</span> <span class="st">"simulation_id"</span><span class="op">]</span></span>
+<span></span>
+<span></span>
+<span><span class="va">DailyHourlyWage</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">`Daily Hourly Wage`</span><span class="op">)</span>,</span>
+<span>                 bins <span class="op">=</span> <span class="fl">10</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/breaks_width.html" class="external-link">breaks_width</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_light</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="02-business-understanding_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
 </div>
 <div class="section level3">
-<h3 id="infering-daily-hourly-wage">Infering Daily Hourly Wage<a class="anchor" aria-label="anchor" href="#infering-daily-hourly-wage"></a>
+<h3 id="defining-a-condifence-interval">Defining a Condifence Interval<a class="anchor" aria-label="anchor" href="#defining-a-condifence-interval"></a>
 </h3>
-<p>After simulating 30 days, we can use <strong>bootstrap</strong> to
+<p>After simulating 60 days, we can use <strong>bootstrap</strong> to
 infer the distribution of the mean <strong>Daily Hourly Wage</strong>
 for any day in the year by following the next steps.</p>
 <ol style="list-style-type: decimal">
-<li>Calculate the <em>Daily Hourly Wage</em> for each simulated
-day.</li>
+<li>Resample with replacement a new 60 days hourly wage 3,000 times and
+calculate the mean of each resample.</li>
 </ol>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">SimulationHourlyWage</span> <span class="op">&lt;-</span></span>
-<span>  <span class="va">BaseLineSimulation</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>`Driver Pay` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">s_driver_pay</span><span class="op">)</span>,</span>
-<span>                         `Tips` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">s_tips</span><span class="op">)</span>,</span>
-<span>                         `Hours Worked` <span class="op">=</span> </span>
-<span>                           <span class="fu"><a href="https://rdrr.io/r/base/difftime.html" class="external-link">difftime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">s_dropoff_datetime</span><span class="op">)</span>,</span>
-<span>                                    <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">s_request_datetime</span><span class="op">)</span>,</span>
-<span>                                    units <span class="op">=</span> <span class="st">"hours"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>                           <span class="fu"><a href="https://rdrr.io/r/base/double.html" class="external-link">as.double</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                     by <span class="op">=</span> <span class="st">"simulation_day"</span><span class="op">]</span></span>
-<span></span>
-<span><span class="va">SimulationHourlyWage</span><span class="op">[</span>, <span class="va">`Daily Hourly Wage`</span> <span class="op">:=</span> <span class="op">(</span><span class="va">`Driver Pay`</span> <span class="op">+</span> <span class="va">Tips</span><span class="op">)</span> <span class="op">/</span> <span class="va">`Hours Worked`</span><span class="op">]</span></span>
-<span></span>
-<span><span class="va">SimulationHourlyWage</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">`Daily Hourly Wage`</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;     simulation_day Driver Pay  Tips Hours Worked Daily Hourly Wage</span></span>
-<span><span class="co">#&gt;              &lt;int&gt;      &lt;num&gt; &lt;num&gt;        &lt;num&gt;             &lt;num&gt;</span></span>
-<span><span class="co">#&gt;  1:              3     426.65 23.86     8.399722          53.63392</span></span>
-<span><span class="co">#&gt;  2:              7     490.49 53.23    10.982222          49.50911</span></span>
-<span><span class="co">#&gt;  3:             23     517.53 23.08    11.324722          47.73715</span></span>
-<span><span class="co">#&gt;  4:              5     464.62 21.22    10.188889          47.68332</span></span>
-<span><span class="co">#&gt;  5:             28     458.33 20.69    10.205833          46.93590</span></span>
-<span><span class="co">#&gt; ---                                                               </span></span>
-<span><span class="co">#&gt; 26:              1     303.72  9.55     8.242222          38.00795</span></span>
-<span><span class="co">#&gt; 27:             11     341.36  9.41     9.299444          37.71946</span></span>
-<span><span class="co">#&gt; 28:             19     390.97 17.91    11.051667          36.99713</span></span>
-<span><span class="co">#&gt; 29:              8     314.33  0.00     9.020556          34.84597</span></span>
-<span><span class="co">#&gt; 30:              4     284.98 27.45    10.417222          29.99168</span></span></code></pre></div>
-<ol start="2" style="list-style-type: decimal">
-<li>Then we need to resample with replacement a new 30 days hourly wage
-3,000 times and calculate the mean of each resample.</li>
-</ol>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1586</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">BootstrapHourlyWage</span> <span class="op">&lt;-</span></span>
-<span>  <span class="fu"><a href="https://infer.tidymodels.org/reference/specify.html" class="external-link">specify</a></span><span class="op">(</span><span class="va">SimulationHourlyWage</span>,</span>
+<span>  <span class="fu"><a href="https://infer.tidymodels.org/reference/specify.html" class="external-link">specify</a></span><span class="op">(</span><span class="va">DailyHourlyWage</span>,</span>
 <span>          <span class="va">`Daily Hourly Wage`</span> <span class="op">~</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://infer.tidymodels.org/reference/generate.html" class="external-link">generate</a></span><span class="op">(</span>reps <span class="op">=</span> <span class="fl">3000</span>, type <span class="op">=</span> <span class="st">"bootstrap"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://infer.tidymodels.org/reference/calculate.html" class="external-link">calculate</a></span><span class="op">(</span>stat <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
@@ -574,21 +766,21 @@ day.</li>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3,000 × 2</span></span></span>
 <span><span class="co">#&gt;    replicate  stat</span></span>
 <span><span class="co">#&gt;        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>         1  43.0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>         2  42.0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>         3  41.9</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         4  42.3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>         5  40.7</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>         6  42.5</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>         7  42.3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>         8  41.7</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>         9  42.3</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>        10  43.3</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>         1  44.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>         2  44.6</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>         3  46.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>         4  46.7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>         5  45.9</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>         6  46.7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>         7  47.0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>         8  48.7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>         9  46.4</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>        10  47.2</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2,990 more rows</span></span></span></code></pre></div>
-<ol start="3" style="list-style-type: decimal">
+<ol start="2" style="list-style-type: decimal">
 <li>Compute the 95% confident interval.</li>
 </ol>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">BootstrapInterval</span> <span class="op">&lt;-</span> </span>
 <span>  <span class="fu"><a href="https://infer.tidymodels.org/reference/get_confidence_interval.html" class="external-link">get_ci</a></span><span class="op">(</span><span class="va">BootstrapHourlyWage</span>, </span>
 <span>         level <span class="op">=</span> <span class="fl">0.95</span>,</span>
@@ -598,11 +790,11 @@ day.</li>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;   lower_ci upper_ci</span></span>
 <span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     40.4     43.6</span></span></code></pre></div>
-<ol start="4" style="list-style-type: decimal">
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     44.3     50.7</span></span></code></pre></div>
+<ol start="3" style="list-style-type: decimal">
 <li>Visualize the estimated distribution.</li>
 </ol>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://infer.tidymodels.org/reference/visualize.html" class="external-link">visualize</a></span><span class="op">(</span><span class="va">BootstrapHourlyWage</span><span class="op">)</span><span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://infer.tidymodels.org/reference/shade_confidence_interval.html" class="external-link">shade_ci</a></span><span class="op">(</span>endpoints <span class="op">=</span> <span class="va">BootstrapInterval</span>,</span>
 <span>           color <span class="op">=</span> <span class="st">"#2c77BF"</span>,</span>
@@ -613,8 +805,6 @@ day.</li>
 <span>                 <span class="va">BootstrapInterval</span><span class="op">[</span><span class="fl">2L</span><span class="op">]</span><span class="op">[[</span><span class="fl">1L</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="fl">0.4</span><span class="op">)</span>,</span>
 <span>           label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">BootstrapInterval</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span>accuracy <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span><span class="op">)</span><span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"Mean Hourly Wage Distribution"</span>,</span>
-<span>       subtitle <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Mean: "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">SimulationHourlyWage</span><span class="op">$</span><span class="va">`Daily Hourly Wage`</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>                         <span class="st">", Median: "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">SimulationHourlyWage</span><span class="op">$</span><span class="va">`Daily Hourly Wage`</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span><span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_light</a></span><span class="op">(</span><span class="op">)</span><span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>panel.grid.minor.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -627,94 +817,67 @@ day.</li>
 <div class="section level2">
 <h2 id="business-case">Business Case<a class="anchor" aria-label="anchor" href="#business-case"></a>
 </h2>
-<p>As the base driver’s pay increases with costs like gas, time and
-car’s maintenance the best way to increase total earning is by
-increasing the amount of <strong>tips</strong> that drivers receive from
-customers.</p>
-<p>Based on <em>424,389,806</em> trips recorded between 2022 and 2023,
-drivers received <em>$469,726,156</em> in tips which is only 5% of the
-total earnings for that year, for example if a driver improves his
-strategy to increase his tips to <strong>20%</strong> of his current
-earning he could be earning <strong>$1,334.08 extra monthly</strong> if
-he works 8 hours a day, 5 days each week and earns <em>$41.69</em>
-hourly.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">NycTrips</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarize</a></span><span class="op">(</span>number_of_trips <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">PULocationID</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>            trips_with_tips <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tips</span> <span class="op">&gt;</span> <span class="fl">0</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>            driver_net_earning <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">driver_pay</span> <span class="op">+</span> <span class="va">tips</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
-<span>            tips <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tips</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/as.data.table.html" class="external-link">as.data.table</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="op">(</span>\<span class="op">(</span><span class="va">dt</span><span class="op">)</span>  <span class="va">dt</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span>number_of_trips <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span><span class="va">number_of_trips</span><span class="op">)</span>,</span>
-<span>                 trips_with_tips <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/comma.html" class="external-link">comma</a></span><span class="op">(</span><span class="va">trips_with_tips</span><span class="op">)</span>,</span>
-<span>                 trips_with_tips_pct <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/percent_format.html" class="external-link">percent</a></span><span class="op">(</span><span class="va">trips_with_tips</span> <span class="op">/</span> <span class="va">number_of_trips</span><span class="op">)</span>,</span>
-<span>                 driver_net_earning <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/dollar_format.html" class="external-link">dollar</a></span><span class="op">(</span><span class="va">driver_net_earning</span><span class="op">)</span>,</span>
-<span>                 tips <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/dollar_format.html" class="external-link">dollar</a></span><span class="op">(</span><span class="va">tips</span><span class="op">)</span>,</span>
-<span>                 tips_pct <span class="op">=</span> <span class="fu"><a href="https://scales.r-lib.org/reference/percent_format.html" class="external-link">percent</a></span><span class="op">(</span><span class="va">tips</span><span class="op">/</span><span class="va">driver_net_earning</span><span class="op">)</span><span class="op">)</span></span>
-<span>          <span class="op">]</span><span class="op">[</span>, <span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/melt.data.table.html" class="external-link">melt</a></span><span class="op">(</span><span class="va">.SD</span>, </span>
-<span>                   measure.vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">.SD</span><span class="op">)</span>,</span>
-<span>                   variable.name <span class="op">=</span> <span class="st">"Summary Variable"</span>,</span>
-<span>                   value.name <span class="op">=</span> <span class="st">"Total"</span>,</span>
-<span>                   variable.factor <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">]</span></span>
-<span>   <span class="op">)</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       Summary Variable          Total</span></span>
-<span><span class="co">#&gt;                 &lt;char&gt;         &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1:     number_of_trips    444,906,103</span></span>
-<span><span class="co">#&gt; 2:     trips_with_tips     88,628,047</span></span>
-<span><span class="co">#&gt; 3: trips_with_tips_pct            20%</span></span>
-<span><span class="co">#&gt; 4:  driver_net_earning $8,984,638,813</span></span>
-<span><span class="co">#&gt; 5:                tips   $495,422,184</span></span>
-<span><span class="co">#&gt; 6:            tips_pct             6%</span></span></code></pre></div>
+<p>Based on the simulation’s results we can confirm that the average
+earnings for a taxi driver per hour goes between 44.32 and 50.63, but
+that doesn’t represent the highest values observed on the
+simulation.</p>
+<p>If we can check the simulation results we can confirm that a 10% of
+the simulated days presented earnings over the 60 dollars per hour.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">DailyHourlyWage</span><span class="op">$</span><span class="va">`Daily Hourly Wage`</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span>probs <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span></span>
+<span><span class="co">#&gt;      90% </span></span>
+<span><span class="co">#&gt; 60.95187</span></span></code></pre></div>
+<p>If we can apply a strategy that can move the
+<code>Daily Hourly Wage</code> to 60 dollars per hour ($ = 20% $) if
+woud be a be a great change for many taxi driver if they apply this
+strategy.</p>
 </div>
 <div class="section level2">
-<h2 id="projects-side-benefits">Project’s Side Benefits<a class="anchor" aria-label="anchor" href="#projects-side-benefits"></a>
+<h2 id="ethical-considerations">Ethical Considerations<a class="anchor" aria-label="anchor" href="#ethical-considerations"></a>
 </h2>
-<p>It’s also important to consider that Taxi companies and customers can
-both benefit from drivers earning more tips in several ways:</p>
+<p>While this project aims to increase taxi driver earnings, it’s
+important to acknowledge that optimizing for driver profits could have
+significant downsides:</p>
 <ol style="list-style-type: decimal">
-<li>
-<strong>Taxi Companies</strong>:
-<ul>
-<li>
-<strong>Employee Satisfaction</strong>: Higher tips can lead to
-increased job satisfaction among drivers, which can improve their
-performance and reduce turnover rates.</li>
-<li>
-<strong>Company Reputation</strong>: If drivers are earning more
-tips, it could indicate that they are providing excellent service, which
-can enhance the company’s reputation.</li>
-<li>
-<strong>Customer Retention</strong>: Satisfied drivers are more
-likely to provide better customer service, which can lead to higher
-customer retention rates.</li>
-</ul>
-</li>
-<li>
-<strong>Customers</strong>:
-<ul>
-<li>
-<strong>Better Service</strong>: Drivers who earn more tips are
-often those who provide better service. This could mean cleaner
-vehicles, more courteous behavior, and a more enjoyable ride
-overall.</li>
-<li>
-<strong>Driver Availability</strong>: If the tip earnings are high,
-it could attract more drivers to work, potentially reducing wait times
-for customers.</li>
-<li>
-<strong>Safety</strong>: Drivers who are not worried about their
-earnings might be less likely to engage in risky behaviors (like
-speeding or working overly long shifts) to earn more.</li>
-</ul>
-</li>
+<li><p><strong>Reduced service quality:</strong> Drivers focusing solely
+on maximizing earnings may avoid less profitable areas or times,
+potentially leaving some passengers underserved.</p></li>
+<li><p><strong>Discrimination risks</strong>: An earnings-focused
+strategy could inadvertently lead to discriminatory practices if certain
+demographics or neighborhoods are perceived as less profitable.</p></li>
+<li><p><strong>Increased congestion</strong>: Drivers congregating in
+high-profit areas could worsen traffic in already busy parts of the
+city.</p></li>
 </ol>
+<p>In conclusion, this project was created to show my abilities as Data
+Scientist, but it is not a project that should be implemented due this
+considerations.</p>
+</div>
+<div class="section level2">
+<h2 id="defining-outcome-to-predict">Defining Outcome to Predict<a class="anchor" aria-label="anchor" href="#defining-outcome-to-predict"></a>
+</h2>
+<p>As a taxi driver only can take 2 decisions when working to increase
+their earnings:</p>
+<ol style="list-style-type: decimal">
+<li>When and where to start working.</li>
+<li>Accept or reject each individual trip request.</li>
+</ol>
+<p>To address the first decision, we need explore the factors that can
+improve the <code>performance_per_hour</code> of each trip.</p>
+<p>But to address the second question, we need to create the variable
+<code>best_trip_20_m</code> which shows 1 if the current trip is the
+best to take in the following 20 minutes.</p>
 </div>
 <div class="section level2">
 <h2 id="deliverables">Deliverables<a class="anchor" aria-label="anchor" href="#deliverables"></a>
 </h2>
-<p>A <strong>Shiny app</strong> which assists the drivers in focusing
-their attention on the better trips.</p>
+<ol style="list-style-type: decimal">
+<li><p>An HTML presentation, explaining the best places and times to
+start working as taxi drivers to increase your earnings.</p></li>
+<li><p>A <strong>Shiny app</strong> which assists the drivers reject o
+accept trips to increase their earnings.</p></li>
+</ol>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
