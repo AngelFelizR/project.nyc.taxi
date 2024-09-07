@@ -82,18 +82,141 @@ INNER JOIN ZoneCodesFilter t2
   ON t1.PULocationID = t2.PULocationID AND
      t1.DOLocationID = t2.DOLocationID
 WHERE t1.year = 2022
-USING SAMPLE 1% (system, 547548);
+USING SAMPLE 0.05% (system, 547548);
 "
 
 TrainingSample <- dbGetQuery(con, TrainingSampleQuery)
-
 setDT(TrainingSample)
+
+# Disconnecting and connecting for garbage collect
+DBI::dbDisconnect(con, shutdown = TRUE)
+con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
 ```
 
 Before saving the sample on DB, we need to create this function.
 
+Tengo que crear una funcion que determine si cancelar el trip actual es recomendable.
+
 ```{r}
 is_best_trip_20_min <- function() 5
+```
+
+
+
+```{r}
+
+TrainingSample |>
+  ggplot(aes(performance_per_hour)) +
+  geom_histogram() +
+  scale_x_log10()
+
+TrainingSample[,.(pay = cut_width(driver_pay + tips, 20),
+                  performance_per_hour)] |>
+  ggplot(aes(pay, performance_per_hour)) +
+  geom_boxplot()
+```
+
+Aqui algunos ejemplos para calcular la variable predictiva
+
+```r
+# Definir la función de decisión
+decidir_viaje <- function(tiempo_actual, duracion_actual, ganancia_actual, viajes_futuros) {
+  
+  # Calcular la ganancia por unidad de tiempo del viaje actual
+  ganancia_por_tiempo_actual <- ganancia_actual / duracion_actual
+  
+  # Inicializar una variable para almacenar el mejor viaje futuro
+  mejor_viaje_futuro <- NULL
+  mejor_ganancia_futuro <- -Inf
+  
+  # Iterar sobre los viajes futuros
+  for (viaje in viajes_futuros) {
+    
+    tiempo_futuro <- viaje$tiempo_inicio
+    duracion_futuro <- viaje$duracion
+    ganancia_futuro <- viaje$ganancia
+    
+    # Calcular el tiempo de espera hasta que empiece el viaje futuro
+    tiempo_espera <- tiempo_futuro - (tiempo_actual + duracion_actual)
+    
+    # Si el tiempo de espera es negativo, el viaje futuro no es posible
+    if (tiempo_espera >= 0) {
+      
+      # Calcular la ganancia por unidad de tiempo del viaje futuro
+      ganancia_por_tiempo_futuro <- ganancia_futuro / (duracion_futuro + tiempo_espera)
+      
+      # Verificar si es mejor que el mejor viaje futuro encontrado hasta ahora
+      if (ganancia_por_tiempo_futuro > mejor_ganancia_futuro) {
+        mejor_ganancia_futuro <- ganancia_por_tiempo_futuro
+        mejor_viaje_futuro <- viaje
+      }
+    }
+  }
+  
+  # Comparar la ganancia del viaje actual con la del mejor viaje futuro
+  if (!is.null(mejor_viaje_futuro) && mejor_ganancia_futuro > ganancia_por_tiempo_actual) {
+    return(list("decision" = "esperar", "viaje_futuro" = mejor_viaje_futuro))
+  } else {
+    return(list("decision" = "aceptar", "viaje_actual" = list("tiempo" = tiempo_actual, 
+                                                              "duracion" = duracion_actual, 
+                                                              "ganancia" = ganancia_actual)))
+  }
+}
+
+# Ejemplo de uso
+viajes_futuros <- list(
+  list(tiempo_inicio = 120, duracion = 30, ganancia = 50),
+  list(tiempo_inicio = 150, duracion = 40, ganancia = 80)
+)
+
+resultado <- decidir_viaje(tiempo_actual = 100, duracion_actual = 20, ganancia_actual = 30, viajes_futuros = viajes_futuros)
+
+print(resultado)
+
+```
+
+
+```sql
+WITH ViajesActualesGanancia AS (
+    -- Calculamos la ganancia por unidad de tiempo para los viajes actuales
+    SELECT 
+        id AS id_actual,
+        tiempo_inicio AS tiempo_inicio_actual,
+        duracion AS duracion_actual,
+        ganancia AS ganancia_actual,
+        ganancia / duracion AS ganancia_por_tiempo_actual
+    FROM ViajesActuales
+),
+ViajesFuturosGanancia AS (
+    -- Calculamos la ganancia por unidad de tiempo para los viajes futuros
+    SELECT 
+        id AS id_futuro,
+        tiempo_inicio AS tiempo_inicio_futuro,
+        duracion AS duracion_futuro,
+        ganancia AS ganancia_futuro,
+        ganancia / duracion AS ganancia_por_tiempo_futuro
+    FROM ViajesFuturos
+)
+SELECT 
+    v_actual.id_actual,
+    v_actual.ganancia_por_tiempo_actual,
+    v_futuro.id_futuro,
+    v_futuro.ganancia_por_tiempo_futuro,
+    v_futuro.tiempo_inicio_futuro - (v_actual.tiempo_inicio_actual + v_actual.duracion_actual) AS tiempo_espera_futuro,
+    (ganancia_futuro / (duracion_futuro + (v_futuro.tiempo_inicio_futuro - (v_actual.tiempo_inicio_actual + v_actual.duracion_actual)))) AS ganancia_por_tiempo_ajustada_futuro
+FROM 
+    ViajesActualesGanancia v_actual
+LEFT JOIN 
+    ViajesFuturosGanancia v_futuro
+ON 
+    v_futuro.tiempo_inicio_futuro >= (v_actual.tiempo_inicio_actual + v_actual.duracion_actual)
+-- Opcional: puedes filtrar solo por los viajes que superan en ganancia al viaje actual
+WHERE 
+    (ganancia_futuro / (duracion_futuro + (v_futuro.tiempo_inicio_futuro - (v_actual.tiempo_inicio_actual + v_actual.duracion_actual)))) > v_actual.ganancia_por_tiempo_actual
+ORDER BY 
+    id_actual, ganancia_por_tiempo_ajustada_futuro DESC
+LIMIT 1;
+
 ```
 
 
