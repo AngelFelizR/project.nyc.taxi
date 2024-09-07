@@ -181,7 +181,7 @@ CREATE TABLE NycTrips AS
     SELECT 
         ROW_NUMBER() OVER () AS trip_id,
         *,
-        (driver_pay + tips) / (EXTRACT(EPOCH FROM (dropoff_datetime - request_datetime)) / 3600) AS performance_per_hour
+        (driver_pay + tips) / (trip_time / 3600) AS performance_per_hour
     FROM {ParquetSource}
 ")
 

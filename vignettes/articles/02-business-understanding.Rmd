@@ -165,13 +165,13 @@ They will be used as the predictors to train the model and can be divided into 2
 
 They can be used to create the **outcome variable** needed to be predicted by the model.
 
-- ***dropoff_datetime***
+- ***trip_time***
 - ***driver_pay***
 - ***tips***
 - *on_scene_datetime*
 - *pickup_datetime*
+- *dropoff_datetime*
 - *congestion_surcharge*
-- *trip_time*
 - *tolls*
 - *bcf*
 - *sales_tax*
@@ -541,7 +541,7 @@ dbExecute(con, MeanDistanceQuery)
 dbListTables(con)
 ```
 
-```{r include=FALSE, eval=TRUE}
+```{r echo=FALSE}
 dbListTables(con)
 ```
 
@@ -620,7 +620,7 @@ visualize(BootstrapHourlyWage)+
 
 ## Business Case
 
-Based on the simulation's results we can confirm that the average earnings for a taxi driver per hour goes between 44.32 and 50.63, but that doesn't represent the highest values observed on the simulation.
+Based on the simulation's results we can confirm that the average earnings for a taxi driver per hour goes between 41.00 and 47.60, but that doesn't represent the highest values observed on the simulation.
 
 If we can check the simulation results we can confirm that a 10% of the simulated days presented earnings over the 60 dollars per hour.
 
@@ -629,7 +629,7 @@ DailyHourlyWage$`Daily Hourly Wage` |>
   quantile(probs = 0.9)
 ```
 
-If we can apply a strategy that can move the `Daily Hourly Wage` to 60 dollars per hour ($ \frac{60 - 50}{50} = 20\% $) if woud be a be a great change for many taxi driver if they apply this strategy.
+If we can apply a strategy that can move the `Daily Hourly Wage` to 60 dollars per hour ($ \frac{60 - 47.60}{50} = 26\% $) if would be a be a great change for many taxi driver if they apply this strategy.
 
 
 ## Ethical Considerations
