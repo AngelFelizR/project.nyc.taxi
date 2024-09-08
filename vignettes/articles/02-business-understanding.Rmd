@@ -549,7 +549,17 @@ dbListTables(con)
 
 ```{r}
 SimulationHourlyWage <- simulate_trips(con, SimulationStartDay)
+```
 
+8. Disconnecting from DB.
+
+```{r}
+dbDisconnect(con, shutdown = TRUE)
+```
+
+9. Showing simulation results.
+
+```{r}
 DailyHourlyWage <-
   SimulationHourlyWage[, .(`Daily Hourly Wage` = 
                              sum(sim_driver_pay + sim_tips) /

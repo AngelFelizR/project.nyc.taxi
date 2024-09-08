@@ -269,7 +269,8 @@ set.seed(1587)
 
 final_table =
   data.table::rbindlist(NycTripsList
-  )[, `:=`(driver_pay = runif(.N, 10, 60),
+  )[, `:=`(trip_time = difftime(dropoff_datetime, request_datetime, units = "secs") |> as.double(),
+           driver_pay = runif(.N, 10, 60),
            tips = runif(.N, 0, 10))]
 
 set.seed(NULL)
