@@ -10,45 +10,7 @@ simulate_trips = function(conn,
                           start_points,
                           model = NULL) {
 
-  # Do we have tables?
-  conn_tables = DBI::dbListTables(conn)
-
-  if(!all(c("NycTrips", "PointMeanDistance") %chin% conn_tables)){
-    stop("Missing NycTrips or PointMeanDistance on DB")
-  }
-
-  # Do the tables have the columns we need?
-
-  # Saving vector as we will need it later to confirm start points
-  min_trip_info = c('trip_id',
-                    'hvfhs_license_num',
-                    'wav_match_flag',
-                    'PULocationID',
-                    'DOLocationID',
-                    'request_datetime',
-                    'dropoff_datetime',
-                    'driver_pay',
-                    'tips')
-
-  check_db_columns(conn,
-                   "NycTrips",
-                   min_trip_info)
-  check_db_columns(conn,
-                   "PointMeanDistance",
-                   c('PULocationID',
-                     'DOLocationID',
-                     'trip_miles_mean'))
-
-  # Validating start trips
-  stopifnot("start_points must be a data.table" = data.table::is.data.table(start_points))
-
-  missing_trip_cols = setdiff(min_trip_info, names(start_points))
-
-  if(length(missing_trip_cols) > 0L) {
-    missing_trip_cols_collapse = paste0(missing_trip_cols, collapse = ", ")
-    stop("start_points is missing: ", missing_trip_cols_collapse)
-  }
-
+  validate_simulation_data(conn, start_points)
 
   # START simulation
 
@@ -88,7 +50,9 @@ simulate_trips = function(conn,
 
       # 3. CHANGES EVERY TIME WE CHECK FOR A NEW TRIP
       # After ending the first trip this is the current times
-      current_time = start_points$dropoff_datetime[simulation_i]
+      current_time =
+        start_points$request_datetime[simulation_i] +
+        lubridate::seconds(start_points$trip_time[simulation_i])
 
       # After ending the first trip this the current position
       current_position = start_points$DOLocationID[simulation_i]
@@ -139,9 +103,15 @@ simulate_trips = function(conn,
                   fill = TRUE)
 
           # Getting ready for a new search
-          current_time = utils::tail(trips_found$dropoff_datetime, 1L)
-          current_position = utils::tail(trips_found$DOLocationID, 1L)
+          current_time =
+            utils::tail(trips_found$request_datetime, 1L) +
+            utils::tail(lubridate::seconds(trips_found$trip_time), 1L)
+
+          current_position =
+            utils::tail(trips_found$DOLocationID, 1L)
+
           n_search_iteration = 0
+
           trip_time_limit = current_time + lubridate::minutes(1)
           trip_dist_limit = 1
 
@@ -187,6 +157,7 @@ simulate_trips = function(conn,
                                sim_DOLocationID = DOLocationID,
                                sim_request_datetime = request_datetime,
                                sim_dropoff_datetime = dropoff_datetime,
+                               sim_trip_time = trip_time,
                                sim_driver_pay = driver_pay,
                                sim_tips = tips)]
 

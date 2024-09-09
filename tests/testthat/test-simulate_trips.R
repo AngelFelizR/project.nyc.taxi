@@ -104,6 +104,7 @@ describe("simulate_trips()",{
                    "sim_DOLocationID",
                    "sim_request_datetime",
                    "sim_dropoff_datetime",
+                   "sim_trip_time",
                    "sim_driver_pay",
                    "sim_tips"))
 
