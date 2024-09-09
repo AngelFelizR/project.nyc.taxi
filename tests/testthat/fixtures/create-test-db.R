@@ -64,6 +64,7 @@ SimulationStartTrips = data.table::data.table(
   DOLocationID = 1,
   request_datetime = as.POSIXct("2023-01-12 20:14:29", tz = "UTC"),
   dropoff_datetime = StartTime,
+  trip_time = 680,
   driver_pay = c(5.47, 5.47),
   tips = 0
 
