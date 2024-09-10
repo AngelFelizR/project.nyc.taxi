@@ -1,19 +1,23 @@
 #' Confirm whether a taxi driver should take the current trip
 #'
 #' @param conn Duckdb connection to NycTrips and PointMeanDistance tables.
-#' @param start_points A data.table with the initial trips of each simulation.
+#' @param start_points A data.table all trips to evaluate.
+#' @param max_min Defines the time limit and distance to find better trips
+#' @param trip_criteria Defines the criteria we want to use when selecting a trip.
 #'
 #' @return A data.table.
 #' @export
-confirm_if_best_trip <- function(conn,
-                                 start_points,
-                                 max_min = 20) {
+set_take_current_trip <- function(conn,
+                                  start_points,
+                                  max_min = 15,
+                                  trip_criteria = c("one_trip", "median", "75%")) {
+
+  trip_criteria = match.arg(trip_criteria)
 
   validate_simulation_data(conn, start_points)
 
-
-  all_simulations_table =
-    lapply(1:nrow(start_points),\(simulation_i){
+  take_trip_confirmation =
+    sapply(1:nrow(start_points),\(simulation_i){
 
       # Defining values to keep constant
       taxi_company_code = start_points$hvfhs_license_num[simulation_i]
@@ -26,14 +30,16 @@ confirm_if_best_trip <- function(conn,
           "('N')"
         }
 
-      current_time = start_points$request_datetime[simulation_i]
+      # The current trip defines the current position, time and performance
       current_position = start_points$PULocationID[simulation_i]
+      current_time = start_points$request_datetime[simulation_i]
+      current_performace = start_points$performance_per_hour[simulation_i]
 
-      last_time_to_start_a_trip = current_time + lubridate::minutes(max_min)
-
-
-      # 4. LOOP FOR GETTINGG ALL TRIPS
-      while(current_time < last_time_to_start_a_trip) {
+      distance_time_limit =
+        seq(3, max_min, by = 2) |>
+        (\(x) if(!max_min %in% x) c(x, max_min) else x )() |>
+        (\(x) paste0("OR (t1.request_datetime <= (TIMESTAMP '",current_time,"' + INTERVAL ", x, " MINUTE) AND t2.trip_miles_mean <= ", x,")") )() |>
+        paste0(collapse = " ")
 
         # The query to extract information from DB
         query_to_find_trips = glue::glue("
@@ -46,8 +52,10 @@ confirm_if_best_trip <- function(conn,
         WHERE t1.hvfhs_license_num = '{taxi_company_code}'
         AND t1.wav_match_flag IN {can_take_wav}
         AND t1.request_datetime >= '{current_time}'
-        AND t1.request_datetime <= '{trip_time_limit}'
-        AND t2.trip_miles_mean <= {trip_dist_limit}
+        AND (
+         (t1.request_datetime <= (TIMESTAMP '{current_time}' + INTERVAL 1 MINUTE) AND t2.trip_miles_mean <= 1)
+         {distance_time_limit}
+        )
         ORDER BY t1.request_datetime
       ")
 
@@ -55,81 +63,22 @@ confirm_if_best_trip <- function(conn,
         trips_found = DBI::dbGetQuery(conn, query_to_find_trips)
         data.table::setDT(trips_found)
 
-        # Confirming if we found trips
-        if(nrow(trips_found) > 0){
+        trips_found[, waiting_secs := difftime(request_datetime, current_time, units = "secs") |> as.double()]
+        trips_found[, performance_per_hour := (driver_pay + tips) / ((trip_time + waiting_secs) / 3600)]
 
-          # PENDING - FILTER BASED ON PREDICTIONS
+        take_current_trip =
+          switch (trip_criteria,
+                  "one_trip" = !any(trips_found$performance_per_hour > current_performace),
+                  "median" = stats::median(trips_found$performance_per_hour, na.rm = TRUE) < current_performace,
+                  "75%" = stats::quantile(trips_found$performance_per_hour, prob = 0.75, na.rm = TRUE) < current_performace) |>
+          as.integer()
 
-          # Accepting the first requested trip
-          simulated_trips =
-            rbind(simulated_trips,
-                  trips_found[1L, ],
-                  use.names = TRUE,
-                  fill = TRUE)
+      return(take_current_trip)
 
-          # Getting ready for a new search
-          current_time =
-            utils::tail(trips_found$request_datetime, 1L) +
-            utils::tail(lubridate::seconds(trips_found$trip_time), 1L)
+    })
 
-          current_position =
-            utils::tail(trips_found$DOLocationID, 1L)
+  start_points[, take_current_trip := take_trip_confirmation]
 
-          n_search_iteration = 0
-
-          trip_time_limit = current_time + lubridate::minutes(1)
-          trip_dist_limit = 1
-
-        }else{
-
-          # Getting ready for a new search
-          if(n_search_iteration == 0){
-            current_time = current_time + lubridate::minutes(1)
-          }else{
-            current_time = current_time + lubridate::minutes(2)
-          }
-          n_search_iteration = n_search_iteration + 1
-          trip_dist_limit = 1 + n_search_iteration * 2
-          trip_time_limit = current_time + lubridate::minutes(2)
-
-        }
-
-
-        # USEFULL FOR TESTING THE SIMULATION
-        # if(length(simulated_trips$trip_id) == 4L && n_search_iteration == 2) {
-        #   browser()
-        # }
-
-
-        # Confirming if is time to take the break
-        if(break_taken == FALSE && current_time >= time_to_take_break){
-
-          break_taken = TRUE
-          current_time = current_time + lubridate::minutes(30)
-
-        }
-
-
-      }
-
-      # Returning the data in the expected shape
-      shaped_table =
-        simulated_trips[, list(simulation_id = trip_id[1L],
-                               sim_trip_id = trip_id,
-                               sim_hvfhs_license_num = hvfhs_license_num,
-                               sim_wav_match_flag = wav_match_flag,
-                               sim_PULocationID = PULocationID,
-                               sim_DOLocationID = DOLocationID,
-                               sim_request_datetime = request_datetime,
-                               sim_dropoff_datetime = dropoff_datetime,
-                               sim_trip_time = trip_time,
-                               sim_driver_pay = driver_pay,
-                               sim_tips = tips)]
-
-      return(shaped_table)
-
-    }) |>
-    data.table::rbindlist()
-
+  return(start_points[])
 
 }

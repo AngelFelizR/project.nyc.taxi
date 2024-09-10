@@ -98,7 +98,7 @@ Before saving the sample on DB, we need to create this function.
 Tengo que crear una funcion que determine si cancelar el trip actual es recomendable.
 
 ```{r}
-is_best_trip_20_min <- function() 5
+set_take_current_trip(con, TrainingSample)
 ```
 
 
