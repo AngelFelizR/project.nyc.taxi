@@ -103,8 +103,6 @@ HasAllParquet <- length(list.files(ParquetFolderPath, recursive = TRUE)) == 24L
 ```
 
 ```{r parsermd-chunk-5, eval=!HasAllParquet}
-
-
 for(year_i in YearFoldersPath) dir.create(year_i, showWarnings = FALSE)
 ```
 
@@ -168,14 +166,14 @@ ParquetSource
 
 2. Creating a connection.
 
-```{r eval=FALSE}
+```r
 con <- DBI::dbConnect(duckdb::duckdb(), 
                       dbdir = here::here("my-db.duckdb"))
 ```
 
 3. Saving all files in the database after adding an id to differentiate between trips and adding the performance per our each trips.
 
-```{r eval=FALSE}
+```r
 NycTripsCreateTable <- glue::glue_safe("
 CREATE TABLE NycTrips AS
     SELECT 
@@ -190,7 +188,7 @@ DBI::dbExecute(con, NycTripsCreateTable)
 
 4. Disconnecting the data base.
 
-```{r eval=FALSE}
+```r
 DBI::dbDisconnect(con, shutdown = TRUE)
 
 rm(con)

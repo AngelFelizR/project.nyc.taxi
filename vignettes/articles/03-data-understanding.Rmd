@@ -8,12 +8,6 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
   chunk_output_type: console
-params:
-  UpdateSample: FALSE
-  UpdateGeoPoints: FALSE
-  MaxTripHours: 3
-  MaxDriverPay: 300
-  MaxLimitTripMiles: 300
 ---
 
 ```{r, include = FALSE}
@@ -71,36 +65,112 @@ con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
 dbListTables(conn = con)
 ```
 
+### Sampling data to use
 
-### Defining testing data
+As we have too much data will only need 1% of the data for training and testing the model, which corresponds to 3,272,947 rows between 2022 and 2023.
 
-```{r eval=FALSE}
-TrainingSampleQuery <- "
+```r
+ValidZoneSampleQuery <- glue::glue("
+CREATE TABLE ValidZoneSample AS
 SELECT t1.*
 FROM NycTrips t1
 INNER JOIN ZoneCodesFilter t2
   ON t1.PULocationID = t2.PULocationID AND
      t1.DOLocationID = t2.DOLocationID
-WHERE t1.year = 2022
-USING SAMPLE 0.05% (system, 547548);
-"
+USING SAMPLE 1% (system, 547548);
+")
 
-TrainingSample <- dbGetQuery(con, TrainingSampleQuery)
-setDT(TrainingSample)
-
-# Disconnecting and connecting for garbage collect
-DBI::dbDisconnect(con, shutdown = TRUE)
-con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
+dbExecute(con, ValidZoneSampleQuery)
 ```
-
-Before saving the sample on DB, we need to create this function.
-
-Tengo que crear una funcion que determine si cancelar el trip actual es recomendable.
 
 ```{r}
-set_take_current_trip(con, TrainingSample)
+dbGetQuery(con, "SELECT year, COUNT(*) AS n_rows FROM ValidZoneSample GROUP BY year")
 ```
 
+### Evaluate the performance
+
+```{r}
+TimeLimitMin <- "15"
+TakeTripCriteria <- "75%"
+
+ValidZoneSamplePerformanceEvaluationQuery <- glue::glue("
+CREATE TABLE ValidZoneSamplePerformanceEvaluation AS
+WITH trip_data AS (
+  SELECT 
+    vz.hvfhs_license_num,
+    vz.request_datetime AS vz_request_datetime,
+    vz.PULocationID AS vz_PULocationID,
+    vz.performance_per_hour AS vz_performance_per_hour,
+    vz.wav_match_flag AS vz_wav_match_flag,
+    t.request_datetime,
+    t.trip_time,
+    t.driver_pay,
+    t.tips,
+    pmd.trip_miles_mean,
+    EXTRACT(EPOCH FROM (t.request_datetime - vz.request_datetime)) AS waiting_secs,
+    (t.driver_pay + t.tips) / ((t.trip_time + EXTRACT(EPOCH FROM (t.request_datetime - vz.request_datetime))) / 3600) AS performance_per_hour
+  FROM ValidZoneSample vz
+  INNER JOIN NycTrips t
+    ON t.hvfhs_license_num = vz.hvfhs_license_num
+    AND t.request_datetime >= vz.request_datetime
+    AND t.request_datetime <= vz.request_datetime + INTERVAL {TimeLimitMin} MINUTE
+  INNER JOIN PointMeanDistance pmd
+    ON pmd.PULocationID = vz.PULocationID
+    AND pmd.DOLocationID = t.PULocationID
+  WHERE (
+    (t.request_datetime <= vz.request_datetime + INTERVAL '1' MINUTE AND pmd.trip_miles_mean <= 1) OR
+    (t.request_datetime <= vz.request_datetime + INTERVAL '3' MINUTE AND pmd.trip_miles_mean <= 3) OR
+    (t.request_datetime <= vz.request_datetime + INTERVAL '5' MINUTE AND pmd.trip_miles_mean <= 5) OR
+    (t.request_datetime <= vz.request_datetime + INTERVAL '7' MINUTE AND pmd.trip_miles_mean <= 7) OR
+    (t.request_datetime <= vz.request_datetime + INTERVAL '9' MINUTE AND pmd.trip_miles_mean <= 9) OR
+    (t.request_datetime <= vz.request_datetime + INTERVAL '11' MINUTE AND pmd.trip_miles_mean <= 11) OR
+    (t.request_datetime <= vz.request_datetime + INTERVAL '13' MINUTE AND pmd.trip_miles_mean <= 13) OR
+    (t.request_datetime <= vz.request_datetime + INTERVAL '15' MINUTE AND pmd.trip_miles_mean <= 15)
+  )
+  AND (
+    (vz.wav_match_flag = 'Y' AND t.wav_match_flag IN ('Y', 'N'))
+    OR (vz.wav_match_flag = 'N' AND t.wav_match_flag = 'N')
+  )
+),
+aggregated_data AS (
+  SELECT
+    hvfhs_license_num,
+    vz_request_datetime,
+    vz_PULocationID,
+    vz_performance_per_hour,
+    vz_wav_match_flag,
+    MAX(performance_per_hour) AS best_performance,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY performance_per_hour) AS median_performance,
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY performance_per_hour) AS percentile_75_performance
+  FROM trip_data
+  GROUP BY hvfhs_license_num, vz_request_datetime, vz_PULocationID, vz_performance_per_hour, vz_wav_match_flag
+)
+SELECT 
+  vz.*,
+  CASE 
+    WHEN '{TakeTripCriteria}' = 'one_trip' THEN 
+      CASE WHEN ad.best_performance <= vz.performance_per_hour THEN 1 ELSE 0 END
+    WHEN '{TakeTripCriteria}' = 'median' THEN
+      CASE WHEN ad.median_performance <= vz.performance_per_hour THEN 1 ELSE 0 END
+    WHEN '{TakeTripCriteria}' = '75%' THEN
+      CASE WHEN ad.percentile_75_performance <= vz.performance_per_hour THEN 1 ELSE 0 END
+  END AS take_current_trip
+FROM ValidZoneSample vz
+LEFT JOIN aggregated_data ad
+  ON vz.hvfhs_license_num = ad.hvfhs_license_num
+  AND vz.request_datetime = ad.vz_request_datetime
+  AND vz.PULocationID = ad.vz_PULocationID
+  AND vz.performance_per_hour = ad.vz_performance_per_hour
+  AND vz.wav_match_flag = ad.vz_wav_match_flag                   
+")
+
+dbExecute(con, ValidZoneSamplePerformanceEvaluationQuery)
+```
+
+```{r}
+dbGetQuery(con, "SELECT year, COUNT(*) AS n_rows 
+                 FROM ValidZoneSamplePerformanceEvaluation GROUP BY year")
+```
 
 
 ```{r}

@@ -240,7 +240,7 @@ con <- dbConnect(duckdb(), dbdir = here("my-db.duckdb"))
 
 3. Importing the definition of each code zone.
 
-```{r eval=FALSE}
+```r
 ZoneCodesRef <- fread(
   here("raw-data/taxi_zone_lookup.csv"),
   colClasses = c("integer",
@@ -400,13 +400,13 @@ plot_map(
 
 Now we can save the results in the database.
 
-```{r eval=FALSE}
+```r
 dbWriteTable(con, "ZoneCodesRefClean", ZoneCodesRefClean)
 ```
 
 5. Creating and saving a temporal table listing all possible combinations of locations in **Manhattan**, **Brooklyn** and **Queens** (they have more trips that other borough in NYC) to be used as filter.
 
-```{r eval=FALSE}
+```r
 ZoneCodesFilter <-
   ZoneCodesRefClean[c("Manhattan", "Brooklyn", "Queens"), 
                     on = "Borough",
@@ -418,7 +418,7 @@ dbWriteTable(con, "ZoneCodesFilter", ZoneCodesFilter)
 
 5. Selecting at random the first trip of each simulation. It's important to know that even after setting the seed 3518 **the sample is not reproducible**, so I saved the data as part of the package of this project, so you have a easy access by running `proyect.nyc.taxi::SimulationStartDay`, this why creating the `trip_id` column was so important.
 
-```{r eval=FALSE}
+```r
 SimulationStartDayQuery <- "
 SELECT t1.*
 FROM NycTrips t1
@@ -477,7 +477,7 @@ Now we can conclude that the initial data **satisfy the assumption 1**.
 
 6. Calculating the mean distance present from one location to other if it has **fewer than 10 miles**.
 
-```{r eval=FALSE}
+```r
 MeanDistanceQuery <- "
 CREATE TABLE PointMeanDistance AS
 
