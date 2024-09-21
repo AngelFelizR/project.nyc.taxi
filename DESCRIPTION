@@ -14,33 +14,24 @@ BugReports: https://github.com/AngelFelizR/project.nyc.taxi/issues
 Depends: 
     R (>= 4.1.0)
 Imports: 
-    arrow,
     data.table,
     DBI,
-    dplyr,
     duckdb,
     glue,
     leaflet,
     lubridate,
-    recipes,
-    rlang,
     stats,
     timeDate,
     utils,
     withr
 Suggests:
-    DiagrammeR,
-    fs,
+    future,
+    future.apply,
     ggplot2,
-    here,
-    infer,
     knitr,
     pkgload,
     rmarkdown,
-    rvest,
-    scales,
     testthat (>= 3.0.0),
-    tidygeocoder
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3
@@ -48,4 +39,4 @@ Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2

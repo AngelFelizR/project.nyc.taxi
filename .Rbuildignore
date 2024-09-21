@@ -1,6 +1,3 @@
-^renv$
-^renv\.lock$
-^dev$
 ^LICENSE\.md$
 ^README\.Rmd$
 ^project\.nyc\.taxi\.Rproj$
@@ -8,12 +5,3 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
-^doc$
-^vignettes/articles$
-^Dockerfile$
-^docker-compose.yml$
-^run-docker\.sh$
-^raw-data$
-^my-db.duckdb$
-^my-db.duckdb.wal$
-

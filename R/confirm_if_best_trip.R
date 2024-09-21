@@ -7,78 +7,75 @@
 #'
 #' @return A data.table.
 #' @export
-set_take_current_trip <- function(conn,
+set_take_current_trip <- function(path_to_parquet,
                                   start_points,
                                   max_min = 15,
                                   trip_criteria = c("one_trip", "median", "75%")) {
 
-  trip_criteria = match.arg(trip_criteria)
+  withr::local_options(list(future.globals.maxSize = 7 * 1024^3))
 
-  validate_simulation_data(conn, start_points)
+  apply::plan(multisession, workers = 4)
 
-  take_trip_confirmation =
-    sapply(1:nrow(start_points),\(simulation_i){
+  results <-
+    lapply(1:nrow(SampleMonths), \(month_i){
 
-      # Defining values to keep constant
-      taxi_company_code = start_points$hvfhs_license_num[simulation_i]
+      ValidZoneSample_i <- ValidZoneSample[SampleMonths[month_i], on = c("year", "month")]
+      NycTrips_i <- dbGetQuery(con,glue("SELECT * FROM {ParquetFiles[month_i]}"))
+      setDT(NycTrips_i)
 
-      # Defining valid wav trip for this simulation
-      can_take_wav =
-        if(start_points$wav_match_flag[simulation_i] == "Y"){
-          "('Y', 'N')"
-        }else{
-          "('N')"
-        }
 
-      # The current trip defines the current position, time and performance
-      current_position = start_points$PULocationID[simulation_i]
-      current_time = start_points$request_datetime[simulation_i]
-      current_performace = start_points$performance_per_hour[simulation_i]
+      # Step 1: Calculate waiting_secs and performance_per_hour for joined data
+      trip_data <-
+        future_lapply(1:nrow(ValidZoneSample_i), \(n_row){
 
-      distance_time_limit =
-        seq(3, max_min, by = 2) |>
-        (\(x) if(!max_min %in% x) c(x, max_min) else x )() |>
-        (\(x) paste0("OR (t1.request_datetime <= (TIMESTAMP '",current_time,"' + INTERVAL ", x, " MINUTE) AND t2.trip_miles_mean <= ", x,")") )() |>
-        paste0(collapse = " ")
+          time_trips <-
+            NycTrips_i[ValidZoneSample_i[n_row],
+                       on = "hvfhs_license_num"
+            ][request_datetime >= i.request_datetime &
+                request_datetime <= request_datetime_extra]
 
-        # The query to extract information from DB
-        query_to_find_trips = glue::glue("
-        SELECT t1.*
-        FROM NycTrips t1
-        INNER JOIN (
-          SELECT * FROM PointMeanDistance WHERE PULocationID = {current_position}
-        ) t2
-          ON t1.PULocationID = t2.DOLocationID
-        WHERE t1.hvfhs_license_num = '{taxi_company_code}'
-        AND t1.wav_match_flag IN {can_take_wav}
-        AND t1.request_datetime >= '{current_time}'
-        AND (
-         (t1.request_datetime <= (TIMESTAMP '{current_time}' + INTERVAL 1 MINUTE) AND t2.trip_miles_mean <= 1)
-         {distance_time_limit}
-        )
-        ORDER BY t1.request_datetime
-      ")
+          current_trip_alternatives <-
+            PointMeanDistance[.(ValidZoneSample_i$`PULocationID`[n_row]),
+                              on = "PULocationID",
+                              nomatch = NULL
+            ][time_trips,
+              on = c("DOLocationID" = "PULocationID"),
+            ][, waiting_secs := as.numeric(difftime(request_datetime, i.request_datetime, units = "secs"))
+            ][, performance_per_hour := (driver_pay + tips) / ((trip_time + waiting_secs) / 3600)
+            ][(request_datetime <= i.request_datetime + 60 & trip_miles_mean <= 1) |
+                (request_datetime <= i.request_datetime + 180 & trip_miles_mean <= 3) |
+                (request_datetime <= i.request_datetime + 300 & trip_miles_mean <= 5) |
+                (request_datetime <= i.request_datetime + 420 & trip_miles_mean <= 7) |
+                (request_datetime <= i.request_datetime + 540 & trip_miles_mean <= 9) |
+                (request_datetime <= i.request_datetime + 660 & trip_miles_mean <= 11) |
+                (request_datetime <= i.request_datetime + 780 & trip_miles_mean <= 13) |
+                (request_datetime <= i.request_datetime + 900 & trip_miles_mean <= 15) &
+                ((i.wav_match_flag == 'Y' & wav_match_flag %in% c('Y', 'N')) |
+                   (i.wav_match_flag == 'N' & wav_match_flag == 'N'))]
 
-        # Running the query
-        trips_found = DBI::dbGetQuery(conn, query_to_find_trips)
-        data.table::setDT(trips_found)
+          return(current_trip_alternatives)
 
-        trips_found[, waiting_secs := difftime(request_datetime, current_time, units = "secs") |> as.double()]
-        trips_found[, performance_per_hour := (driver_pay + tips) / ((trip_time + waiting_secs) / 3600)]
+        }) |>
+        rbindlist()
 
-        take_current_trip =
-          switch (trip_criteria,
-                  "one_trip" = !any(trips_found$performance_per_hour > current_performace),
-                  "median" = stats::median(trips_found$performance_per_hour, na.rm = TRUE) < current_performace,
-                  "75%" = stats::quantile(trips_found$performance_per_hour, prob = 0.75, na.rm = TRUE) < current_performace) |>
-          as.integer()
+      # Step 2: Aggregate data by performance metrics
+      aggregated_data <- trip_data[
+        , .(percentile_75_performance = quantile(performance_per_hour, 0.75, na.rm = TRUE)),
+        by = "trip_id"
+      ]
 
-      return(take_current_trip)
 
-    })
+      # Step 3: Join aggregated data with ValidZoneSample
+      final_data <-
+        ValidZoneSample_i[aggregated_data,
+                          on = "trip_id"
+        ][, take_current_trip := fifelse(performance_per_hour > percentile_75_performance, 0L, 1L)]
 
-  start_points[, take_current_trip := take_trip_confirmation]
 
-  return(start_points[])
+      # Result
+      return(final_data[])
+
+    })|>
+    rbindlist()
 
 }
