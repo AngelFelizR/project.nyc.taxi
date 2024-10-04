@@ -17,6 +17,7 @@ Imports:
     data.table,
     DBI,
     duckdb,
+    future.apply,
     glue,
     leaflet,
     lubridate,
@@ -26,12 +27,11 @@ Imports:
     withr
 Suggests:
     future,
-    future.apply,
     ggplot2,
     knitr,
     pkgload,
     rmarkdown,
-    testthat (>= 3.0.0),
+    testthat (>= 3.0.0)
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3

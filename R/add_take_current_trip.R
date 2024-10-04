@@ -1,28 +1,58 @@
-#' Confirm whether is better to wait for other trip
+#' Add and Evaluate Future Trip Alternatives
 #'
-#' The function helps to confirm for each trip passed to the `trip_sample` argument
-#' whether we can find several trips in the next 15 minutes that can be better
-#' than the current one.
+#' This function identifies and evaluates future trip alternatives for a given sample of trips.
+#' It considers various constraints such as proximity to the current location, the time window,
+#' and trip characteristics like wheelchair accessibility, to determine whether to take the current trip.
 #'
-#' @param trip_sample A data.table table listing all trips to evaluate.
-#' @param point_mean_distance A data.table with the trip_miles_mean between
-#' PULocationID and DOLocationID points.
-#' @param parquet_path A path to a parquet file listing the data to be use
-#' in other to defining a trip should be taken.
+#' @param trip_sample A data frame containing the sample of trips to be evaluated. Each row represents a single trip.
+#' @param point_mean_distance A data table containing mean distances between different pickup and drop-off locations.
+#' It should include at least `PULocationID` and `DOLocationID` columns.
+#' @param parquet_path A string specifying the path to the Parquet file containing all historical trips data, which is queried using DuckDB.
 #'
-#' @return A data.table with the same number of rows as `trip_sample`.
+#' @return A data table with the original trip sample and an additional column, `take_current_trip`, indicating whether the current trip should be taken (1) or not (0) based on performance metrics.
+#'
+#' @details The function connects to a DuckDB database to retrieve historical trip data. For each trip in the sample, it fetches potential future trip alternatives that meet a set of criteria:
+#' - The request time must be between 3 seconds and 15 minutes after the current trip's request time.
+#' - Future trips must be from the same company (`hvfhs_license_num`) as the current trip.
+#' - If the current trip is not for a wheelchair-accessible vehicle, future trips must also not be for a wheelchair-accessible vehicle.
+#'
+#' Each valid future trip is evaluated based on the distance from the current trip and its potential profitability,
+#' calculated as `performance_per_hour` (pay per hour, adjusted for waiting time). The function then compares the performance
+#' of each trip against the 75th percentile of performance for future trips and decides whether to take the current trip.
+#'
+#' @examples
+#' # Example usage:
+#' trip_sample <- data.frame(
+#'   trip_id = 1:5,
+#'   request_datetime = as.POSIXct(Sys.time() + c(0, 60, 120, 180, 240), origin = "1970-01-01"),
+#'   hvfhs_license_num = sample(c('HV001', 'HV002'), 5, replace = TRUE),
+#'   wav_match_flag = sample(c('Y', 'N'), 5, replace = TRUE),
+#'   PULocationID = sample(1:100, 5, replace = TRUE),
+#'   DOLocationID = sample(1:100, 5, replace = TRUE)
+#' )
+#'
+#' point_mean_distance <- data.table::data.table(
+#'   PULocationID = 1:100,
+#'   DOLocationID = 1:100,
+#'   trip_miles_mean = runif(100)
+#' )
+#'
+#' parquet_path <- "path_to_parquet_file"
+#' add_take_current_trip(trip_sample, point_mean_distance, parquet_path)
+#'
 #' @export
 add_take_current_trip <- function(trip_sample,
                                   point_mean_distance,
                                   parquet_path) {
 
   con = DBI::dbConnect(duckdb::duckdb())
-  all_trips = DBI::dbGetQuery(con, paste0("SELECT * FROM ", parquet_path))
+  all_trips = DBI::dbGetQuery(con, paste0("SELECT * FROM '", parquet_path, "'"))
+  DBI::dbDisconnect(con, shutdown = TRUE)
 
   # Step 1: Getting the future alternatives for each trip
   trip_data =
     future.apply::future_lapply(1:nrow(trip_sample), \(n_row){
-
+browser()
       # Selecting the row to use
       trip_sample_i = trip_sample[n_row]
 
@@ -69,12 +99,12 @@ add_take_current_trip <- function(trip_sample,
       return(valid_future_trips)
 
     }) |>
-    rbindlist()
+    data.table::rbindlist()
 
 
   # Step 2: Find the 3er quartile of each sample trip
   future_trip_summary <- trip_data[
-    , .(percentile_75_performance = quantile(performance_per_hour, 0.75, na.rm = TRUE)),
+    , .(percentile_75_performance = stats::quantile(performance_per_hour, 0.75, na.rm = TRUE)),
     by = "trip_id"
   ]
 
