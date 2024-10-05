@@ -6,7 +6,8 @@ describe("add_take_current_trip", {
     request_datetime = as.POSIXct(c("2023-10-01 10:00:00", "2023-10-01 11:00:00")),
     hvfhs_license_num = c("HV123", "HV456"),
     wav_match_flag = c("N", "Y"),
-    PULocationID = c(1, 2)
+    PULocationID = c(1, 2),
+    performance_per_hour = c(100, 50)
   )
 
   PointMeanDistance <- data.table::data.table(
@@ -28,6 +29,7 @@ describe("add_take_current_trip", {
   # Save all_trips to parquet format
   parquet_path <- tempfile(fileext = ".parquet")
   arrow::write_parquet(all_trips, parquet_path)
+  on.exit(file.remove(parquet_path), add = TRUE)
 
   # Test data loading and basic functionality
   it("should load data and return correct output structure", {
