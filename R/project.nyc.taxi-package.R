@@ -65,6 +65,16 @@ utils::globalVariables(c(
   "request_datetime",
   "dropoff_datetime",
   "driver_pay",
-  "tips"
+  "tips",
+
+  # From add_take_current_trip
+  ".",
+  ".SD",
+  "percentile_75_performance",
+  "performance_per_hour",
+  "take_current_trip",
+  "trip_miles_mean",
+  "trip_time",
+  "waiting_secs"
 
 ))

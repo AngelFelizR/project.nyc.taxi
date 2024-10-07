@@ -45,7 +45,6 @@ describe("add_take_current_trip", {
   all_trips <- rbind(future_trips, future_trips)
   all_trips[41:80, hvfhs_license_num := "HV456"]
 
-
   # Save all_trips to parquet format
   parquet_path <- tempfile(fileext = ".parquet")
   con <- DBI::dbConnect(duckdb::duckdb())
@@ -55,7 +54,7 @@ describe("add_take_current_trip", {
   on.exit(file.remove(parquet_path), add = TRUE)
 
   # Test data loading and basic functionality
-  it("It's returning the correct output.", {
+  it("returns the correct output and WAV trips give more money", {
     result <- add_take_current_trip(trip_sample, mean_distance, parquet_path)
 
     # The result is a data.table
@@ -67,9 +66,32 @@ describe("add_take_current_trip", {
     # WAV trips give more money
     expect_equal(result$take_current_trip, c(1L, 0L))
 
-    # Getting all expected functions
+    # Getting all expected columns
     expect_true(all(c("trip_id", "take_current_trip", "performance_per_hour", "percentile_75_performance") %in% names(result)))
+  })
 
-    })
+  it("handles invalid input gracefully", {
+    expect_error(add_take_current_trip(data.frame(), mean_distance, parquet_path), "trip_sample must be a non-empty data frame")
+    expect_error(add_take_current_trip(trip_sample, data.frame(), parquet_path), "point_mean_distance must be a non-empty data frame")
+    expect_error(add_take_current_trip(trip_sample, mean_distance, "non_existent_file.parquet"), "parquet_path does not exist")
+  })
 
+  it("handles edge cases correctly", {
+    # Test with a single trip
+    single_trip <- trip_sample[1]
+    result_single <- add_take_current_trip(single_trip, mean_distance, parquet_path)
+    expect_equal(nrow(result_single), 1)
+
+    # Test with no matching future trips
+    no_match_trip <- data.table::data.table(
+      trip_id = 1,
+      request_datetime = as.POSIXct("2025-01-01 00:00:00"),
+      hvfhs_license_num = "HV999",
+      wav_match_flag = "N",
+      PULocationID = 0,
+      performance_per_hour = 100
+    )
+    result_no_match <- add_take_current_trip(no_match_trip, mean_distance, parquet_path)
+    expect_equal(result_no_match$take_current_trip, 1L)  # Should take current trip if no alternatives
+  })
 })
