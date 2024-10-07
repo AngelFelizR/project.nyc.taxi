@@ -109,11 +109,11 @@ add_take_current_trip <- function(trip_sample,
 
   # Step 1: Getting the future alternatives for each trip
   trip_data =
-    future.apply::future_apply(1:nrow(trip_sample),
-                               FUN = select_valid_future_trips,
-                               trip_sample = trip_sample,
-                               point_mean_distance = point_mean_distance,
-                               all_trips = all_trips) |>
+    future.apply::future_lapply(matrix(1:nrow(trip_sample), ncol = 1),
+                                FUN = select_valid_future_trips,
+                                trip_sample = trip_sample,
+                                point_mean_distance = point_mean_distance,
+                                all_trips = all_trips) |>
     data.table::rbindlist()
 
 
@@ -128,7 +128,11 @@ add_take_current_trip <- function(trip_sample,
   final_data <-
     future_trip_summary[trip_sample,
                         on = "trip_id"
-    ][, take_current_trip := fifelse(performance_per_hour > percentile_75_performance, 0L, 1L)]
+    ][, take_current_trip := fifelse(performance_per_hour > percentile_75_performance, 1L, 0L)]
+
+
+  # Step 4: Define order for new columns
+  data.table::setcolorder(final_data, "percentile_75_performance", before = "take_current_trip")
 
 
   # Result
