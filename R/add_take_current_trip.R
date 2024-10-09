@@ -8,6 +8,7 @@
 #' @param point_mean_distance A data frame containing mean distances between different pickup and drop-off locations.
 #' It should include at least PULocationID and DOLocationID columns.
 #' @param parquet_path A string specifying the path to the Parquet file containing all historical trips data.
+#' @inheritParams future.apply::future_lapply
 #'
 #' @return A data table with the original trip sample and additional columns:
 #'   - percentile_75_performance: The 75th percentile of performance for future trips.
@@ -26,7 +27,8 @@
 #' @export
 add_take_current_trip <- function(trip_sample,
                                   point_mean_distance,
-                                  parquet_path) {
+                                  parquet_path,
+                                  future.scheduling = 5) {
 
   # Input validation
   if (!is.data.frame(trip_sample) || nrow(trip_sample) == 0) {
@@ -63,7 +65,7 @@ add_take_current_trip <- function(trip_sample,
   data.table::setDT(all_trips)
 
   # Creating function to select valid future trips
-  select_valid_future_trips <- function(n_row, trip_sample, point_mean_distance, all_trips) {
+  select_valid_future_trips <- function(n_row) {
     trip_sample_i <- trip_sample[n_row]
 
     distance_to_use <- point_mean_distance[trip_sample_i, on = .(PULocationID), nomatch = NULL]
@@ -96,11 +98,22 @@ add_take_current_trip <- function(trip_sample,
   }
 
   # Getting the future alternatives for each trip
-  trip_data <- future.apply::future_lapply(matrix(1:nrow(trip_sample), ncol = 1),
-                                           FUN = select_valid_future_trips,
-                                           trip_sample = trip_sample,
-                                           point_mean_distance = point_mean_distance,
-                                           all_trips = all_trips) |>
+  trip_data <- future.apply::future_lapply(
+    # Passing the rows to validate
+    seq_len(nrow(trip_sample)),
+
+    # Passing the function to use
+    FUN = select_valid_future_trips,
+
+    # Passing large data.frames to avoid duplication
+    future.globals = c("trip_sample", "point_mean_distance", "all_trips"),
+
+    # We only want to check one row of trip_sample a time
+    future.chunk.size = 1,
+
+    # Each worker can work with n rows at same time
+    future.scheduling = future.scheduling
+    ) |>
     data.table::rbindlist(fill = TRUE)
 
   # Find the 75th percentile of each sample trip

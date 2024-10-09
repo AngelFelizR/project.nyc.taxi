@@ -4,7 +4,12 @@
 \alias{add_take_current_trip}
 \title{Add and Evaluate Future Trip Alternatives}
 \usage{
-add_take_current_trip(trip_sample, point_mean_distance, parquet_path)
+add_take_current_trip(
+  trip_sample,
+  point_mean_distance,
+  parquet_path,
+  future.scheduling = 5
+)
 }
 \arguments{
 \item{trip_sample}{A data frame containing the sample of trips to be evaluated. Each row represents a single trip.}
@@ -13,6 +18,16 @@ add_take_current_trip(trip_sample, point_mean_distance, parquet_path)
 It should include at least PULocationID and DOLocationID columns.}
 
 \item{parquet_path}{A string specifying the path to the Parquet file containing all historical trips data.}
+
+\item{future.scheduling}{Average number of futures ("chunks") per worker.
+If \code{0.0}, then a single future is used to process all elements
+of \code{X}.
+If \code{1.0} or \code{TRUE}, then one future per worker is used.
+If \code{2.0}, then each worker will process two futures
+(if there are enough elements in \code{X}).
+If \code{Inf} or \code{FALSE}, then one future per element of
+\code{X} is used.
+Only used if \code{future.chunk.size} is \code{NULL}.}
 }
 \value{
 A data table with the original trip sample and additional columns:
