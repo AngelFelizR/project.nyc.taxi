@@ -70,6 +70,7 @@ utils::globalVariables(c(
   # From add_take_current_trip
   ".",
   ".SD",
+  "wav_request_flag",
   "percentile_75_performance",
   "performance_per_hour",
   "take_current_trip",

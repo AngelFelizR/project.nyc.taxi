@@ -23,6 +23,7 @@ describe("add_take_current_trip", {
     trip_id = 1:2,
     request_datetime = start_time,
     hvfhs_license_num = c("HV123", "HV456"),
+    wav_request_flag = c("N", "Y"),
     wav_match_flag = c("N", "Y"),
     PULocationID = 0,
     performance_per_hour = c(100, 50)
@@ -34,6 +35,7 @@ describe("add_take_current_trip", {
   future_trips <- data.table::data.table(
     request_datetime = future_time,
     hvfhs_license_num = "HV123",
+    wav_request_flag = c(rep("Y", 10), rep("N", 30)),
     wav_match_flag = c(rep("Y", 10), rep("N", 30)),
     DOLocationID = future_dist,
     driver_pay = c(rnorm(10, mean = 150, sd = 10),
@@ -87,6 +89,7 @@ describe("add_take_current_trip", {
       trip_id = 1,
       request_datetime = as.POSIXct("2025-01-01 00:00:00"),
       hvfhs_license_num = "HV999",
+      wav_request_flag = "N",
       wav_match_flag = "N",
       PULocationID = 0,
       performance_per_hour = 100

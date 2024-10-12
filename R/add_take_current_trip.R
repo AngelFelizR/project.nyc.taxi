@@ -46,7 +46,7 @@ add_take_current_trip <- function(trip_sample,
   data.table::setDT(point_mean_distance)
 
   # Check for required columns in trip_sample
-  required_cols <- c("trip_id", "request_datetime", "hvfhs_license_num", "wav_match_flag", "PULocationID", "performance_per_hour")
+  required_cols <- c("trip_id", "request_datetime", "hvfhs_license_num", "wav_request_flag", "wav_match_flag", "PULocationID", "performance_per_hour")
   missing_cols <- setdiff(required_cols, names(trip_sample))
   if (length(missing_cols) > 0) {
     stop(paste("Missing required columns in trip_sample:", paste(missing_cols, collapse = ", ")))
@@ -66,33 +66,43 @@ add_take_current_trip <- function(trip_sample,
 
   # Creating function to select valid future trips
   select_valid_future_trips <- function(n_row) {
+
     trip_sample_i <- trip_sample[n_row]
 
-    distance_to_use <- point_mean_distance[trip_sample_i, on = .(PULocationID), nomatch = NULL]
+    distance_to_use <- point_mean_distance[
+      trip_sample_i[, c("PULocationID")],
+      on = "PULocationID",
+      nomatch = NULL,
+      j = .(DOLocationID = PULocationID,
+            trip_miles_mean)
+    ]
 
     valid_future_trips <- all_trips[
+      # We only need 15 min of data
       request_datetime >= (trip_sample_i$request_datetime + lubridate::seconds(3)) &
         request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(15)) &
+        # The trip must come from same company
         hvfhs_license_num == trip_sample_i$hvfhs_license_num &
-        (trip_sample_i$wav_match_flag == "Y" | wav_match_flag == "N")
-    ][trip_sample_i, on = "hvfhs_license_num", nomatch = NULL
-    ][, distance_to_use[.SD, on = .(DOLocationID = PULocationID)]]
-
-    # Apply distance thresholds
-    valid_future_trips <- valid_future_trips[
-      (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(1)) & trip_miles_mean <= 1) |
+        # Confirm if the taxi can take wav trips
+        (trip_sample_i$wav_match_flag == "Y" | wav_request_flag == "N")
+      # Adding distances to validate
+    ][, distance_to_use[.SD, on = "DOLocationID"]
+      # Apply distance thresholds
+    ][(request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(1)) & trip_miles_mean <= 1) |
         (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(3)) & trip_miles_mean <= 3) |
         (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(5)) & trip_miles_mean <= 5) |
         (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(7)) & trip_miles_mean <= 7) |
         (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(9)) & trip_miles_mean <= 9) |
         (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(11)) & trip_miles_mean <= 11) |
         (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(13)) & trip_miles_mean <= 13) |
-        (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(15)) & trip_miles_mean <= 15)
-    ]
+        (request_datetime <= (trip_sample_i$request_datetime + lubridate::minutes(15)) & trip_miles_mean <= 15)]
 
     # Calculate performance
     valid_future_trips[, waiting_secs := as.numeric(difftime(request_datetime, trip_sample_i$request_datetime, units = "secs"))]
     valid_future_trips[, performance_per_hour := (driver_pay + tips) / ((trip_time + waiting_secs) / 3600) ]
+
+    # Adding trip_id for all selected rows
+    valid_future_trips[, trip_id := trip_sample_i$trip_id]
 
     return(valid_future_trips)
   }
@@ -113,12 +123,12 @@ add_take_current_trip <- function(trip_sample,
 
     # Each worker can work with n rows at same time
     future.scheduling = future.scheduling
-    ) |>
+  ) |>
     data.table::rbindlist(fill = TRUE)
 
   # Find the 75th percentile of each sample trip
   future_trip_summary <- trip_data[
-    , .(percentile_75_performance = stats::quantile(performance_per_hour, 0.75, na.rm = TRUE)),
+    j = .(percentile_75_performance = stats::quantile(performance_per_hour, 0.75, na.rm = TRUE)),
     by = "trip_id"
   ]
 
