@@ -75,7 +75,10 @@ add_take_current_trip <- function(trip_sample,
       nomatch = NULL,
       j = .(DOLocationID = PULocationID,
             trip_miles_mean)
-    ]
+    ] |>
+      # We don't want a many to many join
+      unique(by = "DOLocationID")
+
 
     valid_future_trips <- all_trips[
       # We only need 15 min of data
