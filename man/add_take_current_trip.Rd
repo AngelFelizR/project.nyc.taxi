@@ -8,7 +8,8 @@ add_take_current_trip(
   trip_sample,
   point_mean_distance,
   parquet_path,
-  future.scheduling = 5
+  future.scheduling = 1,
+  future.chunk.size = NULL
 )
 }
 \arguments{
@@ -28,6 +29,10 @@ If \code{2.0}, then each worker will process two futures
 If \code{Inf} or \code{FALSE}, then one future per element of
 \code{X} is used.
 Only used if \code{future.chunk.size} is \code{NULL}.}
+
+\item{future.chunk.size}{The average number of elements per future ("chunk").
+If \code{Inf}, then all elements are processed in a single future.
+If \code{NULL}, then argument \code{future.scheduling} is used.}
 }
 \value{
 A data table with the original trip sample and additional columns:

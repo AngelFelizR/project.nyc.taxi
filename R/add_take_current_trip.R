@@ -28,7 +28,8 @@
 add_take_current_trip <- function(trip_sample,
                                   point_mean_distance,
                                   parquet_path,
-                                  future.scheduling = 5) {
+                                  future.scheduling = 1,
+                                  future.chunk.size = NULL) {
 
   # Input validation
   if (!is.data.frame(trip_sample) || nrow(trip_sample) == 0) {
@@ -121,10 +122,8 @@ add_take_current_trip <- function(trip_sample,
     # Passing large data.frames to avoid duplication
     future.globals = c("trip_sample", "point_mean_distance", "all_trips"),
 
-    # We only want to check one row of trip_sample a time
-    future.chunk.size = 1,
-
-    # Each worker can work with n rows at same time
+    # Passing optimization params
+    future.chunk.size = future.chunk.size,
     future.scheduling = future.scheduling
   ) |>
     data.table::rbindlist(fill = TRUE)
