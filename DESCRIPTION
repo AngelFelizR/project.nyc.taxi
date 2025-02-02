@@ -21,6 +21,7 @@ Imports:
     glue,
     leaflet,
     lubridate,
+    maptiles,
     sf,
     stats,
     timeDate,

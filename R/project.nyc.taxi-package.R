@@ -38,6 +38,7 @@
 #' @importFrom lubridate minutes
 #' @importFrom lubridate month
 #' @importFrom lubridate year
+#' @importFrom maptiles get_tiles
 #' @importFrom sf st_polygon
 #' @importFrom sf st_sfc
 #' @importFrom stats median
